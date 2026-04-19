@@ -15,6 +15,7 @@
 2. **VERCEL PREVIEW PUSHES:** NEVER push to the `main` branch. The GM has limits on production deployments. ALWAYS explicitly checkout and push everything exclusively to the `preview` branch (`git push origin preview`). You do not need GM's permission to push to the preview branch, keep continually pushing your code iterations there.
 3. **JOURNALING:** This document must be updated continuously. Treat it like permanent ink. Add new dates/entries to the bottom capturing what was built, what broke, and what the next agent needs to know. Do NOT delete old entries.
 4. **STYLE TRAINING:** Keep adding to the `pbs_script.md` artifact to learn and mimic the exact phrasing/spacing stylistic choices of the Grandmaster over time.
+5. **BRAND HEADER LOCK:** The top logo/header generation inside the Next.js `page.tsx` canvas utilizes raw, external static snapshots via `<img>` tag (e.g. `wtf-x-logo.jpg`). NEVER, under any circumstance, attempt to recreate these headers using HTML/CSS or React icons. The Brand Select dropdown seamlessly updates the `img` path. This mechanism is permanently locked.
 
 ---
 
