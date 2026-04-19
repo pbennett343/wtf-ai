@@ -81,9 +81,23 @@ export default function Home() {
 
             {/* SIDEBAR WIZARD */}
             <div className="w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col z-10 shadow-2xl">
-                <div className="p-6 border-b border-zinc-800">
-                    <h1 className="text-2xl font-black italic tracking-tighter">WTF.AI</h1>
-                    <p className="text-zinc-500 text-sm mt-1">IG Generator Engine</p>
+                <div className="p-6 border-b border-zinc-800 space-y-4">
+                    <div>
+                        <h1 className="text-2xl font-black italic tracking-tighter">WTF.AI</h1>
+                        <p className="text-zinc-500 text-sm mt-1">IG Generator Engine</p>
+                    </div>
+
+                    {/* Locked Brand Selector */}
+                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                        <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">Brand Persona</label>
+                        <select
+                            className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-sm text-white focus:outline-none cursor-not-allowed opacity-80"
+                            value="wtf-stats"
+                            disabled
+                        >
+                            <option value="wtf-stats">WTF Stats (@WTFstats)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-8">
@@ -238,21 +252,14 @@ export default function Home() {
                             {/* HEADER (PERFECT TWITTER REPLICA) */}
                             <div className="flex items-center px-[160px] pt-[200px] pb-[70px] gap-[60px]">
 
-                                {/* The specific WTF Stats Logo (Wait for public/logo.png, fallback to rich CSS) */}
-                                <div className="w-[330px] h-[330px] rounded-full bg-[#202745] flex items-center justify-center shrink-0 overflow-hidden shadow-sm relative">
-                                    {/* The inner MLB-style rounded rectangle */}
-                                    <div className="w-[88%] h-[64%] rounded-[30px] flex overflow-hidden border-[8px] border-white relative z-10 shadow-sm bg-[#18203E]">
-                                        {/* Red Side */}
-                                        <div className="w-[45%] bg-[#C8102E] h-full" />
-                                        {/* Silhouette approximation */}
-                                        <div className="absolute inset-0 flex items-end justify-center">
-                                            <svg viewBox="0 0 100 100" className="h-[90%] fill-white">
-                                                <path d="M 50 20 C 58 20 62 25 60 35 C 58 45 48 45 42 55 L 30 75 L 25 70 L 35 55 C 38 45 35 40 32 30 C 30 20 40 20 50 20 Z"></path>
-                                                <path d="M 40 55 C 45 55 55 65 65 85 L 55 85 C 48 70 35 60 40 55 Z"></path>
-                                                <circle cx="50" cy="25" r="8"></circle>
-                                            </svg>
-                                        </div>
-                                    </div>
+                                {/* The specific WTF Stats Raw Logo File */}
+                                <div className="w-[330px] h-[330px] rounded-full flex items-center justify-center shrink-0 overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.1)] relative" style={{ backgroundColor: '#212948' }}>
+                                    <img
+                                        src="/wtf-x-logo.jpg"
+                                        alt="WTF Logo"
+                                        className="w-[85%] h-[60%] rounded-[30px] object-cover border-[10px] border-white bg-white"
+                                        crossOrigin="anonymous"
+                                    />
                                 </div>
 
                                 <div className="flex flex-col justify-center -mt-[15px]">
