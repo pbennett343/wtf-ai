@@ -30,6 +30,7 @@ export default function Home() {
 
     // Layout Engine
     const [leftIndent, setLeftIndent] = useState(160);
+    const [logoHeight, setLogoHeight] = useState(360);
     const [logoTopPadding, setLogoTopPadding] = useState(50);
     const [logoBottomPadding, setLogoBottomPadding] = useState(25);
     const [textTopPadding, setTextTopPadding] = useState(0);
@@ -127,9 +128,9 @@ export default function Home() {
                             onChange={(e) => setBrand(e.target.value)}
                         >
                             <option value="wtf-x-logo.jpg">WTF Stats</option>
-                            <option value="vfl-x-logo.jpg">VFL Hub</option>
                             <option value="bets-x-logo.jpg">WTF Bets</option>
-                            <option value="pod-x-logo.jpg">Willing to Fail (Pod)</option>
+                            <option value="vfl-x-logo.jpg">VFL</option>
+                            <option value="pod-x-logo.jpg">Willing To Fail</option>
                         </select>
                     </div>
                 </div>
@@ -193,6 +194,14 @@ export default function Home() {
                                             <span className="text-white">{leftIndent}px</span>
                                         </label>
                                         <input type="range" min="0" max="1000" value={leftIndent} onChange={(e) => setLeftIndent(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Logo Size (Height)</span>
+                                            <span className="text-white">{logoHeight}px</span>
+                                        </label>
+                                        <input type="range" min="100" max="800" value={logoHeight} onChange={(e) => setLogoHeight(Number(e.target.value))} className="w-full accent-red-500" />
                                     </div>
 
                                     <div className="space-y-3">
