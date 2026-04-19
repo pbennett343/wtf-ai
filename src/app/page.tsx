@@ -47,6 +47,7 @@ export default function Home() {
                 if (d.fontSize) setFontSize(d.fontSize);
                 if (d.lineHeight) setLineHeight(d.lineHeight);
                 if (d.leftIndent !== undefined) setLeftIndent(d.leftIndent);
+                if (d.logoHeight !== undefined) setLogoHeight(d.logoHeight);
                 if (d.logoTopPadding !== undefined) setLogoTopPadding(d.logoTopPadding);
                 if (d.logoBottomPadding !== undefined) setLogoBottomPadding(d.logoBottomPadding);
                 if (d.textTopPadding !== undefined) setTextTopPadding(d.textTopPadding);
@@ -56,7 +57,7 @@ export default function Home() {
     }, []);
 
     const saveDefaults = () => {
-        const d = { fontSize, lineHeight, leftIndent, logoTopPadding, logoBottomPadding, textTopPadding, brand };
+        const d = { fontSize, lineHeight, leftIndent, logoHeight, logoTopPadding, logoBottomPadding, textTopPadding, brand };
         localStorage.setItem('wtf_layout_defaults', JSON.stringify(d));
         alert('Layout Defaults Locked Successfully!');
     };
@@ -337,7 +338,8 @@ export default function Home() {
                                 <img
                                     src={`/${brand}`}
                                     alt="Brand Header"
-                                    className="w-auto h-[360px] object-contain"
+                                    className="w-auto object-contain"
+                                    style={{ height: `${logoHeight}px` }}
                                     crossOrigin="anonymous"
                                 />
                             </div>
