@@ -38,6 +38,24 @@ export default function Home() {
     // Brand Engine
     const [brand, setBrand] = useState('wtf-x-logo.jpg');
 
+    // Responsive Scale Engine
+    const [previewScale, setPreviewScale] = useState(0.14);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setPreviewScale(0.08); // Smaller for mobile
+            } else if (window.innerWidth < 1200) {
+                setPreviewScale(0.11);
+            } else {
+                setPreviewScale(0.14);
+            }
+        };
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     // Local Storage Loading
     useEffect(() => {
         const saved = localStorage.getItem('wtf_layout_defaults');
@@ -110,18 +128,33 @@ export default function Home() {
     ];
 
     return (
-        <div className="flex h-screen bg-zinc-950 text-white font-sans overflow-hidden">
+        <div className="flex flex-col md:flex-row h-screen bg-zinc-950 text-white font-sans overflow-hidden">
 
-            {/* SIDEBAR WIZARD */}
-            <div className="w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col z-10 shadow-2xl">
-                <div className="p-6 border-b border-zinc-800 space-y-4">
-                    <div>
-                        <h1 className="text-2xl font-black italic tracking-tighter">WTF.AI</h1>
-                        <p className="text-zinc-500 text-sm mt-1">IG Generator Engine</p>
+            {/* SIDEBAR WIZARD / BOTTOM PANEL */}
+            <div className="w-full md:w-80 bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col z-10 shadow-2xl order-2 md:order-1 overflow-hidden shrink-0">
+                <div className="p-4 md:p-6 border-b border-zinc-800 space-y-3 md:space-y-4">
+                    <div className="flex items-center justify-between md:block">
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-black italic tracking-tighter">WTF.AI</h1>
+                            <p className="text-zinc-500 text-[10px] md:text-sm md:mt-1 hidden md:block">IG Generator Engine</p>
+                        </div>
+
+                        <div className="md:hidden">
+                            <select
+                                className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-[10px] text-white focus:outline-none"
+                                value={brand}
+                                onChange={(e) => setBrand(e.target.value)}
+                            >
+                                <option value="wtf-x-logo.jpg">WTF Stats</option>
+                                <option value="bets-x-logo.jpg">WTF Bets</option>
+                                <option value="vfl-x-logo.jpg">VFL</option>
+                                <option value="pod-x-logo.jpg">Willing To Fail</option>
+                            </select>
+                        </div>
                     </div>
 
-                    {/* Fully Unlocked Brand Selector */}
-                    <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                    {/* Desktop Brand Selector */}
+                    <div className="hidden md:block bg-zinc-950 p-3 rounded-lg border border-zinc-800">
                         <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">Brand Persona</label>
                         <select
                             className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
@@ -136,10 +169,10 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-8">
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 md:space-y-8">
 
                     {/* Step Navigation */}
-                    <nav className="flex space-x-1 border-b border-zinc-800 pb-4">
+                    <nav className="flex space-x-1 border-b border-zinc-800 pb-4 sticky top-0 bg-zinc-900 z-50">
                         {steps.map((s) => (
                             <button
                                 key={s.id}
@@ -154,7 +187,7 @@ export default function Home() {
                     </nav>
 
                     {/* ACTIVE TOOL PANEL */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 pb-20 md:pb-0">
 
                         {currentStep === 1 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -300,11 +333,11 @@ export default function Home() {
             </div>
 
             {/* MAIN STAGE PREVIEW */}
-            <div className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-zinc-950 relative overflow-hidden flex items-center justify-center">
+            <div className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-zinc-950 relative overflow-hidden flex items-center justify-center order-1 md:order-2 h-[45vh] md:h-full">
 
                 {/* Canvas that holds the 4000x5333 exact node, but visually scaled down to fit */}
-                {/* Magic scale formula: 800px tall preview view -> 800 / 5333 = 0.15 scale */}
-                <div className="relative border border-zinc-800 shadow-2xl bg-zinc-900 rounded-lg overflow-hidden flex items-center justify-center w-[90%] h-[95%]">
+                <div className="relative border border-zinc-800 shadow-2xl bg-zinc-900 rounded-lg overflow-hidden flex items-center justify-center w-full h-full md:w-[90%] md:h-[95%]">
+
 
                     <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded text-xs text-zinc-400 z-50 backdrop-blur-md">
                         Live Preview (Scaled)
@@ -314,7 +347,7 @@ export default function Home() {
                         id="export-mount"
                         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                         style={{
-                            transform: 'translate(-50%, -50%) scale(0.14)',
+                            transform: `translate(-50%, -50%) scale(${previewScale})`,
                             width: '4000px',
                             height: '5333px'
                         }}
