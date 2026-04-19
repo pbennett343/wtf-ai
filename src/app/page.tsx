@@ -235,19 +235,46 @@ export default function Home() {
                             className="w-[4000px] h-[5333px] bg-white flex flex-col"
                         >
 
-                            {/* HEADER */}
-                            <div className="flex items-center px-[220px] pt-[250px] pb-[120px] gap-[70px]">
-                                {/* Fake Logo Profile Pic */}
-                                <div className="w-[300px] h-[300px] rounded-full bg-gradient-to-br from-indigo-900 to-red-900 flex items-center justify-center border-[8px] border-zinc-100 shadow-xl overflow-hidden shrink-0">
-                                    <div className="text-white text-[120px] font-black italic tracking-tighter">WTF</div>
+                            {/* HEADER (PERFECT TWITTER REPLICA) */}
+                            <div className="flex items-center px-[160px] pt-[200px] pb-[70px] gap-[60px]">
+
+                                {/* The specific WTF Stats Logo (Wait for public/logo.png, fallback to rich CSS) */}
+                                <div className="w-[330px] h-[330px] rounded-full bg-[#202745] flex items-center justify-center shrink-0 overflow-hidden shadow-sm relative">
+                                    {/* The inner MLB-style rounded rectangle */}
+                                    <div className="w-[88%] h-[64%] rounded-[30px] flex overflow-hidden border-[8px] border-white relative z-10 shadow-sm bg-[#18203E]">
+                                        {/* Red Side */}
+                                        <div className="w-[45%] bg-[#C8102E] h-full" />
+                                        {/* Silhouette approximation */}
+                                        <div className="absolute inset-0 flex items-end justify-center">
+                                            <svg viewBox="0 0 100 100" className="h-[90%] fill-white">
+                                                <path d="M 50 20 C 58 20 62 25 60 35 C 58 45 48 45 42 55 L 30 75 L 25 70 L 35 55 C 38 45 35 40 32 30 C 30 20 40 20 50 20 Z"></path>
+                                                <path d="M 40 55 C 45 55 55 65 65 85 L 55 85 C 48 70 35 60 40 55 Z"></path>
+                                                <circle cx="50" cy="25" r="8"></circle>
+                                            </svg>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="flex flex-col justify-center">
-                                    <div className="flex items-center gap-[30px]">
-                                        <h1 className="text-[140px] font-black text-black leading-none tracking-tight">WTF Stats</h1>
-                                        <BadgeCheck className="w-[90px] h-[90px] text-[#1D9BF0] fill-current" />
+                                <div className="flex flex-col justify-center -mt-[15px]">
+                                    <div className="flex items-center gap-[22px]">
+                                        {/* Twitter Name Font: system-ui, bold */}
+                                        <h1
+                                            className="text-[150px] font-bold text-[#0F1419] tracking-[-0.03em] leading-none whitespace-nowrap"
+                                            style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
+                                        >
+                                            WTF Stats
+                                        </h1>
+                                        {/* Verified Badge */}
+                                        <svg viewBox="0 0 24 24" className="w-[95px] h-[95px] text-[#1D9BF0] fill-current shrink-0">
+                                            <g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.74 2.746 1.865 3.446-.054.184-.084.38-.084.554 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25C9.182 21.585 10.49 22.5 12 22.5s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.174-.03-.37-.084-.554 1.125-.7 1.865-1.986 1.865-3.446zm-9.076 4.314c-.382.417-1.042.417-1.424 0l-3.214-3.504c-.38-.415-.38-1.09 0-1.505.383-.414 1.004-.414 1.386 0l2.54 2.768 5.679-6.19c.382-.417 1.04-.417 1.423 0 .38.414.38 1.09 0 1.504l-6.39 6.927z"></path></g>
+                                        </svg>
                                     </div>
-                                    <p className="text-[100px] text-[#71767B] font-normal leading-tight mt-[10px]">@WTFstats</p>
+                                    <p
+                                        className="text-[130px] text-[#536471] font-normal leading-tight mt-[10px] tracking-[-0.01em]"
+                                        style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}
+                                    >
+                                        @WTFstats
+                                    </p>
                                 </div>
                             </div>
 
