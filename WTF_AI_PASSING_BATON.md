@@ -11,9 +11,10 @@
 6. Export (Render DOM to 4000x5333 PNG)
 
 ## 🚨 STRICT PROTOCOL (PERMANENT INK - NEVER DELETE)
-1. **REPEAT & CLARIFY BEFORE ACTING:** ALWAYS respond back simply repeating what the user asked you to do. Explain your proposed logic/why and *ask for confirmation* before changing code or pushing updates. 
-2. **JOURNALING:** This document must be updated continuously. Treat it like permanent ink. Add new dates/entries to the bottom capturing what was built, what broke, and what the next agent needs to know. Do NOT delete old entries.
-3. **STYLE TRAINING:** Keep adding to the `pbs_script.md` artifact to learn and mimic the exact phrasing/spacing stylistic choices of the Grandmaster over time.
+1. **REPEAT & CLARIFY BEFORE ACTING:** ALWAYS respond back simply repeating what the user asked you to do. Explain your proposed logic/why and *ask for confirmation* before changing code. 
+2. **VERCEL PREVIEW PUSHES:** NEVER ask for permission to push to the live Vercel preview. PUSH code constantly to the remote repo so the Grandmaster can test it live. Do not block on pushes.
+3. **JOURNALING:** This document must be updated continuously. Treat it like permanent ink. Add new dates/entries to the bottom capturing what was built, what broke, and what the next agent needs to know. Do NOT delete old entries.
+4. **STYLE TRAINING:** Keep adding to the `pbs_script.md` artifact to learn and mimic the exact phrasing/spacing stylistic choices of the Grandmaster over time.
 
 ---
 
