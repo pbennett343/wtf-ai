@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
 import {
     Type,
@@ -27,7 +27,38 @@ export default function Home() {
     const [statText, setStatText] = useState(INITIAL_STAT);
     const [fontSize, setFontSize] = useState(140);
     const [lineHeight, setLineHeight] = useState(1.4);
-    const [paddingTop, setPaddingTop] = useState(100);
+
+    // Layout Engine
+    const [leftIndent, setLeftIndent] = useState(160);
+    const [logoTopPadding, setLogoTopPadding] = useState(50);
+    const [logoBottomPadding, setLogoBottomPadding] = useState(25);
+    const [textTopPadding, setTextTopPadding] = useState(0);
+
+    // Brand Engine
+    const [brand, setBrand] = useState('wtf-x-logo.jpg');
+
+    // Local Storage Loading
+    useEffect(() => {
+        const saved = localStorage.getItem('wtf_layout_defaults');
+        if (saved) {
+            try {
+                const d = JSON.parse(saved);
+                if (d.fontSize) setFontSize(d.fontSize);
+                if (d.lineHeight) setLineHeight(d.lineHeight);
+                if (d.leftIndent !== undefined) setLeftIndent(d.leftIndent);
+                if (d.logoTopPadding !== undefined) setLogoTopPadding(d.logoTopPadding);
+                if (d.logoBottomPadding !== undefined) setLogoBottomPadding(d.logoBottomPadding);
+                if (d.textTopPadding !== undefined) setTextTopPadding(d.textTopPadding);
+                if (d.brand) setBrand(d.brand);
+            } catch (e) { }
+        }
+    }, []);
+
+    const saveDefaults = () => {
+        const d = { fontSize, lineHeight, leftIndent, logoTopPadding, logoBottomPadding, textTopPadding, brand };
+        localStorage.setItem('wtf_layout_defaults', JSON.stringify(d));
+        alert('Layout Defaults Locked Successfully!');
+    };
 
     const [photoUrl, setPhotoUrl] = useState<string | null>(null);
     const [photoZoom, setPhotoZoom] = useState(100);
@@ -87,15 +118,18 @@ export default function Home() {
                         <p className="text-zinc-500 text-sm mt-1">IG Generator Engine</p>
                     </div>
 
-                    {/* Locked Brand Selector */}
+                    {/* Fully Unlocked Brand Selector */}
                     <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800">
                         <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">Brand Persona</label>
                         <select
-                            className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-sm text-white focus:outline-none cursor-not-allowed opacity-80"
-                            value="wtf-stats"
-                            disabled
+                            className="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                            value={brand}
+                            onChange={(e) => setBrand(e.target.value)}
                         >
-                            <option value="wtf-stats">WTF Stats (@WTFstats)</option>
+                            <option value="wtf-x-logo.jpg">WTF Stats</option>
+                            <option value="vfl-x-logo.jpg">VFL Hub</option>
+                            <option value="bets-x-logo.jpg">WTF Bets</option>
+                            <option value="pod-x-logo.jpg">Willing to Fail (Pod)</option>
                         </select>
                     </div>
                 </div>
@@ -136,28 +170,61 @@ export default function Home() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Settings2 className="text-red-500" /> Step 2: Edit Text</h2>
 
-                                <div className="space-y-3">
-                                    <label className="text-sm text-zinc-400 flex justify-between">
-                                        <span>Font Size</span>
-                                        <span className="text-white">{fontSize}px</span>
-                                    </label>
-                                    <input type="range" min="80" max="250" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full accent-red-500" />
-                                </div>
+                                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 pb-8">
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Font Size</span>
+                                            <span className="text-white">{fontSize}px</span>
+                                        </label>
+                                        <input type="range" min="80" max="250" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
 
-                                <div className="space-y-3">
-                                    <label className="text-sm text-zinc-400 flex justify-between">
-                                        <span>Line Height</span>
-                                        <span className="text-white">{lineHeight}</span>
-                                    </label>
-                                    <input type="range" min="1" max="2" step="0.05" value={lineHeight} onChange={(e) => setLineHeight(Number(e.target.value))} className="w-full accent-red-500" />
-                                </div>
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Line Height</span>
+                                            <span className="text-white">{lineHeight}</span>
+                                        </label>
+                                        <input type="range" min="1" max="2" step="0.05" value={lineHeight} onChange={(e) => setLineHeight(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
 
-                                <div className="space-y-3">
-                                    <label className="text-sm text-zinc-400 flex justify-between">
-                                        <span>Padding Top</span>
-                                        <span className="text-white">{paddingTop}px</span>
-                                    </label>
-                                    <input type="range" min="0" max="400" value={paddingTop} onChange={(e) => setPaddingTop(Number(e.target.value))} className="w-full accent-red-500" />
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Left Indent (Image & Text)</span>
+                                            <span className="text-white">{leftIndent}px</span>
+                                        </label>
+                                        <input type="range" min="0" max="1000" value={leftIndent} onChange={(e) => setLeftIndent(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Logo Top Padding</span>
+                                            <span className="text-white">{logoTopPadding}px</span>
+                                        </label>
+                                        <input type="range" min="0" max="400" value={logoTopPadding} onChange={(e) => setLogoTopPadding(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Logo Bottom Padding</span>
+                                            <span className="text-white">{logoBottomPadding}px</span>
+                                        </label>
+                                        <input type="range" min="0" max="400" value={logoBottomPadding} onChange={(e) => setLogoBottomPadding(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-sm text-zinc-400 flex justify-between">
+                                            <span>Text Top Padding (Gap)</span>
+                                            <span className="text-white">{textTopPadding}px</span>
+                                        </label>
+                                        <input type="range" min="0" max="400" value={textTopPadding} onChange={(e) => setTextTopPadding(Number(e.target.value))} className="w-full accent-red-500" />
+                                    </div>
+
+                                    <button
+                                        onClick={saveDefaults}
+                                        className="w-full py-3 mt-4 bg-zinc-800 hover:bg-red-600 text-white rounded text-sm transition-colors border border-zinc-700 font-bold"
+                                    >
+                                        Lock as Default Settings
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -250,10 +317,17 @@ export default function Home() {
                         >
 
                             {/* HEADER (LOCKED STATIC IMAGE) */}
-                            <div className="w-full px-[160px] pt-[200px] pb-[70px]">
+                            <div
+                                className="w-full"
+                                style={{
+                                    paddingLeft: `${leftIndent}px`,
+                                    paddingTop: `${logoTopPadding}px`,
+                                    paddingBottom: `${logoBottomPadding}px`
+                                }}
+                            >
                                 <img
-                                    src="/wtf-x-logo.jpg"
-                                    alt="WTF Stats Header"
+                                    src={`/${brand}`}
+                                    alt="Brand Header"
                                     className="w-auto h-[360px] object-contain"
                                     crossOrigin="anonymous"
                                 />
@@ -262,11 +336,12 @@ export default function Home() {
                             {/* STAT TEXT */}
                             {/* Note: In HTML, whitespace-pre-wrap allows newlines from textarea to render */}
                             <div
-                                className="px-[220px] text-[#0F1419] font-normal whitespace-pre-wrap font-sans"
+                                className="pr-[220px] text-[#0F1419] font-normal whitespace-pre-wrap font-sans"
                                 style={{
+                                    paddingLeft: `${leftIndent}px`,
                                     fontSize: `${fontSize}px`,
                                     lineHeight: `${lineHeight}`,
-                                    paddingTop: `${paddingTop}px`
+                                    paddingTop: `${textTopPadding}px`
                                 }}
                             >
                                 {statText}
