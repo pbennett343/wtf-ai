@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         if (!prompt) return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
 
         const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const isCartoon = style === 'cartoon';
 
@@ -61,6 +61,7 @@ Return ONLY the image prompt, no explanation.`;
 
         return NextResponse.json({
             success: true,
+            source: "gemini",
             generatedPrompt
         });
     } catch (error: any) {
@@ -72,6 +73,6 @@ Return ONLY the image prompt, no explanation.`;
             ? `Kid-friendly Disney Pixar 3D cartoon character, large expressive eyes, vibrant colors. Subject: ${prompt.substring(0, 200)}`
             : `Realistic sports graphic, cinematic lighting, dynamic action. Subject: ${prompt.substring(0, 200)}`;
 
-        return NextResponse.json({ success: true, generatedPrompt: fallback });
+        return NextResponse.json({ success: true, source: "fallback", generatedPrompt: fallback });
     }
 }

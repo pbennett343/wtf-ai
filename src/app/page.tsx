@@ -314,10 +314,11 @@ export default function Home() {
             const data = await res.json();
 
             if (data.generatedPrompt) {
+                console.log("AI Source:", data.source || "unknown", "Prompt:", data.generatedPrompt);
                 const encodedPrompt = encodeURIComponent(data.generatedPrompt);
                 const randomSeed = Math.floor(Math.random() * 1000000);
                 const mockUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
-                setAiImageResult({ url: mockUrl, prompt: data.generatedPrompt });
+                setAiImageResult({ url: mockUrl, prompt: `[${data.source || "?"}] ${data.generatedPrompt}` });
             } else if (data.error) {
                 alert("API ERROR: " + data.error);
             }
