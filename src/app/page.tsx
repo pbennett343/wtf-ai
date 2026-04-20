@@ -112,6 +112,13 @@ export default function Home() {
         alert('Layout Defaults Locked Successfully!');
     };
 
+    // Autopopulate AI Prompt
+    useEffect(() => {
+        if (currentStep === 3 && !aiImagePrompt) {
+            setAiImagePrompt(statText);
+        }
+    }, [currentStep, statText]);
+
     const [photoUrl, setPhotoUrl] = useState<string | null>(null);
     const [photoZoom, setPhotoZoom] = useState(100);
     const [photoPanX, setPhotoPanX] = useState(0);
