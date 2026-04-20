@@ -22,3 +22,4 @@
 ### Journal Log
 *   **(April 19, 2026)** - Initial project setup. Created scaffolding for Next.js MVP focusing on the 6-step wizard and 4000x5333 output requirement.
 *   **(April 19, 2026)** - [Vercel Build Fix] Missing `autoprefixer` module caused remote build to fail. Hand-injected into package.json and pushed alongside the core 6-step MVP UI skeleton.
+*   **(April 19, 2026)** - [AI & JPG Update] Integrated Gemini AI for image scanning and "WTF Style" text rewording. Switched final output to JPG (4000x5333). Added API validation warning and loading spinners for all AI actions.
