@@ -16,7 +16,8 @@ import {
     Loader2,
     Upload,
     Layout,
-    Palette
+    Palette,
+    Zap
 } from "lucide-react";
 
 const INITIAL_STAT = `Victor Wembanyama has faced 547 different players in his NBA career so far.
@@ -34,6 +35,8 @@ export default function Home() {
     const [prevStatText, setPrevStatText] = useState<string | null>(null);
     const [fontSize, setFontSize] = useState(140);
     const [lineHeight, setLineHeight] = useState(1.4);
+    const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+    const [aiImageResult, setAiImageResult] = useState<{ url: string, prompt: string } | null>(null);
 
     // Layout Engine
     const [leftIndent, setLeftIndent] = useState(160);
@@ -191,6 +194,18 @@ export default function Home() {
                         <p className="text-zinc-400 text-[80px]">No media selected</p>
                     </div>
                 )}
+
+                {/* AI Generation Overlay */}
+                {isGeneratingImage && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-in fade-in duration-300">
+                        <div className="relative">
+                            <div className="w-64 h-64 border-8 border-zinc-800 border-t-red-600 rounded-full animate-spin"></div>
+                            <Sparkles className="absolute inset-0 m-auto h-20 w-20 text-red-500 animate-pulse" />
+                        </div>
+                        <h3 className="mt-12 text-[120px] font-black italic tracking-tighter text-white animate-bounce">AI GENERATING...</h3>
+                        <p className="text-red-400 text-[40px] font-bold uppercase tracking-[1em] mt-4 ml-[1em]">Please wait</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -266,6 +281,7 @@ export default function Home() {
     const handleAIGenerate = async () => {
         if (!aiImagePrompt) return;
         setIsAILoading(true);
+        setIsGeneratingImage(true);
         console.log("Starting handleAIGenerate...");
         try {
             const res = await fetch("/api/ai/generate", {
@@ -277,22 +293,20 @@ export default function Home() {
                     context: statText
                 }),
             });
-            console.log("Generate Response Status:", res.status);
             const data = await res.json();
-            console.log("Generate Response Data:", data);
 
             if (data.generatedPrompt) {
-                alert("AI IMAGE PROMPT READY:\n\n" + data.generatedPrompt + "\n\n(Note: Gemini 1.5 Pro generates high-quality descriptions. For a full image generator, a separate Imagen/DALL-E license is needed. Copy this to your fav generator!)");
+                const encodedPrompt = encodeURIComponent(data.generatedPrompt);
+                const mockUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&model=flux`;
+                setAiImageResult({ url: mockUrl, prompt: data.generatedPrompt });
             } else if (data.error) {
-                alert("API ERROR: " + data.error + (data.details ? "\n\nDetails: " + data.details : ""));
-            } else {
-                alert("UNKNOWN API RESPONSE: " + JSON.stringify(data));
+                alert("API ERROR: " + data.error);
             }
         } catch (error: any) {
             console.error("Generate fetch failed", error);
-            alert("FETCH FAILED: " + error.message);
         } finally {
             setIsAILoading(false);
+            setIsGeneratingImage(false);
         }
     };
 
@@ -525,40 +539,60 @@ export default function Home() {
                                     </div>
 
                                     <div className="relative">
-                                        <div className="absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30 rounded-t-xl">
+                                        <div className="absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/10 rounded-t-xl">
                                             <Sparkles size={14} className="text-red-500" />
-                                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Generate with AI</span>
+                                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Smart Generator</span>
                                         </div>
-                                        <div className="pt-12 p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-4">
+                                        <div className="pt-12 p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-4 shadow-inner">
                                             <textarea
                                                 value={aiImagePrompt}
                                                 onChange={(e) => setAiImagePrompt(e.target.value)}
-                                                className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-20"
-                                                placeholder="Describe the image you want (e.g. 'Tom Brady screaming after a touchdown')..."
+                                                className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-20 placeholder:text-zinc-700"
+                                                placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
                                             />
                                             <div className="flex items-center justify-between gap-4">
                                                 <div className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800">
-                                                    <button
-                                                        onClick={() => setAiImageStyle("realistic")}
-                                                        className={`px-3 py-1 text-[10px] rounded-md transition-all ${aiImageStyle === "realistic" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
-                                                    >Realistic</button>
-                                                    <button
-                                                        onClick={() => setAiImageStyle("cartoon")}
-                                                        className={`px-3 py-1 text-[10px] rounded-md transition-all ${aiImageStyle === "cartoon" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
-                                                    >Cartoon</button>
+                                                    <button onClick={() => setAiImageStyle("realistic")} className={`px-3 py-1 text-[10px] rounded-md transition-all ${aiImageStyle === "realistic" ? "bg-red-600 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>Realistic</button>
+                                                    <button onClick={() => setAiImageStyle("cartoon")} className={`px-3 py-1 text-[10px] rounded-md transition-all ${aiImageStyle === "cartoon" ? "bg-red-600 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>Cartoon</button>
                                                 </div>
                                                 <button
                                                     onClick={handleAIGenerate}
                                                     disabled={isAILoading || !aiImagePrompt}
-                                                    className="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-red-900/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                                    className="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                                                 >
-                                                    {isAILoading && <Loader2 className="animate-spin" size={14} />}
-                                                    <span>Generate Image</span>
+                                                    {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
+                                                    <span>GENERATE</span>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-                                    {photoUrl && <p className="text-xs text-green-400 flex items-center gap-1"><CheckCircle2 size={12} /> Photo loaded</p>}
+
+                                    {/* AI RESULT PREVIEW */}
+                                    {aiImageResult && (
+                                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+                                            <div className="aspect-square bg-black relative group">
+                                                <img
+                                                    src={aiImageResult.url}
+                                                    alt="AI Result"
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+                                                    <p className="text-[10px] text-zinc-400 font-mono line-clamp-2 mb-3">{aiImageResult.prompt}</p>
+                                                    <button
+                                                        onClick={() => {
+                                                            setPhotoUrl(aiImageResult.url);
+                                                            alert("Applied to canvas!");
+                                                        }}
+                                                        className="w-full bg-white text-zinc-950 py-2 rounded font-black text-xs hover:bg-red-600 hover:text-white transition-all shadow-xl"
+                                                    >
+                                                        APPLY TO GRAPHIC
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {photoUrl && <p className="text-xs text-green-400 flex items-center gap-1 font-bold"><CheckCircle2 size={12} /> Live on Canvas</p>}
                                 </div>
                             </div>
                         )}
