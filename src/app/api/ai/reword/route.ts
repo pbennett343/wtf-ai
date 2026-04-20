@@ -23,13 +23,15 @@ export async function POST(req: Request) {
         });
 
         const prompt = `
-            Rewrite the following sports statistic in the signature 'WTF Stats' style.
+            Rewrite the following sports statistic in the signature '@wtfstats' style.
             
-            RULES:
-            - Be punchy, aggressive, and direct.
-            - Use contrasting numbers.
-            - Include the percentage blocked/missed/success if applicable.
-            - Format it as a clean text block that fits on a graphic.
+            GOLDEN RULES:
+            - NO HEADERS. Never add "WTF STATS" or any title at the top.
+            - DATA FIRST. Start with the most impactful numbers.
+            - PUNCHY & DIRECT. No friendly explanations or filler words.
+            - RAW VOICE. Be shocked by the numbers. If Wembanyama blocks 50% of the league, say it simply and aggressively.
+            - LINE BREAKS. Use line breaks for dramatic impact between data points.
+            - NO MARKDOWN OVERLOAD. No excessive bolding (**) unless for extreme emphasis on a single word.
             
             TEXT TO REWORD:
             "${text}"

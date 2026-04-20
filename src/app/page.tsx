@@ -31,6 +31,7 @@ export default function Home() {
 
     // App State
     const [statText, setStatText] = useState(INITIAL_STAT);
+    const [prevStatText, setPrevStatText] = useState<string | null>(null);
     const [fontSize, setFontSize] = useState(140);
     const [lineHeight, setLineHeight] = useState(1.4);
 
@@ -61,6 +62,19 @@ export default function Home() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Brand Switcher Scaling logic
+    useEffect(() => {
+        if (brand === 'wtf-x-logo.jpg') {
+            setFontSize(140);
+            setLineHeight(1.0);
+            setLeftIndent(160);
+        } else if (brand === 'vfl-logo.png') {
+            setFontSize(110);
+            setLineHeight(1.4);
+            setLeftIndent(260); // VFL logo is wider
+        }
+    }, [brand]);
 
     // Local Storage Loading
     useEffect(() => {
@@ -198,6 +212,7 @@ export default function Home() {
             console.log("Reword Response Data:", data);
 
             if (data.text) {
+                setPrevStatText(statText); // Save for undo
                 setStatText(data.text);
                 alert("SUCCESS: WTF Style Applied!");
             } else if (data.error) {
@@ -226,7 +241,10 @@ export default function Home() {
                         body: JSON.stringify({ image: reader.result }),
                     });
                     const data = await res.json();
-                    if (data.text) setStatText(data.text);
+                    if (data.text) {
+                        setPrevStatText(statText); // Save for undo
+                        setStatText(data.text);
+                    }
                     else if (data.error) alert("AI Scan Error: " + data.error);
                 } catch (error) {
                     console.error("Vision API failed", error);
@@ -253,7 +271,11 @@ export default function Home() {
             const res = await fetch("/api/ai/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: aiImagePrompt, style: aiImageStyle }),
+                body: JSON.stringify({
+                    prompt: aiImagePrompt,
+                    style: aiImageStyle,
+                    context: statText
+                }),
             });
             console.log("Generate Response Status:", res.status);
             const data = await res.json();
@@ -384,6 +406,18 @@ export default function Home() {
                                             {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} className="text-red-500" />}
                                             <span>WTF Style</span>
                                         </button>
+                                        {prevStatText && (
+                                            <button
+                                                onClick={() => {
+                                                    const current = statText;
+                                                    setStatText(prevStatText);
+                                                    setPrevStatText(current); // Allow re-undo (redo)
+                                                }}
+                                                className="bg-zinc-800 border border-zinc-700 p-2 rounded-lg hover:border-zinc-500 transition-all text-xs flex items-center gap-2 text-zinc-400"
+                                            >
+                                                <span>Undo</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
