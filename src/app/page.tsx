@@ -71,11 +71,19 @@ export default function Home() {
         if (brand === 'wtf-x-logo.jpg') {
             setFontSize(140);
             setLineHeight(1.0);
-            setLeftIndent(160);
+            setLeftIndent(140);
+            setLogoHeight(260);
+            setLogoTopPadding(42);
+            setLogoBottomPadding(20);
+            setTextTopPadding(0);
         } else if (brand === 'vfl-logo.png') {
             setFontSize(110);
             setLineHeight(1.4);
             setLeftIndent(260); // VFL logo is wider
+            setLogoHeight(360);
+            setLogoTopPadding(50);
+            setLogoBottomPadding(25);
+            setTextTopPadding(0);
         }
     }, [brand]);
 
@@ -282,6 +290,7 @@ export default function Home() {
         if (!aiImagePrompt) return;
         setIsAILoading(true);
         setIsGeneratingImage(true);
+        setAiImageResult(null); // Reset preview to force fresh load
         console.log("Starting handleAIGenerate...");
         try {
             const res = await fetch("/api/ai/generate", {
@@ -579,15 +588,23 @@ export default function Home() {
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
                                                     <p className="text-[10px] text-zinc-400 font-mono line-clamp-2 mb-3">{aiImageResult.prompt}</p>
-                                                    <button
-                                                        onClick={() => {
-                                                            setPhotoUrl(aiImageResult.url);
-                                                            alert("Applied to canvas!");
-                                                        }}
-                                                        className="w-full bg-white text-zinc-950 py-2 rounded font-black text-xs hover:bg-red-600 hover:text-white transition-all shadow-xl"
-                                                    >
-                                                        APPLY TO GRAPHIC
-                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={handleAIGenerate}
+                                                            className="flex-1 bg-zinc-800 text-white py-2 rounded font-black text-xs hover:bg-zinc-700 transition-all"
+                                                        >
+                                                            REGENERATE
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setPhotoUrl(aiImageResult.url);
+                                                                alert("Applied to canvas!");
+                                                            }}
+                                                            className="flex-1 bg-white text-zinc-950 py-2 rounded font-black text-xs hover:bg-red-600 hover:text-white transition-all shadow-xl"
+                                                        >
+                                                            APPLY TO GRAPHIC
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

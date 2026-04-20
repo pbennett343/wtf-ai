@@ -13,10 +13,10 @@ export async function POST(req: Request) {
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const generatedPrompt = `A professional ${style} sports graphic concept. 
-        SUBJECT: ${prompt}. 
-        CONTEXT/DATA: ${context || "N/A"}. 
-        AESTHETICS: High-contrast, dynamic action, cinematic lighting, 8k resolution, suitable for a premium sports brand like @wtfstats.`;
+        const isCartoon = style === 'cartoon';
+        const generatedPrompt = isCartoon
+            ? `Professional vector cartoon headshot/avatar. Simple flat colors, clean professional lines, minimalist sticker-style aesthetic. Solid neutral grey background. Subject: ${prompt}. CONTEXT: ${context || ""}. Focus on the player's face and shoulders wearing their team's colors. Professional sports portrait style.`
+            : `A professional realistic sports graphic concept. SUBJECT: ${prompt}. CONTEXT/DATA: ${context || "N/A"}. AESTHETICS: High-contrast, dynamic action, cinematic lighting, 8k resolution, suitable for a premium sports brand like @wtfstats.`;
 
         console.log("Generate Success - Prompting for:", prompt);
         return NextResponse.json({
