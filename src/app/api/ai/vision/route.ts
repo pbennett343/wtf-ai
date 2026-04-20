@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         if (!image) return NextResponse.json({ error: "No image provided" }, { status: 400 });
 
         const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = "Extract all meaningful sports statistics, team names, and context from this image. Format it as a clean, punchy stat. If it's a tweet or instagram post, extract the core message.";
 

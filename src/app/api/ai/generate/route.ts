@@ -11,7 +11,7 @@ export async function POST(req: Request) {
         if (!prompt) return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
 
         const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const generatedPrompt = `A high-quality ${style} sports photo of: ${prompt}. Professional lighting, 8k resolution.`;
 
