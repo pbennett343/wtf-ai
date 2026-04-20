@@ -592,9 +592,17 @@ export default function Home() {
                                             <div className="aspect-square bg-black relative group" key={aiImageResult.url}>
                                                 <img
                                                     src={aiImageResult.url}
-                                                    key={aiImageResult.url} // Force re-render on new URL
+                                                    key={aiImageResult.url}
                                                     alt="AI Result"
-                                                    onLoad={(e) => (e.currentTarget.style.opacity = "1")}
+                                                    onLoad={(e) => {
+                                                        e.currentTarget.style.opacity = "1";
+                                                        const spinner = e.currentTarget.nextElementSibling as HTMLElement;
+                                                        if (spinner) spinner.style.display = "none";
+                                                    }}
+                                                    onError={(e) => {
+                                                        const spinner = e.currentTarget.nextElementSibling as HTMLElement;
+                                                        if (spinner) spinner.innerHTML = '<p style="color:#ef4444;font-size:12px;font-weight:bold">Failed to load. Try regenerating.</p>';
+                                                    }}
                                                     style={{ opacity: 0 }}
                                                     className="w-full h-full object-cover transition-opacity duration-700 group-hover:scale-110"
                                                 />
