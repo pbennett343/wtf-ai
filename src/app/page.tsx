@@ -104,10 +104,10 @@ export default function Home() {
                 backgroundColor: "#ffffff",
             });
 
-            const image = canvas.toDataURL("image/png");
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
             const a = document.createElement("a");
-            a.href = image;
-            a.download = `wtf_stat_${Date.now()}.png`;
+            a.href = dataUrl;
+            a.download = `wtf_stat_${Date.now()}.jpg`;
             a.click();
         } catch (err) {
             console.error("Failed to export:", err);
@@ -192,9 +192,15 @@ export default function Home() {
                 body: JSON.stringify({ text: statText }),
             });
             const data = await res.json();
-            if (data.text) setStatText(data.text);
+            if (data.text) {
+                setStatText(data.text);
+                alert("WTF Style Applied!");
+            } else if (data.error) {
+                alert("AI Reword Error: " + data.error);
+            }
         } catch (error) {
             console.error("Reword failed", error);
+            alert("AI Reword failed to connect.");
         } finally {
             setIsAILoading(false);
         }
@@ -207,17 +213,24 @@ export default function Home() {
         try {
             const reader = new FileReader();
             reader.onloadend = async () => {
-                const res = await fetch("/api/ai/vision", {
-                    method: "POST",
-                    body: JSON.stringify({ image: reader.result }),
-                });
-                const data = await res.json();
-                if (data.text) setStatText(data.text);
+                try {
+                    const res = await fetch("/api/ai/vision", {
+                        method: "POST",
+                        body: JSON.stringify({ image: reader.result }),
+                    });
+                    const data = await res.json();
+                    if (data.text) setStatText(data.text);
+                    else if (data.error) alert("AI Scan Error: " + data.error);
+                } catch (error) {
+                    console.error("Vision API failed", error);
+                    alert("AI Scan failed to connect.");
+                } finally {
+                    setIsAILoading(false);
+                }
             };
             reader.readAsDataURL(file);
         } catch (error) {
-            console.error("Vision failed", error);
-        } finally {
+            console.error("FileReader failed", error);
             setIsAILoading(false);
         }
     };
@@ -234,11 +247,15 @@ export default function Home() {
                 body: JSON.stringify({ prompt: aiImagePrompt, style: aiImageStyle }),
             });
             const data = await res.json();
-            // Since we are simulating in this environment, we represent success 
-            // In a real app, this would set the image data or a temporary URL
-            alert("AI Image Gen requested: " + data.generatedPrompt);
+            if (data.generatedPrompt) {
+                // In a real staging app, this might show the prompt or trigger an actual Image Gen API
+                alert("AI Image Gen requested: " + data.generatedPrompt);
+            } else if (data.error) {
+                alert("AI Generation Error: " + data.error);
+            }
         } catch (error) {
             console.error("Generate failed", error);
+            alert("AI Generation failed to connect.");
         } finally {
             setIsAILoading(false);
         }
@@ -251,6 +268,14 @@ export default function Home() {
             setPhotoUrl(url);
         }
     };
+
+    const [hasApiKey, setHasApiKey] = useState(true);
+
+    useEffect(() => {
+        if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+            setHasApiKey(false);
+        }
+    }, []);
 
     const steps = [
         { id: 1, icon: <Type size={20} />, label: "Enter Text" },
@@ -266,6 +291,11 @@ export default function Home() {
 
             {/* SIDEBAR WIZARD / TOP PANEL (on mobile) */}
             <div className="w-full md:w-80 bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col z-10 shadow-2xl order-1 md:order-1 overflow-hidden shrink-0 h-[50vh] md:h-full">
+                {!hasApiKey && (
+                    <div className="bg-red-900/50 text-red-200 text-[10px] p-2 text-center border-b border-red-800 animate-pulse">
+                        ⚠️ GEMINI_API_KEY MISSING
+                    </div>
+                )}
                 <div className="p-4 md:p-6 border-b border-zinc-800 space-y-3 md:space-y-4">
                     <div className="flex items-center justify-between md:block">
                         <div>
@@ -526,14 +556,14 @@ export default function Home() {
                         {currentStep === 6 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Download className="text-red-500" /> Step 6: Finalize</h2>
-                                <p className="text-sm text-zinc-400">Review your graphic on the right. When ready, click export to generate the 4000x5333 PNG.</p>
+                                <p className="text-sm text-zinc-400">Review your graphic on the right. When ready, click export to generate the 4000x5333 JPG.</p>
 
                                 <button
                                     onClick={handleExport}
                                     disabled={isExporting}
                                     className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black text-lg rounded-xl shadow-[0_0_40px_rgba(220,38,38,0.3)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    {isExporting ? <span className="animate-pulse">Rendering...</span> : <><Download size={24} /> EXPORT PNG</>}
+                                    {isExporting ? <span className="animate-pulse">Rendering...</span> : <><Download size={24} /> EXPORT JPG</>}
                                 </button>
                             </div>
                         )}
