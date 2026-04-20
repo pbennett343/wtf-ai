@@ -216,6 +216,28 @@ export default function Home() {
         }
     };
 
+    const [aiImagePrompt, setAiImagePrompt] = useState("");
+    const [aiImageStyle, setAiImageStyle] = useState<"realistic" | "cartoon">("realistic");
+
+    const handleAIGenerate = async () => {
+        if (!aiImagePrompt) return;
+        setIsAILoading(true);
+        try {
+            const res = await fetch("/api/ai/generate", {
+                method: "POST",
+                body: JSON.stringify({ prompt: aiImagePrompt, style: aiImageStyle }),
+            });
+            const data = await res.json();
+            // Since we are simulating in this environment, we represent success 
+            // In a real app, this would set the image data or a temporary URL
+            alert("AI Image Gen requested: " + data.generatedPrompt);
+        } catch (error) {
+            console.error("Generate failed", error);
+        } finally {
+            setIsAILoading(false);
+        }
+    };
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
