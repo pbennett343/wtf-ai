@@ -44,7 +44,7 @@ export default function Home() {
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth < 768) {
-                setPreviewScale(0.08); // Smaller for mobile
+                setPreviewScale(0.065); // Aggressive scale for mobile bottom view
             } else if (window.innerWidth < 1200) {
                 setPreviewScale(0.11);
             } else {
@@ -130,8 +130,8 @@ export default function Home() {
     return (
         <div className="flex flex-col md:flex-row h-screen bg-zinc-950 text-white font-sans overflow-hidden">
 
-            {/* SIDEBAR WIZARD / BOTTOM PANEL */}
-            <div className="w-full md:w-80 bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col z-10 shadow-2xl order-2 md:order-1 overflow-hidden shrink-0">
+            {/* SIDEBAR WIZARD / TOP PANEL (on mobile) */}
+            <div className="w-full md:w-80 bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-800 flex flex-col z-10 shadow-2xl order-1 md:order-1 overflow-hidden shrink-0 h-[50vh] md:h-full">
                 <div className="p-4 md:p-6 border-b border-zinc-800 space-y-3 md:space-y-4">
                     <div className="flex items-center justify-between md:block">
                         <div>
@@ -332,8 +332,9 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* MAIN STAGE PREVIEW */}
-            <div className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-zinc-950 relative overflow-hidden flex items-center justify-center order-1 md:order-2 h-[45vh] md:h-full">
+            {/* MAIN STAGE PREVIEW (on mobile, this is below) */}
+            <div className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-zinc-950 relative overflow-hidden flex items-center justify-center order-2 md:order-2">
+
 
                 {/* Canvas that holds the 4000x5333 exact node, but visually scaled down to fit */}
                 <div className="relative border border-zinc-800 shadow-2xl bg-zinc-900 rounded-lg overflow-hidden flex items-center justify-center w-full h-full md:w-[90%] md:h-[95%]">
