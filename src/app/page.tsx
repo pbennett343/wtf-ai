@@ -201,7 +201,7 @@ export default function Home() {
                 setStatText(data.text);
                 alert("SUCCESS: WTF Style Applied!");
             } else if (data.error) {
-                alert("API ERROR: " + data.error);
+                alert("API ERROR: " + data.error + (data.details ? "\n\nDetails: " + data.details : ""));
             } else {
                 alert("UNKNOWN API RESPONSE: " + JSON.stringify(data));
             }
@@ -260,9 +260,9 @@ export default function Home() {
             console.log("Generate Response Data:", data);
 
             if (data.generatedPrompt) {
-                alert("SUCCESS: AI Image Gen requested: " + data.generatedPrompt);
+                alert("AI IMAGE PROMPT READY:\n\n" + data.generatedPrompt + "\n\n(Note: Gemini 1.5 Pro generates high-quality descriptions. For a full image generator, a separate Imagen/DALL-E license is needed. Copy this to your fav generator!)");
             } else if (data.error) {
-                alert("API ERROR: " + data.error);
+                alert("API ERROR: " + data.error + (data.details ? "\n\nDetails: " + data.details : ""));
             } else {
                 alert("UNKNOWN API RESPONSE: " + JSON.stringify(data));
             }
