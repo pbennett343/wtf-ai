@@ -186,21 +186,28 @@ export default function Home() {
     const handleAIReword = async () => {
         if (!statText) return;
         setIsAILoading(true);
+        console.log("Starting handleAIReword...");
         try {
             const res = await fetch("/api/ai/reword", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: statText }),
             });
+            console.log("Reword Response Status:", res.status);
             const data = await res.json();
+            console.log("Reword Response Data:", data);
+
             if (data.text) {
                 setStatText(data.text);
-                alert("WTF Style Applied!");
+                alert("SUCCESS: WTF Style Applied!");
             } else if (data.error) {
-                alert("AI Reword Error: " + data.error);
+                alert("API ERROR: " + data.error);
+            } else {
+                alert("UNKNOWN API RESPONSE: " + JSON.stringify(data));
             }
-        } catch (error) {
-            console.error("Reword failed", error);
-            alert("AI Reword failed to connect.");
+        } catch (error: any) {
+            console.error("Reword fetch failed", error);
+            alert("FETCH FAILED: " + error.message);
         } finally {
             setIsAILoading(false);
         }
@@ -241,21 +248,27 @@ export default function Home() {
     const handleAIGenerate = async () => {
         if (!aiImagePrompt) return;
         setIsAILoading(true);
+        console.log("Starting handleAIGenerate...");
         try {
             const res = await fetch("/api/ai/generate", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ prompt: aiImagePrompt, style: aiImageStyle }),
             });
+            console.log("Generate Response Status:", res.status);
             const data = await res.json();
+            console.log("Generate Response Data:", data);
+
             if (data.generatedPrompt) {
-                // In a real staging app, this might show the prompt or trigger an actual Image Gen API
-                alert("AI Image Gen requested: " + data.generatedPrompt);
+                alert("SUCCESS: AI Image Gen requested: " + data.generatedPrompt);
             } else if (data.error) {
-                alert("AI Generation Error: " + data.error);
+                alert("API ERROR: " + data.error);
+            } else {
+                alert("UNKNOWN API RESPONSE: " + JSON.stringify(data));
             }
-        } catch (error) {
-            console.error("Generate failed", error);
-            alert("AI Generation failed to connect.");
+        } catch (error: any) {
+            console.error("Generate fetch failed", error);
+            alert("FETCH FAILED: " + error.message);
         } finally {
             setIsAILoading(false);
         }
