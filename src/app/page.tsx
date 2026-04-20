@@ -111,6 +111,70 @@ export default function Home() {
         }
     };
 
+    const GraphicTemplate = ({ containerRef, isHidden = false }: { containerRef?: React.RefObject<HTMLDivElement>, isHidden?: boolean }) => (
+        <div
+            ref={containerRef}
+            className={`w-[4000px] h-[5333px] bg-white flex flex-col ${isHidden ? 'fixed -left-[5000px] -top-[5000px]' : ''}`}
+            style={{
+                transform: !isHidden ? `scale(${previewScale})` : 'none',
+                transformOrigin: 'top left'
+            }}
+        >
+            {/* HEADER (LOCKED STATIC IMAGE) */}
+            <div
+                className="w-full"
+                style={{
+                    paddingLeft: `${leftIndent}px`,
+                    paddingTop: `${logoTopPadding}px`,
+                    paddingBottom: `${logoBottomPadding}px`
+                }}
+            >
+                <img
+                    src={`/${brand}`}
+                    alt="Brand Header"
+                    className="w-auto object-contain"
+                    style={{ height: `${logoHeight}px` }}
+                    crossOrigin="anonymous"
+                />
+            </div>
+
+            {/* STAT TEXT */}
+            <div
+                className="pr-[220px] text-[#0F1419] font-normal whitespace-pre-wrap font-sans"
+                style={{
+                    paddingLeft: `${leftIndent}px`,
+                    fontSize: `${fontSize}px`,
+                    lineHeight: `${lineHeight}`,
+                    paddingTop: `${textTopPadding}px`
+                }}
+            >
+                {statText}
+            </div>
+
+            {/* MEDIA / PHOTO LAYER */}
+            <div className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
+                {photoUrl ? (
+                    <img
+                        src={photoUrl}
+                        alt="Background"
+                        className="absolute max-w-none"
+                        style={{
+                            width: `${photoZoom}%`,
+                            left: `calc(50% + ${photoPanX}px)`,
+                            top: `calc(50% + ${photoPanY}px)`,
+                            transform: 'translate(-50%, -50%)',
+                        }}
+                        crossOrigin="anonymous"
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center border-t-[4px] border-zinc-200">
+                        <p className="text-zinc-400 text-[80px]">No media selected</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -344,88 +408,22 @@ export default function Home() {
             {/* MAIN STAGE PREVIEW (on mobile, this is below) */}
             <div className="flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-zinc-950 relative overflow-hidden flex items-center justify-center order-2 md:order-2">
 
+                {/* Render-ready hidden target (Perfect for html2canvas) */}
+                <GraphicTemplate containerRef={exportRef} isHidden={true} />
 
-                {/* Canvas that holds the 4000x5333 exact node, but visually scaled down to fit */}
+                {/* Canvas visual view */}
                 <div className="relative border border-zinc-800 shadow-2xl bg-zinc-900 rounded-lg overflow-hidden flex items-center justify-center w-full h-full md:w-[90%] md:h-[95%]">
-
-
                     <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded text-xs text-zinc-400 z-50 backdrop-blur-md">
                         Live Preview (Scaled)
                     </div>
 
-                    <div
-                        id="export-mount"
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                        style={{
-                            transform: `translate(-50%, -50%) scale(${previewScale})`,
-                            width: '4000px',
-                            height: '5333px'
-                        }}
-                    >
-
-                        {/* THE ACTUAL HIGH RES RENDER TARGET */}
-                        <div
-                            ref={exportRef}
-                            className="w-[4000px] h-[5333px] bg-white flex flex-col"
-                        >
-
-                            {/* HEADER (LOCKED STATIC IMAGE) */}
-                            <div
-                                className="w-full"
-                                style={{
-                                    paddingLeft: `${leftIndent}px`,
-                                    paddingTop: `${logoTopPadding}px`,
-                                    paddingBottom: `${logoBottomPadding}px`
-                                }}
-                            >
-                                <img
-                                    src={`/${brand}`}
-                                    alt="Brand Header"
-                                    className="w-auto object-contain"
-                                    style={{ height: `${logoHeight}px` }}
-                                    crossOrigin="anonymous"
-                                />
-                            </div>
-
-                            {/* STAT TEXT */}
-                            {/* Note: In HTML, whitespace-pre-wrap allows newlines from textarea to render */}
-                            <div
-                                className="pr-[220px] text-[#0F1419] font-normal whitespace-pre-wrap font-sans"
-                                style={{
-                                    paddingLeft: `${leftIndent}px`,
-                                    fontSize: `${fontSize}px`,
-                                    lineHeight: `${lineHeight}`,
-                                    paddingTop: `${textTopPadding}px`
-                                }}
-                            >
-                                {statText}
-                            </div>
-
-                            {/* MEDIA / PHOTO LAYER */}
-                            <div className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
-                                {photoUrl ? (
-                                    <div
-                                        className="absolute inset-0 bg-zinc-200"
-                                        style={{
-                                            backgroundImage: `url(${photoUrl})`,
-                                            backgroundSize: `${photoZoom}%`,
-                                            backgroundPosition: `calc(50% + ${photoPanX}px) calc(50% + ${photoPanY}px)`,
-                                            backgroundRepeat: 'no-repeat',
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center border-t-[4px] border-zinc-200">
-                                        <p className="text-zinc-400 text-[80px]">No media selected</p>
-                                    </div>
-                                )}
-                            </div>
-
-                        </div>
-
+                    <div className="flex items-center justify-center w-full h-full overflow-hidden">
+                        <GraphicTemplate />
                     </div>
                 </div>
-
             </div>
+
         </div>
+        </div >
     );
 }
