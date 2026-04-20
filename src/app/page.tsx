@@ -82,6 +82,7 @@ export default function Home() {
 
     const [photoUrl, setPhotoUrl] = useState<string | null>(null);
     const [photoZoom, setPhotoZoom] = useState(100);
+    const [photoPanX, setPhotoPanX] = useState(0);
     const [photoPanY, setPhotoPanY] = useState(0);
 
     const exportRef = useRef<HTMLDivElement>(null);
@@ -119,7 +120,7 @@ export default function Home() {
     };
 
     const steps = [
-        { id: 1, icon: <Type size={20} />, label: "Stat" },
+        { id: 1, icon: <Type size={20} />, label: "Enter Text" },
         { id: 2, icon: <Settings2 size={20} />, label: "Edit Text" },
         { id: 3, icon: <ImageIcon size={20} />, label: "Add Photo" },
         { id: 4, icon: <Table2 size={20} />, label: "Add Table" },
@@ -191,12 +192,12 @@ export default function Home() {
 
                         {currentStep === 1 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <h2 className="text-lg font-bold flex items-center gap-2"><Type className="text-red-500" /> Step 1: The Stat</h2>
+                                <h2 className="text-lg font-bold flex items-center gap-2"><Type className="text-red-500" /> Step 1: Enter Text</h2>
                                 <textarea
                                     value={statText}
                                     onChange={(e) => setStatText(e.target.value)}
                                     className="w-full h-64 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all resize-none"
-                                    placeholder="Paste your WTF stat here..."
+                                    placeholder="Type or paste your text here..."
                                 />
                             </div>
                         )}
@@ -305,6 +306,14 @@ export default function Home() {
 
                                 <div className="space-y-3">
                                     <label className="text-sm text-zinc-400 flex justify-between">
+                                        <span>Horizontal Pan</span>
+                                        <span className="text-white">{photoPanX}px</span>
+                                    </label>
+                                    <input type="range" min="-1000" max="1000" value={photoPanX} onChange={(e) => setPhotoPanX(Number(e.target.value))} className="w-full accent-red-500" />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-sm text-zinc-400 flex justify-between">
                                         <span>Vertical Pan (Offset)</span>
                                         <span className="text-white">{photoPanY}px</span>
                                     </label>
@@ -400,7 +409,7 @@ export default function Home() {
                                         style={{
                                             backgroundImage: `url(${photoUrl})`,
                                             backgroundSize: `${photoZoom}%`,
-                                            backgroundPosition: `center calc(50% + ${photoPanY}px)`,
+                                            backgroundPosition: `calc(50% + ${photoPanX}px) calc(50% + ${photoPanY}px)`,
                                             backgroundRepeat: 'no-repeat',
                                         }}
                                     />
