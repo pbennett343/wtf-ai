@@ -13,7 +13,10 @@ import {
     BadgeCheck,
     Sparkles,
     Scan,
-    Loader2
+    Loader2,
+    Upload,
+    Layout,
+    Palette
 } from "lucide-react";
 
 const INITIAL_STAT = `Victor Wembanyama has faced 547 different players in his NBA career so far.
