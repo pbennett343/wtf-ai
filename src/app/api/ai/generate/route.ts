@@ -6,8 +6,18 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
     const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
     console.log("POST /api/ai/generate - Key Length:", key.length);
+
+    // Parse body ONCE, store in outer scope so catch block can access
+    let prompt = "";
+    let style = "cartoon";
+    let context = "";
+
     try {
-        const { prompt, style, context } = await req.json();
+        const body = await req.json();
+        prompt = body.prompt || "";
+        style = body.style || "cartoon";
+        context = body.context || "";
+
         if (!prompt) return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
 
         const genAI = new GoogleGenerativeAI(key);
@@ -15,7 +25,6 @@ export async function POST(req: Request) {
 
         const isCartoon = style === 'cartoon';
 
-        // Use Gemini to analyze the stat text and build a rich image description
         const analysisPrompt = `You are an image prompt engineer for an AI image generator. Analyze this sports stat text and generate a vivid image prompt (max 100 words).
 
 STAT TEXT / CONTEXT:
@@ -48,24 +57,21 @@ Return ONLY the image prompt, no explanation.`;
 
         console.log("Gemini enriched prompt:", generatedPrompt);
 
+        if (!generatedPrompt) throw new Error("Gemini returned empty response");
+
         return NextResponse.json({
             success: true,
-            message: "AI Generation Request Received",
             generatedPrompt
         });
     } catch (error: any) {
-        console.error("Generate Error:", error);
+        console.error("Generate Error:", error?.message || error);
 
-        // Fallback: if Gemini fails, use a basic prompt
-        try {
-            const { prompt, style } = await req.json();
-            const isCartoon = style === 'cartoon';
-            const fallback = isCartoon
-                ? `Playful kid-friendly cartoon character, Disney/Pixar 3D style, large eyes, vibrant team colors. Subject: ${prompt?.substring(0, 200)}`
-                : `Realistic sports graphic, cinematic lighting, dynamic action. Subject: ${prompt?.substring(0, 200)}`;
-            return NextResponse.json({ success: true, generatedPrompt: fallback });
-        } catch {
-            return NextResponse.json({ error: "Failed to generate image", details: error.message }, { status: 500 });
-        }
+        // Fallback: Gemini failed, use a basic prompt from the already-parsed body
+        const isCartoon = style === 'cartoon';
+        const fallback = isCartoon
+            ? `Kid-friendly Disney Pixar 3D cartoon character, large expressive eyes, vibrant colors. Subject: ${prompt.substring(0, 200)}`
+            : `Realistic sports graphic, cinematic lighting, dynamic action. Subject: ${prompt.substring(0, 200)}`;
+
+        return NextResponse.json({ success: true, generatedPrompt: fallback });
     }
 }
