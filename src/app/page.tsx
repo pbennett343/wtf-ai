@@ -175,6 +175,47 @@ export default function Home() {
         </div>
     );
 
+    const [isAILoading, setIsAILoading] = useState(false);
+
+    const handleAIReword = async () => {
+        if (!statText) return;
+        setIsAILoading(true);
+        try {
+            const res = await fetch("/api/ai/reword", {
+                method: "POST",
+                body: JSON.stringify({ text: statText }),
+            });
+            const data = await res.json();
+            if (data.text) setStatText(data.text);
+        } catch (error) {
+            console.error("Reword failed", error);
+        } finally {
+            setIsAILoading(false);
+        }
+    };
+
+    const handleAIRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setIsAILoading(true);
+        try {
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const res = await fetch("/api/ai/vision", {
+                    method: "POST",
+                    body: JSON.stringify({ image: reader.result }),
+                });
+                const data = await res.json();
+                if (data.text) setStatText(data.text);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error("Vision failed", error);
+        } finally {
+            setIsAILoading(false);
+        }
+    };
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -256,13 +297,41 @@ export default function Home() {
 
                         {currentStep === 1 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <h2 className="text-lg font-bold flex items-center gap-2"><Type className="text-red-500" /> Step 1: Enter Text</h2>
-                                <textarea
-                                    value={statText}
-                                    onChange={(e) => setStatText(e.target.value)}
-                                    className="w-full h-64 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all resize-none"
-                                    placeholder="Type or paste your text here..."
-                                />
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-lg font-bold flex items-center gap-2"><Type className="text-red-500" /> Step 1: Enter Text</h2>
+                                    <div className="flex gap-2">
+                                        <label className="cursor-pointer bg-zinc-900 border border-zinc-800 p-2 rounded-lg hover:border-red-500 transition-all text-xs flex items-center gap-2">
+                                            <Scan size={14} className="text-zinc-400" />
+                                            <span>Scan Image</span>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleAIRead} disabled={isAILoading} />
+                                        </label>
+                                        <button
+                                            onClick={handleAIReword}
+                                            disabled={isAILoading || !statText}
+                                            className="bg-zinc-900 border border-zinc-800 p-2 rounded-lg hover:border-red-500 transition-all text-xs flex items-center gap-2"
+                                        >
+                                            {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} className="text-red-500" />}
+                                            <span>WTF Style</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="relative">
+                                    <textarea
+                                        value={statText}
+                                        onChange={(e) => setStatText(e.target.value)}
+                                        className="w-full h-64 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all resize-none font-sans"
+                                        placeholder="Type, paste, or scan an image to extract text..."
+                                    />
+                                    {isAILoading && (
+                                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Loader2 className="animate-spin text-red-500" size={32} />
+                                                <span className="text-sm text-zinc-400">AI is thinking...</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
