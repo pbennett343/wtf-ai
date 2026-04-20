@@ -6,17 +6,8 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
     const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
     console.log("POST /api/ai/generate - Key Length:", key.length);
-
-    let prompt = "";
-    let style = "cartoon";
-    let context = "";
-
     try {
-        const body = await req.json();
-        prompt = body.prompt || "";
-        style = body.style || "cartoon";
-        context = body.context || "";
-
+        const { prompt, style, context } = await req.json();
         if (!prompt) return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
 
         const genAI = new GoogleGenerativeAI(key);
@@ -25,7 +16,7 @@ export async function POST(req: Request) {
         const isCartoon = style === 'cartoon';
 
         // Use Gemini to analyze the stat text and build a rich image description
-        const analysisPrompt = `You are an image prompt engineer. Analyze this sports stat text and generate a short, vivid image prompt (max 120 words).
+        const analysisPrompt = `You are an image prompt engineer for an AI image generator. Analyze this sports stat text and generate a vivid image prompt (max 100 words).
 
 STAT TEXT / CONTEXT:
 """
@@ -37,25 +28,25 @@ USER PROMPT:
 ${prompt.substring(0, 200)}
 """
 
-Your task:
-1. Identify the main athlete/person mentioned
-2. Recall their real appearance: skin tone, hair style, facial hair, height/build
-3. Identify their current team and exact team colors (jersey color, accent colors)
-4. Determine the key action from the stat (blocking, scoring, dunking, etc.)
+CRITICAL INSTRUCTIONS:
+1. Identify the athlete mentioned in the text
+2. Look up their CURRENT team and EXACT team colors (primary + secondary). Be very specific — say "wearing a black and silver San Antonio Spurs jersey" not just "team colors"
+3. Describe their real appearance briefly (skin tone, hair, height/build)
+4. Determine the action from the stat (blocking, shooting, dunking, etc.)
+
+THE TEAM JERSEY COLORS MUST APPEAR AT THE VERY START OF YOUR PROMPT AND BE REPEATED. Example: "wearing a purple and gold Los Angeles Lakers jersey, purple and gold uniform..."
 
 ${isCartoon
-                ? `Generate a prompt for a CARTOON image: kid-friendly Disney/Pixar 3D style, large expressive eyes, friendly smile, vibrant colors, chibi proportions. The character should be recognizable as the real athlete wearing their actual team jersey colors.`
-                : `Generate a prompt for a REALISTIC sports graphic: cinematic lighting, high-contrast, dynamic action pose, 8k resolution, dramatic atmosphere.`
+                ? `Style: Kid-friendly Disney/Pixar 3D cartoon, large expressive eyes, friendly smile, vibrant colors, chibi proportions. START the prompt with the exact jersey colors.`
+                : `Style: Realistic sports photography, cinematic lighting, high-contrast, dynamic action, 8k. START the prompt with the exact jersey colors.`
             }
 
-Return ONLY the image generation prompt, nothing else. No quotes, no explanation.`;
+Return ONLY the image prompt, no explanation.`;
 
         const result = await model.generateContent(analysisPrompt);
         const generatedPrompt = result.response.text().trim().substring(0, 500);
 
         console.log("Gemini enriched prompt:", generatedPrompt);
-
-        if (!generatedPrompt) throw new Error("Gemini returned empty response");
 
         return NextResponse.json({
             success: true,
@@ -66,10 +57,15 @@ Return ONLY the image generation prompt, nothing else. No quotes, no explanation
         console.error("Generate Error:", error);
 
         // Fallback: if Gemini fails, use a basic prompt
-        const isCartoon = style === 'cartoon';
-        const fallback = isCartoon
-            ? `Playful kid-friendly cartoon character, Disney/Pixar 3D style, large eyes, vibrant team colors. Subject: ${prompt.substring(0, 200)}`
-            : `Realistic sports graphic, cinematic lighting, dynamic action. Subject: ${prompt.substring(0, 200)}`;
-        return NextResponse.json({ success: true, generatedPrompt: fallback });
+        try {
+            const { prompt, style } = await req.json();
+            const isCartoon = style === 'cartoon';
+            const fallback = isCartoon
+                ? `Playful kid-friendly cartoon character, Disney/Pixar 3D style, large eyes, vibrant team colors. Subject: ${prompt?.substring(0, 200)}`
+                : `Realistic sports graphic, cinematic lighting, dynamic action. Subject: ${prompt?.substring(0, 200)}`;
+            return NextResponse.json({ success: true, generatedPrompt: fallback });
+        } catch {
+            return NextResponse.json({ error: "Failed to generate image", details: error.message }, { status: 500 });
+        }
     }
 }
