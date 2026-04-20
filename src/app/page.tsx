@@ -10,7 +10,10 @@ import {
     Maximize,
     Download,
     CheckCircle2,
-    BadgeCheck
+    BadgeCheck,
+    Sparkles,
+    Scan,
+    Loader2
 } from "lucide-react";
 
 const INITIAL_STAT = `Victor Wembanyama has faced 547 different players in his NBA career so far.
@@ -429,14 +432,54 @@ export default function Home() {
                         )}
 
                         {currentStep === 3 && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><ImageIcon className="text-red-500" /> Step 3: Add Photo</h2>
-                                <div className="border-2 border-dashed border-zinc-700 hover:border-red-500 bg-zinc-950 rounded-xl p-8 text-center transition-colors cursor-pointer relative">
-                                    <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                    <ImageIcon className="mx-auto h-8 w-8 text-zinc-500 mb-3" />
-                                    <p className="text-sm text-zinc-400">Click or drag an image here</p>
+
+                                <div className="space-y-4">
+                                    <div className="p-4 border-2 border-dashed border-zinc-800 rounded-xl bg-zinc-900/50 hover:bg-zinc-900 transition-all group">
+                                        <label className="cursor-pointer flex flex-col items-center gap-2 py-4 text-center">
+                                            <Upload className="mx-auto h-6 w-6 text-zinc-500 group-hover:text-red-500 transition-colors" />
+                                            <span className="text-zinc-400 block mt-2 text-sm">Upload your own photo</span>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                                        </label>
+                                    </div>
+
+                                    <div className="relative">
+                                        <div className="absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-2 border-b border-zinc-800/50 bg-zinc-900/30 rounded-t-xl">
+                                            <Sparkles size={14} className="text-red-500" />
+                                            <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Generate with AI</span>
+                                        </div>
+                                        <div className="pt-12 p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-4">
+                                            <textarea
+                                                value={aiImagePrompt}
+                                                onChange={(e) => setAiImagePrompt(e.target.value)}
+                                                className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-20"
+                                                placeholder="Describe the image you want (e.g. 'Tom Brady screaming after a touchdown')..."
+                                            />
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex bg-zinc-900 p-1 rounded-lg border border-zinc-800">
+                                                    <button
+                                                        onClick={() => setAiImageStyle("realistic")}
+                                                        className={`px-3 py-1 text-[10px] rounded-md transition-all ${aiImageStyle === "realistic" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                                                    >Realistic</button>
+                                                    <button
+                                                        onClick={() => setAiImageStyle("cartoon")}
+                                                        className={`px-3 py-1 text-[10px] rounded-md transition-all ${aiImageStyle === "cartoon" ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                                                    >Cartoon</button>
+                                                </div>
+                                                <button
+                                                    onClick={handleAIGenerate}
+                                                    disabled={isAILoading || !aiImagePrompt}
+                                                    className="bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-red-900/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                                >
+                                                    {isAILoading && <Loader2 className="animate-spin" size={14} />}
+                                                    <span>Generate Image</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {photoUrl && <p className="text-xs text-green-400 flex items-center gap-1"><CheckCircle2 size={12} /> Photo loaded</p>}
                                 </div>
-                                {photoUrl && <p className="text-xs text-green-400 flex items-center gap-1"><CheckCircle2 size={12} /> Photo loaded</p>}
                             </div>
                         )}
 
