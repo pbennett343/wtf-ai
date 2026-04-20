@@ -297,7 +297,8 @@ export default function Home() {
 
             if (data.generatedPrompt) {
                 const encodedPrompt = encodeURIComponent(data.generatedPrompt);
-                const mockUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&model=flux`;
+                const randomSeed = Math.floor(Math.random() * 1000000);
+                const mockUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&model=flux&seed=${randomSeed}`;
                 setAiImageResult({ url: mockUrl, prompt: data.generatedPrompt });
             } else if (data.error) {
                 alert("API ERROR: " + data.error);
