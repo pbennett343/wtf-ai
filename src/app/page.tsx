@@ -205,7 +205,7 @@ export default function Home() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Settings2 className="text-red-500" /> Step 2: Edit Text</h2>
 
-                                <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2 pb-8">
+                                <div className="space-y-4 pr-2 pb-12">
                                     <div className="space-y-3">
                                         <label className="text-sm text-zinc-400 flex justify-between">
                                             <span>Font Size</span>
