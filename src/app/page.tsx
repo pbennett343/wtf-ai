@@ -594,8 +594,13 @@ export default function Home() {
                                                     src={aiImageResult.url}
                                                     key={aiImageResult.url} // Force re-render on new URL
                                                     alt="AI Result"
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    onLoad={(e) => (e.currentTarget.style.opacity = "1")}
+                                                    style={{ opacity: 0 }}
+                                                    className="w-full h-full object-cover transition-opacity duration-700 group-hover:scale-110"
                                                 />
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <Loader2 className="animate-spin text-red-600 opacity-50" size={32} />
+                                                </div>
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
                                                     <p className="text-[10px] text-zinc-400 font-mono line-clamp-2 mb-3">{aiImageResult.prompt}</p>
                                                     <div className="flex gap-2">
