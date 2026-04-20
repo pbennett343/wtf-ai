@@ -117,7 +117,7 @@ export default function Home() {
             className={`w-[4000px] h-[5333px] bg-white flex flex-col ${isHidden ? 'fixed -left-[5000px] -top-[5000px]' : ''}`}
             style={{
                 transform: !isHidden ? `scale(${previewScale})` : 'none',
-                transformOrigin: 'top left'
+                transformOrigin: 'center center'
             }}
         >
             {/* HEADER (LOCKED STATIC IMAGE) */}
