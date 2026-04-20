@@ -292,7 +292,7 @@ export default function Home() {
     };
 
     const [aiImagePrompt, setAiImagePrompt] = useState("");
-    const [aiImageStyle, setAiImageStyle] = useState<"realistic" | "cartoon">("realistic");
+    const [aiImageStyle, setAiImageStyle] = useState<"realistic" | "cartoon">("cartoon");
 
     const handleAIGenerate = async () => {
         if (!aiImagePrompt) return;
