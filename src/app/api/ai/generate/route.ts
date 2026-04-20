@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
         const isCartoon = style === 'cartoon';
         const generatedPrompt = isCartoon
-            ? `Professional vector cartoon headshot/avatar. Simple flat colors, clean professional lines, minimalist sticker-style aesthetic. Solid neutral grey background. Subject: ${prompt}. CONTEXT: ${context || ""}. Focus on the player's face and shoulders wearing their team's colors. Professional sports portrait style.`
+            ? `Playful, kid-friendly character design. Disney/Pixar style, large expressive eyes, friendly energetic smile, vibrant colors. Clean 3D cartoon render aesthetic. Subject: ${prompt}. CONTEXT: ${context || ""}. Wearing their team's specific colors. Character-focused composition.`
             : `A professional realistic sports graphic concept. SUBJECT: ${prompt}. CONTEXT/DATA: ${context || "N/A"}. AESTHETICS: High-contrast, dynamic action, cinematic lighting, 8k resolution, suitable for a premium sports brand like @wtfstats.`;
 
         console.log("Generate Success - Prompting for:", prompt);

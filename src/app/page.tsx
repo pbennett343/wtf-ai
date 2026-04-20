@@ -42,8 +42,9 @@ export default function Home() {
     const [leftIndent, setLeftIndent] = useState(160);
     const [logoHeight, setLogoHeight] = useState(360);
     const [logoTopPadding, setLogoTopPadding] = useState(50);
-    const [logoBottomPadding, setLogoBottomPadding] = useState(25);
+    const [logoBottomPadding, setLogoBottomPadding] = useState(68);
     const [textTopPadding, setTextTopPadding] = useState(0);
+    const [genCount, setGenCount] = useState(0);
 
     // Brand Engine
     const [brand, setBrand] = useState('wtf-x-logo.jpg');
@@ -74,7 +75,7 @@ export default function Home() {
             setLeftIndent(140);
             setLogoHeight(260);
             setLogoTopPadding(42);
-            setLogoBottomPadding(20);
+            setLogoBottomPadding(68);
             setTextTopPadding(0);
         } else if (brand === 'vfl-logo.png') {
             setFontSize(110);
@@ -288,6 +289,7 @@ export default function Home() {
 
     const handleAIGenerate = async () => {
         if (!aiImagePrompt) return;
+        setGenCount(prev => prev + 1); // Force key change
         setIsAILoading(true);
         setIsGeneratingImage(true);
         setAiImageResult(null); // Reset preview to force fresh load
@@ -579,10 +581,11 @@ export default function Home() {
 
                                     {/* AI RESULT PREVIEW */}
                                     {aiImageResult && (
-                                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-                                            <div className="aspect-square bg-black relative group">
+                                        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-500" key={genCount}>
+                                            <div className="aspect-square bg-black relative group" key={aiImageResult.url}>
                                                 <img
                                                     src={aiImageResult.url}
+                                                    key={aiImageResult.url} // Force re-render on new URL
                                                     alt="AI Result"
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                                 />
