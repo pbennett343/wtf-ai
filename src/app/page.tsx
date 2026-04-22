@@ -49,7 +49,6 @@ export default function Home() {
 
     // AI Image state (declared before useEffect that references them — Bug #1 fix)
     const [aiImagePrompt, setAiImagePrompt] = useState("");
-    const [aiImageStyle, setAiImageStyle] = useState<"realistic" | "cartoon">("cartoon");
     const [aiRefImage, setAiRefImage] = useState<string | null>(null);
     const [aiRefImageName, setAiRefImageName] = useState<string | null>(null);
 
@@ -323,7 +322,6 @@ export default function Home() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     prompt: aiImagePrompt,
-                    style: aiImageStyle,
                     context: statText,
                     referenceImage: aiRefImage || undefined,
                 }),
@@ -661,33 +659,11 @@ export default function Home() {
                                                     style={{ outline: 'none' }}
                                                     placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
                                                 />
-                                                <div className="flex items-center justify-between gap-4">
-                                                    <div className="flex p-1 rounded-lg border" style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '40' }}>
-                                                        <button
-                                                            onClick={() => setAiImageStyle("realistic")}
-                                                            className="px-3 py-1 text-[10px] rounded-md transition-all"
-                                                            style={{
-                                                                background: aiImageStyle === "realistic" ? BRAND.crimson : 'transparent',
-                                                                color: aiImageStyle === "realistic" ? "#fff" : BRAND.navyLight,
-                                                            }}
-                                                        >
-                                                            Realistic
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setAiImageStyle("cartoon")}
-                                                            className="px-3 py-1 text-[10px] rounded-md transition-all"
-                                                            style={{
-                                                                background: aiImageStyle === "cartoon" ? BRAND.crimson : 'transparent',
-                                                                color: aiImageStyle === "cartoon" ? "#fff" : BRAND.navyLight,
-                                                            }}
-                                                        >
-                                                            Cartoon
-                                                        </button>
-                                                    </div>
+                                                <div className="flex items-center justify-end">
                                                     <button
                                                         onClick={handleAIGenerate}
                                                         disabled={isAILoading || (!aiImagePrompt && !aiRefImage)}
-                                                        className="text-white text-xs px-4 py-2 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                                        className="text-white text-xs px-5 py-2.5 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                                                         style={{ background: BRAND.crimson }}
                                                     >
                                                         {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
