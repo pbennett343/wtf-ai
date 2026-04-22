@@ -10,32 +10,36 @@ export async function POST(req: Request) {
     let prompt = "";
     let style = "cartoon";
     let context = "";
+    let referenceImage = "";
 
     try {
         const body = await req.json();
         prompt = body.prompt || "";
         style = body.style || "cartoon";
         context = body.context || "";
+        referenceImage = body.referenceImage || "";
 
-        if (!prompt) return NextResponse.json({ error: "No prompt provided" }, { status: 400 });
+        if (!prompt && !referenceImage) return NextResponse.json({ error: "No prompt or reference image provided" }, { status: 400 });
 
         const genAI = new GoogleGenerativeAI(key);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const isCartoon = style === 'cartoon';
 
-        const analysisPrompt = `You are an expert image prompt engineer. I need you to create a precise, detailed image generation prompt based on a sports statistic.
+        const analysisPrompt = `You are an expert image prompt engineer. I need you to create a precise, detailed image generation prompt based on a sports statistic${referenceImage ? " and a reference image" : ""}.
 
 STAT TEXT:
 """
 ${(context || prompt).substring(0, 600)}
 """
 
+${referenceImage ? "A REFERENCE IMAGE has been provided. Analyze it to identify the athlete, their team, jersey colors, physical appearance, and the action/pose shown. Use these details to enrich the prompt." : ""}
+
 INSTRUCTIONS — follow every step:
 
-STEP 1: Identify the athlete in the stat. Who is this person?
+STEP 1: Identify the athlete in the stat${referenceImage ? " and/or reference image" : ""}. Who is this person?
 STEP 2: What team do they play for RIGHT NOW? What are the team's EXACT primary and secondary colors? (e.g. San Antonio Spurs = black and silver, Los Angeles Lakers = purple and gold, Boston Celtics = green and white)
-STEP 3: What does this athlete actually look like? (skin tone, hair color/style, facial hair, build, height)
+STEP 3: What does this athlete actually look like? (skin tone, hair color/style, facial hair, build, height)${referenceImage ? " Use the reference image for accurate details." : ""}
 STEP 4: What action is described in the stat? (blocking shots, scoring, dunking, passing, etc.)
 
 NOW BUILD THE PROMPT using this exact structure:
@@ -52,7 +56,20 @@ CRITICAL RULES:
 
 Return ONLY the prompt. No quotes, no explanation, no preamble.`;
 
-        const result = await model.generateContent(analysisPrompt);
+        // Build content parts — include reference image if provided
+        const contentParts: any[] = [analysisPrompt];
+        if (referenceImage) {
+            const mimeMatch = referenceImage.match(/^data:(image\/\w+);base64,/);
+            const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+            contentParts.push({
+                inlineData: {
+                    data: referenceImage.split(",")[1],
+                    mimeType,
+                },
+            });
+        }
+
+        const result = await model.generateContent(contentParts);
         const generatedPrompt = result.response.text().trim().substring(0, 600);
 
         console.log("Gemini enriched prompt:", generatedPrompt);

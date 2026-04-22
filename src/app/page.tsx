@@ -50,6 +50,8 @@ export default function Home() {
     // AI Image state (declared before useEffect that references them — Bug #1 fix)
     const [aiImagePrompt, setAiImagePrompt] = useState("");
     const [aiImageStyle, setAiImageStyle] = useState<"realistic" | "cartoon">("cartoon");
+    const [aiRefImage, setAiRefImage] = useState<string | null>(null);
+    const [aiRefImageName, setAiRefImageName] = useState<string | null>(null);
 
     // Layout Engine
     const [leftIndent, setLeftIndent] = useState(160);
@@ -309,7 +311,7 @@ export default function Home() {
     };
 
     const handleAIGenerate = async () => {
-        if (!aiImagePrompt) return;
+        if (!aiImagePrompt && !aiRefImage) return;
         setGenCount(prev => prev + 1);
         setIsAILoading(true);
         setIsGeneratingImage(true);
@@ -322,7 +324,8 @@ export default function Home() {
                 body: JSON.stringify({
                     prompt: aiImagePrompt,
                     style: aiImageStyle,
-                    context: statText
+                    context: statText,
+                    referenceImage: aiRefImage || undefined,
                 }),
             });
             const data = await res.json();
@@ -342,6 +345,17 @@ export default function Home() {
             setIsAILoading(false);
             setIsGeneratingImage(false);
         }
+    };
+
+    const handleAIRefImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setAiRefImageName(file.name);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setAiRefImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -606,10 +620,44 @@ export default function Home() {
                                                 <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: BRAND.navyLight }}>Smart Generator</span>
                                             </div>
                                             <div className="pt-12 p-4 border rounded-xl space-y-4 shadow-inner" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
+
+                                                {/* Reference Image Upload */}
+                                                <div className="border border-dashed rounded-lg p-3 transition-all" style={{ borderColor: BRAND.navyLight + '50' }}>
+                                                    {aiRefImage ? (
+                                                        <div className="flex items-center gap-3">
+                                                            <img src={aiRefImage} alt="Reference" className="w-14 h-14 rounded-md object-cover border" style={{ borderColor: BRAND.navyLight + '40' }} />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs text-white font-bold truncate">{aiRefImageName}</p>
+                                                                <p className="text-[10px]" style={{ color: BRAND.navyLight }}>Reference image loaded</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => { setAiRefImage(null); setAiRefImageName(null); }}
+                                                                className="text-[10px] px-2 py-1 rounded border transition-all"
+                                                                style={{ borderColor: BRAND.navyLight + '40', color: BRAND.navyLight }}
+                                                            >
+                                                                Clear
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <label className="cursor-pointer flex items-center gap-3 py-1">
+                                                            <Upload size={16} style={{ color: BRAND.navyLight }} />
+                                                            <span className="text-xs" style={{ color: BRAND.navyLight }}>Upload reference image <span className="text-[10px] opacity-60">(optional — instead of typing prompt)</span></span>
+                                                            <input type="file" className="hidden" accept="image/*" onChange={handleAIRefImageUpload} />
+                                                        </label>
+                                                    )}
+                                                </div>
+
+                                                {/* Divider */}
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
+                                                    <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: BRAND.navyLight + '80' }}>or type prompt</span>
+                                                    <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
+                                                </div>
+
                                                 <textarea
                                                     value={aiImagePrompt}
                                                     onChange={(e) => setAiImagePrompt(e.target.value)}
-                                                    className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-20"
+                                                    className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-16"
                                                     style={{ outline: 'none' }}
                                                     placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
                                                 />
@@ -638,7 +686,7 @@ export default function Home() {
                                                     </div>
                                                     <button
                                                         onClick={handleAIGenerate}
-                                                        disabled={isAILoading || !aiImagePrompt}
+                                                        disabled={isAILoading || (!aiImagePrompt && !aiRefImage)}
                                                         className="text-white text-xs px-4 py-2 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                                                         style={{ background: BRAND.crimson }}
                                                     >

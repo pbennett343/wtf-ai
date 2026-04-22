@@ -16,6 +16,7 @@
 3. **JOURNALING:** This document must be updated continuously. Treat it like permanent ink. Add new dates/entries to the bottom capturing what was built, what broke, and what the next agent needs to know. Do NOT delete old entries.
 4. **STYLE TRAINING:** Keep adding to the `pbs_script.md` artifact to learn and mimic the exact phrasing/spacing stylistic choices of the Grandmaster over time.
 5. **BRAND HEADER LOCK:** The top logo/header generation inside the Next.js `page.tsx` canvas utilizes raw, external static snapshots via `<img>` tag (e.g. `wtf-x-logo.jpg`). NEVER, under any circumstance, attempt to recreate these headers using HTML/CSS or React icons. The Brand Select dropdown seamlessly updates the `img` path. This mechanism is permanently locked.
+6. **NO BROWSER VERIFICATION:** NEVER open the browser to check Vercel preview deployments. The GM verifies all previews. Push code to the `preview` branch and report what was changed — the GM handles all visual QA. This avoids excessive screen recording data and wasted compute.
 
 ---
 
