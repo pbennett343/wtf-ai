@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-    title: "WTF.AI Image Generator",
-    description: "Create WTF Stats graphics automatically",
+    title: "WTF Sports — AI Stats Engine",
+    description: "Create WTF Sports stats graphics automatically with AI",
 };
 
 export default function RootLayout({
@@ -12,9 +12,10 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className="bg-zinc-950 text-white min-h-screen">
+            <body className="min-h-screen" style={{ background: '#2d2d54', color: 'white' }}>
                 {children}
             </body>
         </html>
     );
 }
+

@@ -16,12 +16,16 @@ export async function POST(req: Request) {
 
         const prompt = "Extract all meaningful sports statistics, team names, and context from this image. Format it as a clean, punchy stat. If it's a tweet or instagram post, extract the core message.";
 
+        // Dynamically detect MIME type from data URL (e.g. "data:image/jpeg;base64,...")
+        const mimeMatch = image.match(/^data:(image\/\w+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+
         const result = await model.generateContent([
             prompt,
             {
                 inlineData: {
                     data: image.split(",")[1],
-                    mimeType: "image/png",
+                    mimeType,
                 },
             },
         ]);

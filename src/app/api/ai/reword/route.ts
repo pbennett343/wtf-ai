@@ -3,11 +3,10 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(key);
-
 export async function POST(req: Request) {
+    const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
     console.log("POST /api/ai/reword - Key Length:", key.length);
+    const genAI = new GoogleGenerativeAI(key);
     try {
         const { text } = await req.json();
         if (!text) return NextResponse.json({ error: "No text provided" }, { status: 400 });
