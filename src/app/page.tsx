@@ -6,7 +6,6 @@ import {
     Type,
     Settings2,
     Image as ImageIcon,
-    Table2,
     Maximize,
     Download,
     CheckCircle2,
@@ -15,8 +14,6 @@ import {
     Loader2,
     Upload,
     Zap,
-    ToggleLeft,
-    ToggleRight
 } from "lucide-react";
 
 const INITIAL_STAT = `Victor Wembanyama has faced 547 different players in his NBA career so far.
@@ -33,7 +30,7 @@ const BRAND = {
     crimsonDark: "#8a1a25",
 };
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | 2 | 3 | 5 | 6;
 
 export default function Home() {
     const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -63,8 +60,6 @@ export default function Home() {
     // Brand Engine
     const [brand, setBrand] = useState('wtf-x-logo.jpg');
 
-    // Photo Upload Toggle — "raw" or "ai"
-    const [photoMode, setPhotoMode] = useState<"raw" | "ai">("raw");
 
     // Responsive Scale Engine
     const [previewScale, setPreviewScale] = useState(0.14);
@@ -376,17 +371,16 @@ export default function Home() {
         { id: 1, icon: <Type size={20} />, label: "Enter Text" },
         { id: 2, icon: <Settings2 size={20} />, label: "Edit Text" },
         { id: 3, icon: <ImageIcon size={20} />, label: "Add Photo" },
-        { id: 4, icon: <Table2 size={20} />, label: "Add Table" },
         { id: 5, icon: <Maximize size={20} />, label: "Visuals" },
         { id: 6, icon: <Download size={20} />, label: "Finalize" },
     ];
 
     return (
-        <div className="flex flex-col md:flex-row h-screen text-white font-sans overflow-hidden" style={{ background: BRAND.navyDark }}>
+        <div className="flex flex-col md:flex-row min-h-screen md:h-screen text-white font-sans overflow-y-auto md:overflow-hidden" style={{ background: BRAND.navyDark }}>
 
             {/* SIDEBAR WIZARD / TOP PANEL (on mobile) */}
             <div
-                className="w-full md:w-80 border-b md:border-b-0 md:border-r flex flex-col z-10 shadow-2xl order-1 md:order-1 overflow-hidden shrink-0 h-[50vh] md:h-full"
+                className="w-full md:w-80 border-b-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0 md:h-full md:overflow-hidden pb-10 md:pb-0"
                 style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '40' }}
             >
                 {!hasApiKey && (
@@ -571,108 +565,60 @@ export default function Home() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><ImageIcon style={{ color: BRAND.crimson }} /> Step 3: Add Photo</h2>
 
-                                {/* PHOTO MODE TOGGLE */}
-                                <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: BRAND.navyLight + '40' }}>
-                                    <button
-                                        onClick={() => setPhotoMode("raw")}
-                                        className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold transition-all duration-200"
-                                        style={{
-                                            background: photoMode === "raw" ? BRAND.crimson : BRAND.navyDark,
-                                            color: photoMode === "raw" ? "#fff" : BRAND.navyLight,
-                                        }}
-                                    >
-                                        <Upload size={16} />
-                                        Upload Raw
-                                    </button>
-                                    <button
-                                        onClick={() => setPhotoMode("ai")}
-                                        className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold transition-all duration-200"
-                                        style={{
-                                            background: photoMode === "ai" ? BRAND.crimson : BRAND.navyDark,
-                                            color: photoMode === "ai" ? "#fff" : BRAND.navyLight,
-                                        }}
-                                    >
-                                        <Sparkles size={16} />
-                                        AI Generate
-                                    </button>
-                                </div>
-
                                 <div className="space-y-4">
-                                    {/* RAW UPLOAD MODE */}
-                                    {photoMode === "raw" && (
-                                        <div className="p-4 border-2 border-dashed rounded-xl transition-all group" style={{ borderColor: BRAND.navyLight + '60', background: BRAND.navyDark + '80' }}>
-                                            <label className="cursor-pointer flex flex-col items-center gap-2 py-4 text-center">
-                                                <Upload className="mx-auto h-6 w-6 transition-colors" style={{ color: BRAND.navyLight }} />
-                                                <span className="block mt-2 text-sm" style={{ color: BRAND.navyLight }}>Click to upload your photo</span>
-                                                <span className="text-[10px]" style={{ color: BRAND.navyLight + '80' }}>JPG, PNG, or WebP</span>
-                                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                                            </label>
-                                        </div>
-                                    )}
-
-                                    {/* AI GENERATE MODE */}
-                                    {photoMode === "ai" && (
-                                        <div className="relative">
-                                            <div className="absolute inset-x-0 top-0 flex items-center gap-2 px-4 py-2 border-b rounded-t-xl" style={{ borderColor: BRAND.navyLight + '30', background: BRAND.navyDark + '40' }}>
-                                                <Sparkles size={14} style={{ color: BRAND.crimson }} />
-                                                <span className="text-[10px] uppercase tracking-widest font-bold" style={{ color: BRAND.navyLight }}>Smart Generator</span>
-                                            </div>
-                                            <div className="pt-12 p-4 border rounded-xl space-y-4 shadow-inner" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
-
-                                                {/* Reference Image Upload */}
-                                                <div className="border border-dashed rounded-lg p-3 transition-all" style={{ borderColor: BRAND.navyLight + '50' }}>
-                                                    {aiRefImage ? (
-                                                        <div className="flex items-center gap-3">
-                                                            <img src={aiRefImage} alt="Reference" className="w-14 h-14 rounded-md object-cover border" style={{ borderColor: BRAND.navyLight + '40' }} />
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-xs text-white font-bold truncate">{aiRefImageName}</p>
-                                                                <p className="text-[10px]" style={{ color: BRAND.navyLight }}>Reference image loaded</p>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => { setAiRefImage(null); setAiRefImageName(null); }}
-                                                                className="text-[10px] px-2 py-1 rounded border transition-all"
-                                                                style={{ borderColor: BRAND.navyLight + '40', color: BRAND.navyLight }}
-                                                            >
-                                                                Clear
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <label className="cursor-pointer flex items-center gap-3 py-1">
-                                                            <Upload size={16} style={{ color: BRAND.navyLight }} />
-                                                            <span className="text-xs" style={{ color: BRAND.navyLight }}>Upload reference image <span className="text-[10px] opacity-60">(optional — instead of typing prompt)</span></span>
-                                                            <input type="file" className="hidden" accept="image/*" onChange={handleAIRefImageUpload} />
-                                                        </label>
-                                                    )}
-                                                </div>
-
-                                                {/* Divider */}
+                                    <div className="p-4 border rounded-xl space-y-4 shadow-inner" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
+                                        {/* Reference Image Upload */}
+                                        <div className="border border-dashed rounded-lg p-3 transition-all" style={{ borderColor: BRAND.navyLight + '50' }}>
+                                            {aiRefImage ? (
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
-                                                    <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: BRAND.navyLight + '80' }}>or type prompt</span>
-                                                    <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
-                                                </div>
-
-                                                <textarea
-                                                    value={aiImagePrompt}
-                                                    onChange={(e) => setAiImagePrompt(e.target.value)}
-                                                    className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-16"
-                                                    style={{ outline: 'none' }}
-                                                    placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
-                                                />
-                                                <div className="flex items-center justify-end">
+                                                    <img src={aiRefImage} alt="Reference" className="w-14 h-14 rounded-md object-cover border" style={{ borderColor: BRAND.navyLight + '40' }} />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-white font-bold truncate">{aiRefImageName}</p>
+                                                        <p className="text-[10px]" style={{ color: BRAND.navyLight }}>Reference image loaded</p>
+                                                    </div>
                                                     <button
-                                                        onClick={handleAIGenerate}
-                                                        disabled={isAILoading || (!aiImagePrompt && !aiRefImage)}
-                                                        className="text-white text-xs px-5 py-2.5 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-                                                        style={{ background: BRAND.crimson }}
+                                                        onClick={() => { setAiRefImage(null); setAiRefImageName(null); }}
+                                                        className="text-[10px] px-2 py-1 rounded border transition-all"
+                                                        style={{ borderColor: BRAND.navyLight + '40', color: BRAND.navyLight }}
                                                     >
-                                                        {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
-                                                        <span>GENERATE</span>
+                                                        Clear
                                                     </button>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <label className="cursor-pointer flex items-center gap-3 py-1">
+                                                    <Upload size={16} style={{ color: BRAND.navyLight }} />
+                                                    <span className="text-xs" style={{ color: BRAND.navyLight }}>Upload reference image <span className="text-[10px] opacity-60">(optional — instead of typing prompt)</span></span>
+                                                    <input type="file" className="hidden" accept="image/*" onChange={handleAIRefImageUpload} />
+                                                </label>
+                                            )}
                                         </div>
-                                    )}
+
+                                        {/* Divider */}
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
+                                            <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: BRAND.navyLight + '80' }}>or type prompt</span>
+                                            <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
+                                        </div>
+
+                                        <textarea
+                                            value={aiImagePrompt}
+                                            onChange={(e) => setAiImagePrompt(e.target.value)}
+                                            className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-16"
+                                            style={{ outline: 'none' }}
+                                            placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
+                                        />
+                                        <div className="flex items-center justify-end">
+                                            <button
+                                                onClick={handleAIGenerate}
+                                                disabled={isAILoading || (!aiImagePrompt && !aiRefImage)}
+                                                className="text-white text-xs px-5 py-2.5 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                                style={{ background: BRAND.crimson }}
+                                            >
+                                                {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
+                                                <span>GENERATE CLAY MODEL</span>
+                                            </button>
+                                        </div>
+                                    </div>
 
                                     {/* AI RESULT PREVIEW (visible in both modes once generated) */}
                                     {aiImageResult && (
@@ -728,12 +674,7 @@ export default function Home() {
                             </div>
                         )}
 
-                        {currentStep === 4 && (
-                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <h2 className="text-lg font-bold flex items-center gap-2"><Table2 style={{ color: BRAND.crimson }} /> Step 4: Add Table (Optional)</h2>
-                                <p className="text-sm" style={{ color: BRAND.navyLight }}>Coming soon. Skip this for the text+photo MVP.</p>
-                            </div>
-                        )}
+
 
                         {currentStep === 5 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -786,8 +727,8 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* MAIN STAGE PREVIEW (on mobile, this is below) */}
-            <div className="flex-1 relative overflow-hidden flex items-center justify-center order-2 md:order-2" style={{ background: `linear-gradient(135deg, ${BRAND.navyDark} 0%, #1a1a2e 100%)` }}>
+            {/* MAIN STAGE PREVIEW (on mobile, this is ABOVE the controls) */}
+            <div className="w-full md:flex-1 relative overflow-hidden flex items-center justify-center order-1 md:order-2 min-h-[50vh] md:min-h-0" style={{ background: `linear-gradient(135deg, ${BRAND.navyDark} 0%, #1a1a2e 100%)` }}>
 
                 {/* Render-ready hidden target (Perfect for html2canvas) */}
                 <GraphicTemplate containerRef={exportRef} isHidden={true} />
