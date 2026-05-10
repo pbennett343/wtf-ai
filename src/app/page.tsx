@@ -735,7 +735,7 @@ export default function Home() {
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Maximize style={{ color: BRAND.crimson }} /> Step 5: Visuals</h2>
 
                                 {[
-                                    { label: "Photo Zoom", value: photoZoom, setter: setPhotoZoom, min: 100, max: 250, unit: "%" },
+                                    { label: "Photo Zoom", value: photoZoom, setter: setPhotoZoom, min: 100, max: 500, unit: "%" },
                                     { label: "Horizontal Pan", value: photoPanX, setter: setPhotoPanX, min: -1000, max: 1000, unit: "px" },
                                     { label: "Vertical Pan (Offset)", value: photoPanY, setter: setPhotoPanY, min: -1000, max: 1000, unit: "px" },
                                 ].map((control) => (
