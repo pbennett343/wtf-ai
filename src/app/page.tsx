@@ -559,30 +559,30 @@ export default function Home() {
                     </button>
                 </div>
 
-                <div className="overflow-y-auto flex-1 p-4 space-y-4 md:space-y-6 pb-32">
+                {/* Step Navigation — hidden on Step 0 brand picker */}
+                {currentStep !== 0 && (
+                    <nav className="flex space-x-1 border-b px-4 py-3 shrink-0 z-50 shadow-sm relative" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
+                        {steps.map((s) => (
+                            <button
+                                key={s.id}
+                                onClick={() => setCurrentStep(s.id as Step)}
+                                className={`flex-1 flex justify-center py-2 rounded-md transition-all duration-200 ${currentStep === s.id
+                                    ? "text-white shadow-lg"
+                                    : "hover:text-white"
+                                    }`}
+                                style={currentStep === s.id
+                                    ? { background: BRAND.crimson, boxShadow: `0 4px 14px ${BRAND.crimson}50` }
+                                    : { color: BRAND.navyLight }
+                                }
+                                title={s.label}
+                            >
+                                {s.icon}
+                            </button>
+                        ))}
+                    </nav>
+                )}
 
-                    {/* Step Navigation — hidden on Step 0 brand picker */}
-                    {currentStep !== 0 && (
-                        <nav className="flex space-x-1 border-b pb-3 mb-2 sticky top-0 z-50" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
-                            {steps.map((s) => (
-                                <button
-                                    key={s.id}
-                                    onClick={() => setCurrentStep(s.id as Step)}
-                                    className={`flex-1 flex justify-center py-2 rounded-md transition-all duration-200 ${currentStep === s.id
-                                        ? "text-white shadow-lg"
-                                        : "hover:text-white"
-                                        }`}
-                                    style={currentStep === s.id
-                                        ? { background: BRAND.crimson, boxShadow: `0 4px 14px ${BRAND.crimson}50` }
-                                        : { color: BRAND.navyLight }
-                                    }
-                                    title={s.label}
-                                >
-                                    {s.icon}
-                                </button>
-                            ))}
-                        </nav>
-                    )}
+                <div className="overflow-y-auto flex-1 p-4 space-y-4 md:space-y-6 pb-32">
 
                     {/* ACTIVE TOOL PANEL */}
                     <div className="space-y-6 pb-20 md:pb-0">
