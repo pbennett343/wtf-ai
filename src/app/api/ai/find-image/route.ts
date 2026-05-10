@@ -24,16 +24,14 @@ INSTRUCTIONS:
 1. Identify if the stat is primarily about a specific PLAYER or a TEAM.
 2. If it is a PLAYER: Search Google for the player's ESPN profile to find their ESPN Player ID. Return their official transparent headshot using this exact format: \`https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/[ESPN_ID].png\`
 3. If it is a TEAM: Return their official ESPN logo using this exact format: \`https://a.espncdn.com/i/teamlogos/mlb/500/[TEAM_ABBREVIATION].png\` (e.g., 'phi', 'nyy', 'lad').
-4. WIKIPEDIA FALLBACK: For your remaining image slots, search Wikipedia or Wikimedia Commons for action photos of the player or team. These URLs MUST start with \`https://upload.wikimedia.org/\`.
-5. EXTREMELY IMPORTANT: Do NOT return any URLs from local news, Yahoo, Bleacher Report, USA Today, or Getty/AP. They will ALL be blocked by CORS protections. ONLY return ESPN CDN links or Wikimedia Commons links.
+4. EXTREMELY IMPORTANT: Do NOT attempt to find action photos on Google Images, Wikimedia, or anywhere else. You cannot see direct image URLs, so you will hallucinate them and break the app. YOU MUST ONLY RETURN ESPN HEADSHOTS OR LOGOS.
 
 Search query examples:
 - "[player name] espn mlb profile"
-- "[player name] wikimedia commons photo"
 
-Return ONLY a raw JSON array of up to 4 image URLs. Requirements:
-- URLs must point directly to an image file.
-- It is CRITICAL that you return at least 1 image. Do NOT return an empty array. If you can only find 1 or 2 good images, that is fine.
+Return ONLY a raw JSON array of 1 or 2 image URLs. Requirements:
+- URLs MUST be the exact ESPN CDN formats listed above.
+- Do NOT return an empty array. If you can't find the player ID, return the team logo instead.
 - If you cannot find action photos, it is acceptable to return a direct link to the team's logo (e.g. ESPN CDN logo) or a player headshot.
 - NEVER use Getty Images or AP Images (they block embedding).
 
