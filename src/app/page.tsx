@@ -162,14 +162,13 @@ export default function Home() {
         }
     };
 
-    // Bug #3 fix: GraphicTemplate extracted with useCallback to prevent remounting
     const GraphicTemplate = useCallback(({ containerRef, isHidden = false }: { containerRef?: React.RefObject<HTMLDivElement>, isHidden?: boolean }) => (
         <div
             ref={containerRef}
             className={`w-[4000px] h-[5333px] bg-white flex flex-col ${isHidden ? 'fixed -left-[5000px] -top-[5000px]' : ''}`}
             style={{
                 transform: !isHidden ? `scale(${previewScale})` : 'none',
-                transformOrigin: 'center center'
+                transformOrigin: 'top left',
             }}
         >
             {/* HEADER (LOCKED STATIC IMAGE) */}
@@ -739,15 +738,17 @@ export default function Home() {
                 {/* Render-ready hidden target (Perfect for html2canvas) */}
                 <GraphicTemplate containerRef={exportRef} isHidden={true} />
 
-                {/* Canvas visual view */}
-                <div className="relative border shadow-2xl rounded-lg overflow-hidden flex items-center justify-center w-full h-full md:w-[90%] md:h-[95%]" style={{ borderColor: BRAND.navyLight + '30', background: BRAND.navyDark + '80' }}>
-                    <div className="absolute top-4 right-4 px-3 py-1 rounded text-xs z-50 backdrop-blur-md" style={{ background: 'rgba(0,0,0,0.5)', color: BRAND.navyLight }}>
-                        Live Preview (Scaled)
-                    </div>
-
-                    <div className="flex items-center justify-center w-full h-full overflow-hidden">
-                        <GraphicTemplate />
-                    </div>
+                {/* Canvas visual view — overflow-hidden wrapper prevents 4000px layout bleed */}
+                <div
+                    style={{
+                        width: `${4000 * previewScale}px`,
+                        height: `${5333 * previewScale}px`,
+                        overflow: 'hidden',
+                        position: 'relative',
+                        flexShrink: 0,
+                    }}
+                >
+                    <GraphicTemplate />
                 </div>
             </div>
 

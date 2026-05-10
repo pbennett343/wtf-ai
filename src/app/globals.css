@@ -22,6 +22,7 @@
 
 body {
     background: #2d2d54;
+    overflow-x: hidden;
 }
 
 /* Focus ring override for brand crimson */
