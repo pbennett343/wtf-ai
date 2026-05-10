@@ -21,15 +21,15 @@ export async function POST(req: Request) {
 STAT: "${statText}"
 
 INSTRUCTIONS:
-1. Identify the main Player or Team mentioned in the stat.
-2. Search Google Images for action photos of THAT specific player or team from the last month. Do NOT search the exact stat text.
-3. EXTREMELY IMPORTANT: You MUST avoid images from Getty Images, AP Images, Reuters, or USA Today. They strictly block embedding and will break the app.
-4. Use images from Wikipedia, official team sites, or general sports news sites (Bleacher Report, Yahoo, local news) that permit hotlinking.
-5. ANTI-TIMEOUT RULE: Do NOT endlessly search. If you cannot find good action photos after 2 searches, immediately fallback to returning official ESPN/Wikipedia team logos or player headshots.
+1. Identify if the stat is primarily about a specific PLAYER or a TEAM.
+2. If it is a PLAYER: Search Google for the player's ESPN profile to find their ESPN Player ID. Return their official transparent headshot using this exact format: \`https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/[ESPN_ID].png\`
+3. If it is a TEAM: Return their official ESPN logo using this exact format: \`https://a.espncdn.com/i/teamlogos/mlb/500/[TEAM_ABBREVIATION].png\` (e.g., 'phi', 'nyy', 'lad').
+4. WIKIPEDIA FALLBACK: For your remaining image slots, search Wikipedia or Wikimedia Commons for action photos of the player or team. These URLs MUST start with \`https://upload.wikimedia.org/\`.
+5. EXTREMELY IMPORTANT: Do NOT return any URLs from local news, Yahoo, Bleacher Report, USA Today, or Getty/AP. They will ALL be blocked by CORS protections. ONLY return ESPN CDN links or Wikimedia Commons links.
 
 Search query examples:
-- "[player name] [team] action photo 2026 -site:gettyimages.com -site:apimages.com -site:usatoday.com"
-- "[player name] photo -site:gettyimages.com -site:reuters.com"
+- "[player name] espn mlb profile"
+- "[player name] wikimedia commons photo"
 
 Return ONLY a raw JSON array of up to 4 image URLs. Requirements:
 - URLs must point directly to an image file.
