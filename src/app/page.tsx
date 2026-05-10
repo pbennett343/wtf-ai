@@ -18,6 +18,30 @@ import {
     Search,
 } from "lucide-react";
 
+const TODAY = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+const PROMPT_WTF_BETS = `### ROLE: ODDSSHARK TREND RESEARCHER FOR "WTF BETS" ###
+Today's date is ${TODAY}. You MUST navigate to oddsshark.com/mlb/trends and find the most lopsided betting trends for MLB games scheduled TODAY (${TODAY}) or tomorrow ONLY.
+
+### MANDATORY COMPLIANCE RULES ###
+1. ONLY MLB: We are in MLB season. Do NOT include NBA (season is over), NFL (off-season), or any other sport.
+2. ACTIVE GAMES ONLY: Every single trend MUST be for a team that has a game scheduled TODAY or TOMORROW. Verify the team is playing.
+3. EXACT DATES: Use the exact game date (e.g. "May 10, 2026"). NEVER say "Tonight" or "Today".
+4. HIGHEST RATIOS: Find the most extreme/lopsided trends. Prefer 15+ game samples (e.g. 18-4, 21-3).
+5. NO BRACKETS: Do NOT prefix stats with [MLB] or any sport tag.
+6. CATEGORY MIX (8 slots):
+   - 2x OVER trends (highest ratios)
+   - 2x UNDER trends (highest ratios)  
+   - 2x ATS/Runline trends (highest ratios)
+   - 2x ANY remaining extreme trends (NO "SU" unless 15-0+)
+7. VERIFY ON ODDSSHARK: Every trend must come from oddsshark.com/mlb/trends. Cross-check that the team is playing.
+
+### OUTPUT ###
+Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
+- "section": "WTF Bets"
+- "date": Exact game date (e.g. "${TODAY}")
+- "source": "OddsShark"
+- "text": The full trend string. No source or sport tags in the text.`;
+
 const INITIAL_STAT = ``;
 
 // Brand colors
@@ -59,6 +83,8 @@ export default function Home() {
             const data = await res.json();
             if (data.stats) {
                 setFoundStats(data.stats);
+            } else if (data.error) {
+                alert("API Error: " + data.error);
             } else {
                 alert("Failed to find stats. Check console.");
             }
@@ -525,7 +551,7 @@ export default function Home() {
 
                     {/* Step Navigation — hidden on Step 0 brand picker */}
                     {currentStep !== 0 && (
-                        <nav className="flex space-x-1 border-b pb-3 sticky top-0 z-50" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
+                        <nav className="flex space-x-1 border-b pb-3 mb-2 sticky top-0 z-50" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
                             {steps.map((s) => (
                                 <button
                                     key={s.id}

@@ -9,24 +9,22 @@ const TODAY = new Date().toLocaleDateString("en-US", {
 });
 
 const PROMPT_WTF_STATS = `### ROLE: LEAD RESEARCHER FOR "WTF STATS" ###
-Today's date is ${TODAY}. Your mission is to find the best WTF Stats that occurred EXACTLY in the last 24 hours.
+Today's date is ${TODAY}. Your mission is to find the best WTF Stats from the last 24 hours.
 
 ### MANDATORY COMPLIANCE RULES ###
-1. RECENCY ZERO TOLERANCE: Every single stat MUST be from a game played yesterday or today (${TODAY}).
-   You MUST verify the date of the event before including it. If a stat is from 3 days ago or last month, REJECT IT.
-   DO NOT hallucinate recent dates for old stats.
-2. STYLE REFERENCE: A "WTF Stat" is NOT a hot streak or a highlight. It is a historical anomaly.
+1. STYLE REFERENCE: A "WTF Stat" is NOT a hot streak or a highlight. It is a historical anomaly.
    It MUST include language like "First time since 19XX," "Only player in history," or "Highest/Lowest in [X] years."
    If it does NOT have that historical context, it is REJECTED.
-3. DATA ONLY: Must be quantitative historical anomalies. No "Player X hit a HR" news items.
-4. NO BETTING TERMS: Phrases like "SU", "ATS", "Over/Under", or "Covered" are BANNED.
-5. SPORT PRIORITY: NFL, MLB, NBA, NHL only. No Soccer, Lacrosse, or WNBA unless once-in-a-century.
-6. SOURCES: Use Google Search to find recent tweets from @ESPNinsights, @jaycuda, @mlbstats, @MLB, @NBA, @NFL, @OPTAStats, @slangonsports.
+2. DATA ONLY: Must be quantitative historical anomalies. No "Player X hit a HR" news items.
+3. NO BETTING TERMS: Phrases like "SU", "ATS", "Over/Under", or "Covered" are BANNED.
+4. SPORT PRIORITY: NFL, MLB, NBA, NHL only. No Soccer, Lacrosse, or WNBA unless once-in-a-century.
+5. RECENCY: All stats MUST relate to games or events from the last 24 hours (since ${TODAY}). Do not use old stats.
+6. SOURCES: Scan @ESPNinsights, @jaycuda, @mlbstats, @MLB, @NBA, @NFL, @OPTAStats, @slangonsports on X.
 
 ### OUTPUT ###
 Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
 - "section": "WTF Stat"
-- "date": The exact date of the game/event (e.g. "${TODAY}")
+- "date": The exact date of the game/event (e.g. "${TODAY}", "Last Night")
 - "source": Source name only — never a full URL (e.g. "@OptaSTATS", "ESPN")
 - "text": The full stat string. Do NOT include the source inside the text.`;
 
