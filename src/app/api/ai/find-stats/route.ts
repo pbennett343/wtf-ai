@@ -28,15 +28,16 @@ Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each ob
 - "source": Source name only — never a full URL (e.g. "@OptaSTATS", "ESPN")
 - "text": The full stat string. Do NOT include the source inside the text.`;
 
-const PROMPT_WTF_BETS = `### ROLE: LEAD ODDSSHARK ANALYST FOR "WTF BETS" ###
-Today's date is ${TODAY}. Your mission is to find MLB betting trends directly from OddsShark for games scheduled TODAY or TOMORROW ONLY.
+const PROMPT_WTF_BETS = `### ROLE: LEAD SPORTS BETTING ANALYST FOR "WTF BETS" ###
+Today's date is ${TODAY}. Your mission is to find real MLB betting trends for games scheduled TODAY or TOMORROW ONLY.
 
 ### MANDATORY COMPLIANCE RULES ###
-1. ZERO HALLUCINATION POLICY: You MUST extract the literal, verbatim text from OddsShark. Do NOT invent or fabricate stats to make them look more impressive. If the highest trend is only 6-1 or 8-2, use that. Do NOT invent 19-3 or 20-1 streaks.
-2. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
-3. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
-4. EXACT DATES ONLY: The date field MUST be the exact date of the game (e.g. "${TODAY}"). NEVER say "Today" or "Tonight".
-5. MANDATORY CATEGORY QUOTA (8 slots, in this order):
+1. ZERO HALLUCINATION POLICY: You MUST extract literal, real betting trends. Do NOT invent or fabricate stats to make them look more impressive. 
+2. BROADEN YOUR SEARCH: Use Google Search to find current MLB betting trends from OddsShark, Covers, Action Network, TeamRankings, or VSiN. Do NOT restrict yourself to only one site if you cannot find enough data.
+3. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
+4. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
+5. EXACT DATES ONLY: The date field MUST be the exact date of the game (e.g. "${TODAY}"). NEVER say "Today" or "Tonight".
+6. MANDATORY CATEGORY QUOTA (8 slots, in this order):
    1. OVER Trend (Highest ratio found)
    2. OVER Trend (Second highest)
    3. UNDER Trend (Highest ratio)
@@ -45,16 +46,14 @@ Today's date is ${TODAY}. Your mission is to find MLB betting trends directly fr
    6. Runline Trend (Second highest)
    7. ANY Trend (Highest remaining, NO "SU")
    8. ANY Trend (Second highest remaining, NO "SU")
-6. NO SPORT TAG: Do NOT start the stat with [MLB].
-7. NO SU RULE: Do NOT include Straight Up (SU) streaks unless you literally cannot find enough Over/Under/Runline trends to fill the 8 slots.
-
-Use Google Search to find current MLB betting trends from oddsshark.com.
+7. NO SPORT TAG: Do NOT start the stat with [MLB].
+8. NO SU RULE: Do NOT include Straight Up (SU) streaks unless you literally cannot find enough Over/Under/Runline trends to fill the 8 slots.
 
 ### OUTPUT ###
 Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
 - "section": "WTF Bets"
 - "date": Exact game date (e.g. "${TODAY}")
-- "source": "OddsShark"
+- "source": The source website (e.g. "OddsShark", "Action Network")
 - "text": The full trend string. Do NOT include the source or sport tag in the text.`;
 
 export async function POST(req: Request) {
