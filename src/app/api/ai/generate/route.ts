@@ -22,9 +22,25 @@ export async function POST(req: Request) {
         // New @google/genai SDK — required for Nano Banana image generation
         const ai = new GoogleGenAI({ apiKey: key });
 
+        let enrichedContext = prompt;
+        if (prompt && !referenceImage) {
+            try {
+                const searchRes = await ai.models.generateContent({
+                    model: "gemini-2.5-flash",
+                    contents: `Identify the main athlete or team mentioned in this text: "${prompt}". Use Google Search to find their current team and their primary team uniform colors. Return a short, visually descriptive sentence for an image generator (e.g., "Bobby Witt Jr. wearing a Kansas City Royals white and royal blue uniform").`,
+                    config: { tools: [{ googleSearch: {} }] }
+                });
+                if (searchRes.text) {
+                    enrichedContext = searchRes.text;
+                }
+            } catch (e) {
+                console.error("Search enrichment failed:", e);
+            }
+        }
+
         const clayInstruction = referenceImage
-            ? `Transform this image into a 3D clay figurine style. Keep the EXACT same pose, composition, player number, jersey colors, and body proportions from the original image. Only change the material/texture: make everything look like smooth matte clay or soft plastic. The face should remain recognizable but simplified. Place the characters in a vibrant stadium, arena, or field backdrop relevant to their sport. Do NOT change the pose or add new elements. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Additional context: ${prompt}` : ""}`
-            : `Create a 3D clay figurine style sports illustration based on this context: "${prompt}". IMPORTANT RESTRICTIONS: Do NOT generate or include any text, words, or numbers floating in the image. Do NOT include scoreboards, UI elements, or infographics. ONLY generate the clay figurine characters interacting in a vibrant stadium, arena, or field backdrop relevant to their sport (NO blank/plain backgrounds). Smooth matte clay material, soft studio lighting. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`;
+            ? `Transform this image into a 3D clay figurine style. Keep the EXACT same pose, composition, player number, jersey colors, and body proportions from the original image. Only change the material/texture: make everything look like smooth matte clay or soft plastic. The face should remain recognizable but simplified. Place the characters on the appropriate sports field, zoomed in, with a heavily blurred background of fans in the stands. Nothing else going on in the background. Do NOT change the pose or add new elements. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Additional context: ${prompt}` : ""}`
+            : `Create a simple 3D clay figurine sports illustration based on this context: "${enrichedContext}". IMPORTANT RESTRICTIONS: Do NOT generate or include any text, words, or numbers floating in the image. Do NOT include scoreboards, UI elements, or infographics. ONLY generate the simple clay figurine character(s) in their accurate team uniform. The background MUST be the appropriate sports field, zoomed in, with a heavily blurred background of fans in the stands. Nothing else going on in the background. Smooth matte clay material, soft studio lighting. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`;
 
         // Build content parts array
         const contentParts: any[] = [{ text: clayInstruction }];
