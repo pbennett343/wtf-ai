@@ -31,7 +31,6 @@ METHODOLOGY: Use Google Search and X (Twitter) to find quantitative historical a
 
 ### SECTION 2: THE WTF BETTING TRENDS (STRICT QUOTA & HIGHEST NUMBERS) ###
 METHODOLOGY: Navigate directly to Oddsshark.com (e.g., /nba/trends, /nhl/trends, /mlb/trends).
-- IN-SEASON ONLY: ONLY pull stats for sports that are currently actively in-season right now. (e.g. Do NOT pull NFL stats in May). Check the current date and filter appropriately.
 - THE FILTER (HIGHER NUMBERS!): Hunt for the most lopsided mathematical streaks. Look for denominators of 15, 20, or 25 games.
 - MANDATORY CATEGORY QUOTA (8 SLOTS TOTAL): You must fill the slots in this exact order to ensure variety:
 1. OVER Trend (Highest ratio found)
