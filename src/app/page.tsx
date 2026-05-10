@@ -388,7 +388,7 @@ export default function Home() {
                 <div className="p-4 md:p-6 border-b space-y-3 md:space-y-4" style={{ borderColor: BRAND.navyLight + '40' }}>
                     <div className="flex items-center justify-between md:block">
                         <div>
-                            <img src="/wtf-x-logo.jpg" alt="WTF Sports" className="h-8 w-auto object-contain mb-3" />
+                            <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-10 w-auto object-contain mb-1 drop-shadow-sm" />
                             <h1 className="text-xl md:text-2xl font-black italic tracking-tighter">
                                 <span style={{ color: BRAND.crimson }}>WTF</span>
                                 <span className="text-white">.AI</span>
