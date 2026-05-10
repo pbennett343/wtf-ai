@@ -16,24 +16,26 @@ export async function POST(req: Request) {
 
     if (!statText) return NextResponse.json({ error: "No stat text provided" }, { status: 400 });
 
-    const prompt = `You are a sports image researcher. I need you to find 4 high-quality, publicly accessible sports action photos related to this stat:
+    const prompt = `You are a sports image researcher. I need you to find 4 high-quality, publicly accessible sports action photos related to the primary subject of this stat:
 
-"${statText}"
+STAT: "${statText}"
 
-Search Google Images and sports news sites (ESPN, Getty Images, AP Images, USA Today Sports, Reuters) for recent photos (last 7 days) of the specific player or team mentioned.
+INSTRUCTIONS:
+1. Identify the main Player or Team mentioned in the stat.
+2. Search Google Images for recent action photos of THAT specific player or team. Do NOT search the exact stat text.
+3. EXTREMELY IMPORTANT: Do NOT use images from Getty Images, AP Images, or Reuters. They block embedding and will break the app.
+4. Prefer images from Wikipedia, Wikimedia Commons, official team sites, or ESPN.
 
-Search queries to use:
-- [player name] [team] action photo 2026
-- [player name] [team] game May 2026
-- site:espn.com OR site:nba.com OR site:mlb.com [player name] photo
+Search query examples:
+- "[player name] [team] action photo"
+- "[team] game photo 2026"
 
 Return ONLY a raw JSON array of exactly 4 direct image URLs. Requirements:
 - Must be direct image URLs ending in .jpg, .jpeg, .png, or .webp
-- Must be publicly accessible (no paywalls)
-- Prefer high resolution action shots (no headshots, no graphics)
-- Different poses/moments if possible
+- Must be publicly accessible (no paywalls, no 403 blocks)
+- Prefer high resolution action shots
 
-Example format: ["https://a.espncdn.com/photo/...", "https://...", "https://...", "https://..."]
+Example format: ["https://upload.wikimedia.org/wikipedia/commons/...", "https://a.espncdn.com/photo/...", "https://...", "https://..."]
 
 Return ONLY the JSON array. No markdown, no explanation, no other text.`;
 
