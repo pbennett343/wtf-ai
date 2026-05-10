@@ -16,28 +16,33 @@ export async function POST(req: Request) {
 
     if (!statText) return NextResponse.json({ error: "No stat text provided" }, { status: 400 });
 
-    const prompt = `You are a sports image researcher. I need you to find 4 high-quality, publicly accessible sports action photos related to the primary subject of this stat:
+    const prompt = `You are a sports image researcher. I need you to find 4 high-quality sports action photos related to the primary subject of this stat:
 
 STAT: "${statText}"
 
 INSTRUCTIONS:
-1. Identify if the stat is primarily about a specific PLAYER or a TEAM.
-2. If it is a PLAYER: Search Google for the player's ESPN profile to find their ESPN Player ID. Return their official transparent headshot using this exact format: \`https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/[ESPN_ID].png\`
-3. If it is a TEAM: Return their official ESPN logo using this exact format: \`https://a.espncdn.com/i/teamlogos/mlb/500/[TEAM_ABBREVIATION].png\` (e.g., 'phi', 'nyy', 'lad').
-4. EXTREMELY IMPORTANT: Do NOT attempt to find action photos on Google Images, Wikimedia, or anywhere else. You cannot see direct image URLs, so you will hallucinate them and break the app. YOU MUST ONLY RETURN ESPN HEADSHOTS OR LOGOS.
+1. Identify the main PLAYER or TEAM mentioned in the stat.
+2. Search Google Images for high-quality action photos of that player or team.
+3. Return up to 4 direct image URLs. The URLs must point directly to image files (ending in .jpg, .png, .webp, etc. or served as image content).
+4. PRIORITIZE in this order:
+   a. ESPN CDN headshots: \`https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/[ESPN_ID].png\` (search "[player name] espn profile" to find the ID)
+   b. ESPN team logos: \`https://a.espncdn.com/i/teamlogos/mlb/500/[TEAM_ABBREVIATION].png\`
+   c. Wikipedia/Wikimedia Commons images (URLs starting with https://upload.wikimedia.org/)
+   d. Any other direct image URL from Google Images results
+5. ANTI-TIMEOUT: Do NOT endlessly search. After 2-3 searches, return the best URLs you found.
 
 Search query examples:
 - "[player name] espn mlb profile"
+- "[player name] [team] action photo"
+- "[team name] baseball photo"
 
-Return ONLY a raw JSON array of 1 or 2 image URLs. Requirements:
-- URLs MUST be the exact ESPN CDN formats listed above.
-- Do NOT return an empty array. If you can't find the player ID, return the team logo instead.
-- If you cannot find action photos, it is acceptable to return a direct link to the team's logo (e.g. ESPN CDN logo) or a player headshot.
-- NEVER use Getty Images or AP Images (they block embedding).
+Return ONLY a raw JSON array of up to 4 image URLs. Requirements:
+- Do NOT return an empty array. Always return at least 1 URL (use ESPN team logo as fallback).
+- No markdown, no explanation, no other text. Just the raw JSON array.
 
-Example format: ["https://upload.wikimedia.org/wikipedia/commons/...", "https://a.espncdn.com/i/teamlogos/..."]
+Example format: ["https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/12345.png", "https://upload.wikimedia.org/wikipedia/commons/..."]
 
-Return ONLY the JSON array. No markdown, no explanation, no other text.`;
+Return ONLY the JSON array.`;
 
     try {
         const ai = new GoogleGenAI({ apiKey: key });

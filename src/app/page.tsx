@@ -18,6 +18,8 @@ import {
     Search,
 } from "lucide-react";
 
+const proxyUrl = (url: string) => `/api/proxy-image?url=${encodeURIComponent(url)}`;
+
 const TODAY = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 const PROMPT_WTF_BETS = `### ROLE: ODDSSHARK TREND RESEARCHER FOR "WTF BETS" ###
 Today's date is ${TODAY}. You MUST navigate to oddsshark.com/mlb/trends and find the most lopsided betting trends for MLB games scheduled TODAY (${TODAY}) or tomorrow ONLY.
@@ -303,7 +305,7 @@ export default function Home() {
             <div className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
                 {photoUrl ? (
                     <img
-                        src={photoUrl}
+                        src={photoUrl.startsWith('blob:') ? photoUrl : proxyUrl(photoUrl)}
                         alt="Background"
                         className="absolute max-w-none"
                         style={{
@@ -829,7 +831,7 @@ export default function Home() {
                                         <span>FIND IMAGE</span>
                                     </button>
                                     <button
-                                        onClick={() => { if (aiRefImage) setPhotoUrl(aiRefImage); }}
+                                        onClick={() => { if (aiRefImage) setPhotoUrl(proxyUrl(aiRefImage)); }}
                                         disabled={!aiRefImage}
                                         className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg border text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
                                         style={{ background: BRAND.navyDark, borderColor: aiRefImage ? BRAND.crimson : BRAND.navyLight + '40', color: aiRefImage ? 'white' : BRAND.navyLight }}
@@ -862,7 +864,7 @@ export default function Home() {
                                                 >
                                                     <span className="absolute text-[10px] text-zinc-500 font-bold z-0 text-center break-all opacity-50 px-1">Link Broken or Protected</span>
                                                     <img 
-                                                        src={url} 
+                                                        src={proxyUrl(url)} 
                                                         alt={`Found ${i + 1}`} 
                                                         className="w-full h-full object-cover absolute inset-0 z-10 bg-zinc-100" 
                                                         onError={(e) => { 
@@ -910,7 +912,7 @@ export default function Home() {
                                                         </button>
                                                         <button
                                                             onClick={() => {
-                                                                setPhotoUrl(aiImageResult.url);
+                                                                setPhotoUrl(proxyUrl(aiImageResult.url));
                                                                 alert("Applied to canvas!");
                                                             }}
                                                             className="flex-1 py-2 rounded font-black text-xs transition-all shadow-xl"
