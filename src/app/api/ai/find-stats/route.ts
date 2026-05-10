@@ -47,7 +47,7 @@ METHODOLOGY: Navigate directly to Oddsshark.com (e.g., /nba/trends, /nhl/trends,
 ### OUTPUT REQUIREMENT ###
 You MUST return your final response as a pure JSON array containing exactly 16 objects. 
 Each object must have the following properties:
-- "section": Either "Daily WTF Stats" or "Betting Trends"
+- "section": Either "WTF Stats" or "WTF Bets Stats"
 - "text": The formatted stat string exactly as requested (including the link or source).
 
 Do NOT wrap the JSON in markdown formatting blocks like \`\`\`json. Return ONLY the raw JSON array string. DO NOT INCLUDE ANY OTHER TEXT.`;
