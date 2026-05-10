@@ -28,10 +28,10 @@ const BRAND = {
     crimsonDark: "#8a1a25",
 };
 
-type Step = 1 | 2 | 3 | 5 | 6;
+type Step = 0 | 1 | 2 | 3 | 5 | 6;
 
 export default function Home() {
-    const [currentStep, setCurrentStep] = useState<Step>(1);
+    const [currentStep, setCurrentStep] = useState<Step>(0);
     const [isExporting, setIsExporting] = useState(false);
 
     // App State
@@ -75,6 +75,7 @@ export default function Home() {
     const [logoTopPadding, setLogoTopPadding] = useState(50);
     const [logoBottomPadding, setLogoBottomPadding] = useState(68);
     const [textTopPadding, setTextTopPadding] = useState(0);
+    const [textBottomPadding, setTextBottomPadding] = useState(0);
     const [genCount, setGenCount] = useState(0);
 
     // Brand Engine
@@ -133,13 +134,14 @@ export default function Home() {
                 if (d.logoTopPadding !== undefined) setLogoTopPadding(d.logoTopPadding);
                 if (d.logoBottomPadding !== undefined) setLogoBottomPadding(d.logoBottomPadding);
                 if (d.textTopPadding !== undefined) setTextTopPadding(d.textTopPadding);
+                if (d.textBottomPadding !== undefined) setTextBottomPadding(d.textBottomPadding);
                 if (d.brand) setBrand(d.brand);
             } catch (e) { }
         }
     }, []);
 
     const saveDefaults = () => {
-        const d = { fontSize, lineHeight, leftIndent, logoHeight, logoTopPadding, logoBottomPadding, textTopPadding, brand };
+        const d = { fontSize, lineHeight, leftIndent, logoHeight, logoTopPadding, logoBottomPadding, textTopPadding, textBottomPadding, brand };
         localStorage.setItem('wtf_layout_defaults', JSON.stringify(d));
         alert('Layout Defaults Locked Successfully!');
     };
@@ -161,18 +163,41 @@ export default function Home() {
     const handleExport = async () => {
         if (!exportRef.current) return;
         setIsExporting(true);
-
         try {
             const canvas = await html2canvas(exportRef.current, {
                 scale: 1,
                 useCORS: true,
                 backgroundColor: "#ffffff",
             });
-
             const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+            const fileName = `wtf_stat_${Date.now()}.jpg`;
+
+            // Web Share API — gives iOS native "Save Image" to Camera Roll
+            if (typeof navigator.share === 'function') {
+                try {
+                    const arr = dataUrl.split(',');
+                    const mimeMatch = arr[0].match(/:(.*?);/);
+                    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+                    const bstr = atob(arr[1]);
+                    let n = bstr.length;
+                    const u8arr = new Uint8Array(n);
+                    while (n--) u8arr[n] = bstr.charCodeAt(n);
+                    const blob = new Blob([u8arr], { type: mime });
+                    const file = new File([blob], fileName, { type: 'image/jpeg' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: 'WTF Stat' });
+                        return;
+                    }
+                } catch (shareErr: any) {
+                    if (shareErr.name === 'AbortError') return; // user dismissed sheet
+                    // fall through to link download
+                }
+            }
+
+            // Desktop fallback
             const a = document.createElement("a");
             a.href = dataUrl;
-            a.download = `wtf_stat_${Date.now()}.jpg`;
+            a.download = fileName;
             a.click();
         } catch (err) {
             console.error("Failed to export:", err);
@@ -216,7 +241,8 @@ export default function Home() {
                     paddingLeft: `${leftIndent}px`,
                     fontSize: `${fontSize}px`,
                     lineHeight: `${lineHeight}`,
-                    paddingTop: `${textTopPadding}px`
+                    paddingTop: `${textTopPadding}px`,
+                    paddingBottom: `${textBottomPadding}px`,
                 }}
             >
                 {statText}
@@ -256,7 +282,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage]);
+    }, [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -419,7 +445,7 @@ export default function Home() {
     ];
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen text-white font-sans relative" style={{ background: BRAND.navyDark }}>
+        <div className="flex flex-col md:flex-row h-screen overflow-hidden text-white font-sans relative" style={{ background: BRAND.navyDark }}>
 
             {/* Mobile Header Overlay */}
             <div className="md:hidden absolute top-4 left-4 z-50 flex flex-col items-start gap-0 pointer-events-none">
@@ -432,7 +458,7 @@ export default function Home() {
 
             {/* SIDEBAR WIZARD — order-2 on mobile so preview shows first */}
             <div
-                className="w-full md:w-80 border-t md:border-t-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0 relative"
+                className="w-full md:w-80 border-t md:border-t-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0 relative h-[50vh] md:h-screen"
                 style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '40' }}
             >
                 {!hasApiKey && (
@@ -451,31 +477,72 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="overflow-y-auto p-4 space-y-6 md:space-y-8 pb-10">
+                <div className="overflow-y-auto flex-1 p-4 space-y-4 md:space-y-6 pb-10">
 
-                    {/* Step Navigation */}
-                    <nav className="flex space-x-1 border-b pb-4 sticky top-0 z-50" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
-                        {steps.map((s) => (
-                            <button
-                                key={s.id}
-                                onClick={() => setCurrentStep(s.id as Step)}
-                                className={`flex-1 flex justify-center py-2 rounded-md transition-all duration-200 ${currentStep === s.id
-                                    ? "text-white shadow-lg"
-                                    : "hover:text-white"
-                                    }`}
-                                style={currentStep === s.id
-                                    ? { background: BRAND.crimson, boxShadow: `0 4px 14px ${BRAND.crimson}50` }
-                                    : { color: BRAND.navyLight }
-                                }
-                                title={s.label}
-                            >
-                                {s.icon}
-                            </button>
-                        ))}
-                    </nav>
+                    {/* Step Navigation — hidden on Step 0 brand picker */}
+                    {currentStep !== 0 && (
+                        <nav className="flex space-x-1 border-b pb-3 sticky top-0 z-50" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
+                            {steps.map((s) => (
+                                <button
+                                    key={s.id}
+                                    onClick={() => setCurrentStep(s.id as Step)}
+                                    className={`flex-1 flex justify-center py-2 rounded-md transition-all duration-200 ${currentStep === s.id
+                                        ? "text-white shadow-lg"
+                                        : "hover:text-white"
+                                        }`}
+                                    style={currentStep === s.id
+                                        ? { background: BRAND.crimson, boxShadow: `0 4px 14px ${BRAND.crimson}50` }
+                                        : { color: BRAND.navyLight }
+                                    }
+                                    title={s.label}
+                                >
+                                    {s.icon}
+                                </button>
+                            ))}
+                        </nav>
+                    )}
 
                     {/* ACTIVE TOOL PANEL */}
                     <div className="space-y-6 pb-20 md:pb-0">
+
+                        {/* ── STEP 0: BRAND HOME ── */}
+                        {currentStep === 0 && (
+                            <div className="space-y-3 animate-in fade-in duration-300 pt-1">
+                                <div className="text-center pb-1">
+                                    <h2 className="text-lg font-black italic tracking-tight">
+                                        <span style={{ color: BRAND.crimson }}>SELECT</span>
+                                        <span className="text-white"> BRAND</span>
+                                    </h2>
+                                    <p className="text-xs mt-0.5" style={{ color: BRAND.navyLight }}>Choose a brand to get started</p>
+                                </div>
+                                {[
+                                    { file: 'wtf-x-logo.jpg', label: 'WTF Stats', desc: 'Historical sports anomalies' },
+                                    { file: 'bets-x-logo.jpg', label: 'WTF Bets', desc: 'Premium picks & analysis' },
+                                    { file: 'vfl-x-logo.jpg', label: 'VFL', desc: 'Virtual Football League' },
+                                    { file: 'pod-x-logo.jpg', label: 'Willing To Fail', desc: 'Podcast content' },
+                                ].map((b) => (
+                                    <button
+                                        key={b.file}
+                                        onClick={() => { setBrand(b.file); setCurrentStep(1); }}
+                                        className="w-full flex items-center gap-4 p-3 rounded-xl border transition-all active:scale-95"
+                                        style={{ background: BRAND.navyDark, borderColor: brand === b.file ? BRAND.crimson : BRAND.navyLight + '40' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                        onMouseLeave={(e) => e.currentTarget.style.borderColor = brand === b.file ? BRAND.crimson : BRAND.navyLight + '40'}
+                                    >
+                                        <img
+                                            src={`/${b.file}`}
+                                            alt={b.label}
+                                            className="h-9 w-auto object-contain flex-shrink-0"
+                                            onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
+                                        />
+                                        <div className="text-left">
+                                            <p className="font-bold text-sm text-white">{b.label}</p>
+                                            <p className="text-[10px]" style={{ color: BRAND.navyLight }}>{b.desc}</p>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         {currentStep === 1 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -601,7 +668,8 @@ export default function Home() {
                                         { label: "Logo Size (Height)", value: logoHeight, setter: setLogoHeight, min: 100, max: 800, unit: "px" },
                                         { label: "Logo Top Padding", value: logoTopPadding, setter: setLogoTopPadding, min: 0, max: 400, unit: "px" },
                                         { label: "Logo Bottom Padding", value: logoBottomPadding, setter: setLogoBottomPadding, min: 0, max: 400, unit: "px" },
-                                        { label: "Text Top Padding (Gap)", value: textTopPadding, setter: setTextTopPadding, min: 0, max: 400, unit: "px" },
+                                        { label: "Text Top Padding", value: textTopPadding, setter: setTextTopPadding, min: 0, max: 400, unit: "px" },
+                                        { label: "Text Bottom Padding", value: textBottomPadding, setter: setTextBottomPadding, min: 0, max: 400, unit: "px" },
                                     ].map((control) => (
                                         <div key={control.label} className="space-y-3">
                                             <label className="text-sm flex justify-between" style={{ color: BRAND.navyLight }}>
@@ -832,13 +900,10 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* MAIN STAGE PREVIEW — order-1 on mobile so it shows at top */}
+            {/* MAIN STAGE PREVIEW — fixed 50vh on mobile, flex-1 on desktop */}
             <div
-                className="w-full md:flex-1 relative flex items-center justify-center order-1 md:order-2"
-                style={{
-                    background: `linear-gradient(135deg, ${BRAND.navyDark} 0%, #1a1a2e 100%)`,
-                    minHeight: '60vw',
-                }}
+                className="w-full h-[50vh] md:h-screen md:flex-1 relative flex items-center justify-center order-1 md:order-2 shrink-0"
+                style={{ background: `linear-gradient(135deg, ${BRAND.navyDark} 0%, #1a1a2e 100%)` }}
             >
 
                 {/* Render-ready hidden target (Perfect for html2canvas) */}
