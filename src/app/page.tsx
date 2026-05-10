@@ -886,7 +886,7 @@ export default function Home() {
 
                         {currentStep === 5 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <h2 className="text-lg font-bold flex items-center gap-2"><Maximize style={{ color: BRAND.crimson }} /> Step 5: Visuals</h2>
+                                <h2 className="text-lg font-bold flex items-center gap-2"><Maximize style={{ color: BRAND.crimson }} /> Step 4: Visuals</h2>
 
                                 {[
                                     { label: "Photo Zoom", value: photoZoom, setter: setPhotoZoom, min: 100, max: 500, unit: "%" },
@@ -914,7 +914,7 @@ export default function Home() {
 
                         {currentStep === 6 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <h2 className="text-lg font-bold flex items-center gap-2"><Download style={{ color: BRAND.crimson }} /> Step 6: Finalize</h2>
+                                <h2 className="text-lg font-bold flex items-center gap-2"><Download style={{ color: BRAND.crimson }} /> Step 5: Export</h2>
                                 <p className="text-sm" style={{ color: BRAND.navyLight }}>Review your graphic on the right. When ready, click export to generate the 4000x5333 JPG.</p>
 
                                 <button
