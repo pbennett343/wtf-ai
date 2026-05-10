@@ -857,10 +857,18 @@ export default function Home() {
                                                 <button
                                                     key={i}
                                                     onClick={() => { setAiRefImage(url); setAiRefImageName(`Found Image ${i + 1}`); setAiInputMode('image'); }}
-                                                    className="aspect-square rounded-lg overflow-hidden border-2 transition-all active:scale-95"
+                                                    className="aspect-square rounded-lg overflow-hidden border-2 transition-all active:scale-95 relative bg-zinc-100 flex flex-col items-center justify-center p-2"
                                                     style={{ borderColor: aiRefImage === url ? BRAND.crimson : 'transparent' }}
                                                 >
-                                                    <img src={url} alt={`Found ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
+                                                    <span className="absolute text-[10px] text-zinc-500 font-bold z-0 text-center break-all opacity-50 px-1">Link Broken or Protected</span>
+                                                    <img 
+                                                        src={url} 
+                                                        alt={`Found ${i + 1}`} 
+                                                        className="w-full h-full object-cover absolute inset-0 z-10 bg-zinc-100" 
+                                                        onError={(e) => { 
+                                                            (e.target as HTMLImageElement).style.opacity = '0'; 
+                                                        }} 
+                                                    />
                                                 </button>
                                             ))}
                                         </div>
