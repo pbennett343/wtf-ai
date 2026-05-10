@@ -559,7 +559,7 @@ export default function Home() {
                     </button>
                 </div>
 
-                <div className="overflow-y-auto flex-1 p-4 space-y-4 md:space-y-6 pb-10">
+                <div className="overflow-y-auto flex-1 p-4 space-y-4 md:space-y-6 pb-32">
 
                     {/* Step Navigation — hidden on Step 0 brand picker */}
                     {currentStep !== 0 && (
