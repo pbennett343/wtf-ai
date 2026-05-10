@@ -173,7 +173,10 @@ export default function Home() {
             const fileName = `wtf_stat_${Date.now()}.jpg`;
 
             // Web Share API — gives iOS native "Save Image" to Camera Roll
-            if (typeof navigator.share === 'function') {
+            const nav = navigator as Navigator & {
+                canShare?: (data?: { files?: File[] }) => boolean;
+            };
+            if (typeof nav.share === 'function') {
                 try {
                     const arr = dataUrl.split(',');
                     const mimeMatch = arr[0].match(/:(.*?);/);
@@ -184,12 +187,12 @@ export default function Home() {
                     while (n--) u8arr[n] = bstr.charCodeAt(n);
                     const blob = new Blob([u8arr], { type: mime });
                     const file = new File([blob], fileName, { type: 'image/jpeg' });
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({ files: [file], title: 'WTF Stat' });
+                    if (nav.canShare && nav.canShare({ files: [file] })) {
+                        await nav.share({ files: [file], title: 'WTF Stat' });
                         return;
                     }
-                } catch (shareErr: any) {
-                    if (shareErr.name === 'AbortError') return; // user dismissed sheet
+                } catch (shareErr) {
+                    if ((shareErr as Error).name === 'AbortError') return;
                     // fall through to link download
                 }
             }
