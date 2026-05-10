@@ -936,8 +936,8 @@ export default function Home() {
 
                                 {[
                                     { label: "Photo Zoom", value: photoZoom, setter: setPhotoZoom, min: 100, max: 500, unit: "%" },
-                                    { label: "Horizontal Pan", value: photoPanX, setter: setPhotoPanX, min: -1000, max: 1000, unit: "px" },
-                                    { label: "Vertical Pan (Offset)", value: photoPanY, setter: setPhotoPanY, min: -1000, max: 1000, unit: "px" },
+                                    { label: "Horizontal Pan", value: photoPanX, setter: setPhotoPanX, min: -4000, max: 4000, unit: "px" },
+                                    { label: "Vertical Pan (Offset)", value: photoPanY, setter: setPhotoPanY, min: -4000, max: 4000, unit: "px" },
                                 ].map((control) => (
                                     <div key={control.label} className="space-y-3">
                                         <label className="text-sm flex justify-between" style={{ color: BRAND.navyLight }}>
