@@ -419,11 +419,20 @@ export default function Home() {
     ];
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen text-white font-sans" style={{ background: BRAND.navyDark }}>
+        <div className="flex flex-col md:flex-row min-h-screen text-white font-sans relative" style={{ background: BRAND.navyDark }}>
+
+            {/* Mobile Header Overlay */}
+            <div className="md:hidden absolute top-4 left-4 z-50 flex items-center gap-2 pointer-events-none">
+                <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-8 w-auto object-contain drop-shadow-sm" />
+                <h1 className="text-xl font-black italic tracking-tighter drop-shadow-md">
+                    <span style={{ color: BRAND.crimson }}>WTF</span>
+                    <span className="text-white">.AI</span>
+                </h1>
+            </div>
 
             {/* SIDEBAR WIZARD — order-2 on mobile so preview shows first */}
             <div
-                className="w-full md:w-80 border-t md:border-t-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0"
+                className="w-full md:w-80 border-t md:border-t-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0 relative"
                 style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '40' }}
             >
                 {!hasApiKey && (
@@ -431,7 +440,7 @@ export default function Home() {
                         ⚠️ GEMINI_API_KEY MISSING
                     </div>
                 )}
-                <div className="p-4 md:p-6 border-b space-y-3 md:space-y-4" style={{ borderColor: BRAND.navyLight + '40' }}>
+                <div className="p-4 md:p-6 border-b space-y-3 md:space-y-4 hidden md:block" style={{ borderColor: BRAND.navyLight + '40' }}>
                     <div className="flex items-center justify-between md:block">
                         <div>
                             <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-10 w-auto object-contain mb-1 drop-shadow-sm" />
@@ -475,11 +484,6 @@ export default function Home() {
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-lg font-bold flex items-center gap-2"><Type style={{ color: BRAND.crimson }} /> Step 1: Enter Stat</h2>
                                     <div className="flex flex-wrap gap-2">
-                                        <label className="cursor-pointer border p-2 rounded-lg transition-all text-xs flex items-center gap-2 hover:border-opacity-100" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
-                                            <Scan size={14} style={{ color: BRAND.navyLight }} />
-                                            <span>Scan Image</span>
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleAIRead} disabled={isAILoading} />
-                                        </label>
                                         <button
                                             onClick={handleFindStats}
                                             disabled={isFindingStats}

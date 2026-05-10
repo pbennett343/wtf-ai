@@ -12,13 +12,17 @@ export async function POST(req: Request) {
         if (!text) return NextResponse.json({ error: "No text provided" }, { status: 400 });
 
         const prompt = `
-            Rewrite the following sports statistic in the signature '@wtfstats' style.
+            Your task is to rewrite the following sports statistic so it perfectly matches the signature style of the @wtfstats X (Twitter) account.
+            
+            MANDATORY FIRST STEP:
+            Use your Google Search tool to find and read recent posts from the "@wtfstats" account on X (Twitter).
+            Analyze their exact tone, formatting, structure, and style. 
             
             GOLDEN RULES:
             - NO HEADERS. Never add "WTF STATS" or any title at the top.
             - DATA FIRST. Start with the most impactful numbers.
             - PUNCHY & DIRECT. No friendly explanations or filler words.
-            - RAW VOICE. Be shocked by the numbers. If Wembanyama blocks 50% of the league, say it simply and aggressively.
+            - RAW VOICE. Be shocked by the numbers.
             - LINE BREAKS. Use line breaks for dramatic impact between data points.
             - NO MARKDOWN OVERLOAD. No excessive bolding (**) unless for extreme emphasis on a single word.
             
@@ -28,6 +32,8 @@ export async function POST(req: Request) {
             WTF Style: "The Thunder are 7-0 ATS in their last 7 games vs the Lakers."
             Make sure to use team mascots/short names and standard sports vernacular (vs instead of against).
 
+            Now, based on your real-time analysis of recent @wtfstats posts, rewrite this stat in that EXACT style:
+
             TEXT TO REWORD:
             "${text}"
         `;
@@ -35,6 +41,9 @@ export async function POST(req: Request) {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }]
+            }
         });
 
         const rewordedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "Failed to generate text.";
