@@ -42,6 +42,28 @@ export default function Home() {
     const [isGeneratingImage, setIsGeneratingImage] = useState(false);
     const [aiImageResult, setAiImageResult] = useState<{ url: string, prompt: string } | null>(null);
 
+    // AI Find Stats state
+    const [foundStats, setFoundStats] = useState<{ section: string, text: string }[]>([]);
+    const [isFindingStats, setIsFindingStats] = useState(false);
+
+    const handleFindStats = async () => {
+        setIsFindingStats(true);
+        try {
+            const res = await fetch("/api/ai/find-stats", { method: "POST" });
+            const data = await res.json();
+            if (data.stats) {
+                setFoundStats(data.stats);
+            } else {
+                alert("Failed to find stats. Check console.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error finding stats");
+        } finally {
+            setIsFindingStats(false);
+        }
+    };
+
     // AI Image state (declared before useEffect that references them — Bug #1 fix)
     const [aiImagePrompt, setAiImagePrompt] = useState("");
     const [aiRefImage, setAiRefImage] = useState<string | null>(null);
@@ -427,13 +449,22 @@ export default function Home() {
                         {currentStep === 1 && (
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <div className="flex justify-between items-center">
-                                    <h2 className="text-lg font-bold flex items-center gap-2"><Type style={{ color: BRAND.crimson }} /> Step 1: Enter Text</h2>
-                                    <div className="flex gap-2">
+                                    <h2 className="text-lg font-bold flex items-center gap-2"><Type style={{ color: BRAND.crimson }} /> Step 1: Enter Stat</h2>
+                                    <div className="flex flex-wrap gap-2">
                                         <label className="cursor-pointer border p-2 rounded-lg transition-all text-xs flex items-center gap-2 hover:border-opacity-100" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
                                             <Scan size={14} style={{ color: BRAND.navyLight }} />
                                             <span>Scan Image</span>
                                             <input type="file" className="hidden" accept="image/*" onChange={handleAIRead} disabled={isAILoading} />
                                         </label>
+                                        <button
+                                            onClick={handleFindStats}
+                                            disabled={isFindingStats}
+                                            className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2"
+                                            style={{ background: BRAND.crimson, borderColor: BRAND.crimsonDark }}
+                                        >
+                                            {isFindingStats ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
+                                            <span className="font-bold">Find Stats</span>
+                                        </button>
                                         <button
                                             onClick={handleAIReword}
                                             disabled={isAILoading || !statText}
@@ -463,7 +494,7 @@ export default function Home() {
                                     <textarea
                                         value={statText}
                                         onChange={(e) => setStatText(e.target.value)}
-                                        className="w-full h-64 border rounded-lg p-3 text-zinc-300 focus:outline-none transition-all resize-none font-sans"
+                                        className="w-full h-32 border rounded-lg p-3 text-zinc-300 focus:outline-none transition-all resize-none font-sans text-sm"
                                         style={{
                                             background: BRAND.navyDark,
                                             borderColor: BRAND.navyLight + '40',
@@ -481,6 +512,30 @@ export default function Home() {
                                         </div>
                                     )}
                                 </div>
+
+                                {foundStats.length > 0 && (
+                                    <div className="mt-4 space-y-4">
+                                        <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: BRAND.navyLight }}>
+                                            <Zap size={14} style={{ color: BRAND.crimson }} />
+                                            Generated Stats
+                                        </h3>
+                                        <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                                            {foundStats.map((stat, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setStatText(stat.text)}
+                                                    className="text-left p-3 rounded-lg border transition-all text-xs hover:scale-[1.02] active:scale-95 flex flex-col gap-1"
+                                                    style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                                >
+                                                    <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: BRAND.crimson }}>{stat.section}</span>
+                                                    <span className="text-zinc-200 leading-snug">{stat.text}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
