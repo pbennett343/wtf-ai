@@ -285,7 +285,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    }, [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
