@@ -30,7 +30,8 @@ METHODOLOGY: Use Google Search and X (Twitter) to find quantitative historical a
 - REQUIREMENT: Provide exactly 8 stats. You MUST use plain text numbering (1. 2. 3. etc.). Every entry MUST have a direct source URL (X link or credible sports news URL).
 
 ### SECTION 2: THE WTF BETTING TRENDS (STRICT QUOTA & HIGHEST NUMBERS) ###
-METHODOLOGY: Navigate directly to Oddsshark.com (e.g., /nba/trends, /nhl/trends, /mlb/trends).
+METHODOLOGY: Navigate directly to Oddsshark.com (e.g., /nba/trends, /nhl/trends, /mlb/trends) and ONLY pull trends from the last 24 hours for teams playing TODAY.
+- IN-SEASON & ACTIVE ONLY: Reject any trends for teams that are eliminated or out of season (e.g. NO NFL in May). The trend MUST be for an upcoming game today or tomorrow.
 - THE FILTER (HIGHER NUMBERS!): Hunt for the most lopsided mathematical streaks. Look for denominators of 15, 20, or 25 games.
 - MANDATORY CATEGORY QUOTA (8 SLOTS TOTAL): You must fill the slots in this exact order to ensure variety:
 1. OVER Trend (Highest ratio found)
