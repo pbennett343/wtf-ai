@@ -605,7 +605,20 @@ export default function Home() {
                                             style={{ outline: 'none' }}
                                             placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
                                         />
-                                        <div className="flex items-center justify-end">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    if (aiRefImage) {
+                                                        setPhotoUrl(aiRefImage);
+                                                        alert("Applied uploaded image to canvas!");
+                                                    }
+                                                }}
+                                                disabled={!aiRefImage}
+                                                className="text-xs px-5 py-2.5 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 border"
+                                                style={{ color: BRAND.navyLight, borderColor: BRAND.navyLight + '40' }}
+                                            >
+                                                <span>USE UPLOADED IMAGE</span>
+                                            </button>
                                             <button
                                                 onClick={handleAIGenerate}
                                                 disabled={isAILoading || (!aiImagePrompt && !aiRefImage)}
@@ -613,7 +626,7 @@ export default function Home() {
                                                 style={{ background: BRAND.crimson }}
                                             >
                                                 {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
-                                                <span>GENERATE CLAY MODEL</span>
+                                                <span>AI GENERATE IMAGE</span>
                                             </button>
                                         </div>
                                     </div>
