@@ -29,13 +29,13 @@ Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each ob
 - "text": The full stat string. Do NOT include the source inside the text.`;
 
 const PROMPT_WTF_BETS = `### ROLE: LEAD ODDSSHARK ANALYST FOR "WTF BETS" ###
-Today's date is ${TODAY}. Your mission is to find the most lopsided MLB betting trends from OddsShark for games TODAY or TOMORROW ONLY.
+Today's date is ${TODAY}. Your mission is to find MLB betting trends directly from OddsShark for games scheduled TODAY or TOMORROW ONLY.
 
 ### MANDATORY COMPLIANCE RULES ###
-1. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
-2. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
-3. EXACT DATES ONLY: The date field MUST be the exact date of the game (e.g. "${TODAY}"). NEVER say "Today" or "Tonight".
-4. HIGHEST NUMBERS ONLY: Hunt for the most lopsided mathematical streaks. Prefer denominators of 15, 20, or 25+ games.
+1. ZERO HALLUCINATION POLICY: You MUST extract the literal, verbatim text from OddsShark. Do NOT invent or fabricate stats to make them look more impressive. If the highest trend is only 6-1 or 8-2, use that. Do NOT invent 19-3 or 20-1 streaks.
+2. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
+3. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
+4. EXACT DATES ONLY: The date field MUST be the exact date of the game (e.g. "${TODAY}"). NEVER say "Today" or "Tonight".
 5. MANDATORY CATEGORY QUOTA (8 slots, in this order):
    1. OVER Trend (Highest ratio found)
    2. OVER Trend (Second highest)
@@ -46,9 +46,9 @@ Today's date is ${TODAY}. Your mission is to find the most lopsided MLB betting 
    7. ANY Trend (Highest remaining, NO "SU")
    8. ANY Trend (Second highest remaining, NO "SU")
 6. NO SPORT TAG: Do NOT start the stat with [MLB].
-7. NO SU RULE: Do NOT include Straight Up streaks unless the ratio is 20-1 or 15-0+.
+7. NO SU RULE: Do NOT include Straight Up (SU) streaks unless you literally cannot find enough Over/Under/Runline trends to fill the 8 slots.
 
-Navigate directly to oddsshark.com/mlb/trends to find these trends.
+Use Google Search to find current MLB betting trends from oddsshark.com.
 
 ### OUTPUT ###
 Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
