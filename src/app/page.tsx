@@ -395,36 +395,6 @@ export default function Home() {
                             </h1>
                             <p className="text-[10px] md:text-sm md:mt-1 hidden md:block" style={{ color: BRAND.navyLight }}>Sports Stats Engine</p>
                         </div>
-
-                        <div className="md:hidden">
-                            <select
-                                className="border rounded px-2 py-1 text-[10px] text-white focus:outline-none"
-                                style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight }}
-                                value={brand}
-                                onChange={(e) => setBrand(e.target.value)}
-                            >
-                                <option value="wtf-x-logo.jpg">WTF Stats</option>
-                                <option value="bets-x-logo.jpg">WTF Bets</option>
-                                <option value="vfl-x-logo.jpg">VFL</option>
-                                <option value="pod-x-logo.jpg">Willing To Fail</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* Desktop Brand Selector */}
-                    <div className="hidden md:block p-3 rounded-lg border" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
-                        <label className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: BRAND.navyLight }}>Brand Persona</label>
-                        <select
-                            className="w-full border rounded p-2 text-sm text-white focus:outline-none transition-colors"
-                            style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '60' }}
-                            value={brand}
-                            onChange={(e) => setBrand(e.target.value)}
-                        >
-                            <option value="wtf-x-logo.jpg">WTF Stats</option>
-                            <option value="bets-x-logo.jpg">WTF Bets</option>
-                            <option value="vfl-x-logo.jpg">VFL</option>
-                            <option value="pod-x-logo.jpg">Willing To Fail</option>
-                        </select>
                     </div>
                 </div>
 
@@ -517,6 +487,24 @@ export default function Home() {
                         {currentStep === 2 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Settings2 style={{ color: BRAND.crimson }} /> Step 2: Edit Text</h2>
+
+                                <div className="p-4 rounded-xl border mb-6" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
+                                    <label className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: BRAND.navyLight }}>
+                                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: BRAND.crimson }}></div>
+                                        Brand Persona
+                                    </label>
+                                    <select
+                                        className="w-full border rounded-lg p-4 text-base font-bold text-white focus:outline-none transition-all shadow-inner"
+                                        style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '60' }}
+                                        value={brand}
+                                        onChange={(e) => setBrand(e.target.value)}
+                                    >
+                                        <option value="wtf-x-logo.jpg">WTF Stats</option>
+                                        <option value="bets-x-logo.jpg">WTF Bets</option>
+                                        <option value="vfl-x-logo.jpg">VFL</option>
+                                        <option value="pod-x-logo.jpg">Willing To Fail</option>
+                                    </select>
+                                </div>
 
                                 <div className="space-y-4 pr-2 pb-12">
                                     {[
