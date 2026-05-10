@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         const genAI = new GoogleGenerativeAI(key);
 
         // Use Gemini's native image generation model for true image-to-image transformation
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-preview-image-generation" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
         // Build the transformation instruction
         const clayInstruction = referenceImage
