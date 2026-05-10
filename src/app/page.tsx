@@ -422,9 +422,9 @@ export default function Home() {
         <div className="flex flex-col md:flex-row min-h-screen text-white font-sans relative" style={{ background: BRAND.navyDark }}>
 
             {/* Mobile Header Overlay */}
-            <div className="md:hidden absolute top-4 left-4 z-50 flex items-center gap-2 pointer-events-none">
-                <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-8 w-auto object-contain drop-shadow-sm" />
-                <h1 className="text-xl font-black italic tracking-tighter drop-shadow-md">
+            <div className="md:hidden absolute top-4 left-4 z-50 flex flex-col items-start gap-0 pointer-events-none">
+                <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-10 w-auto object-contain mb-1 drop-shadow-sm" />
+                <h1 className="text-xl font-black italic tracking-tighter drop-shadow-md leading-none">
                     <span style={{ color: BRAND.crimson }}>WTF</span>
                     <span className="text-white">.AI</span>
                 </h1>
@@ -441,15 +441,13 @@ export default function Home() {
                     </div>
                 )}
                 <div className="p-4 md:p-6 border-b space-y-3 md:space-y-4 hidden md:block" style={{ borderColor: BRAND.navyLight + '40' }}>
-                    <div className="flex items-center justify-between md:block">
-                        <div>
-                            <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-10 w-auto object-contain mb-1 drop-shadow-sm" />
-                            <h1 className="text-xl md:text-2xl font-black italic tracking-tighter">
-                                <span style={{ color: BRAND.crimson }}>WTF</span>
-                                <span className="text-white">.AI</span>
-                            </h1>
-                            <p className="text-[10px] md:text-sm md:mt-1 hidden md:block" style={{ color: BRAND.navyLight }}>Sports Stats Engine</p>
-                        </div>
+                    <div className="flex flex-col items-start">
+                        <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-12 w-auto object-contain mb-1 drop-shadow-sm" />
+                        <h1 className="text-xl md:text-2xl font-black italic tracking-tighter leading-none mt-1">
+                            <span style={{ color: BRAND.crimson }}>WTF</span>
+                            <span className="text-white">.AI</span>
+                        </h1>
+                        <p className="text-[10px] md:text-sm md:mt-1 hidden md:block" style={{ color: BRAND.navyLight }}>Sports Stats Engine</p>
                     </div>
                 </div>
 
