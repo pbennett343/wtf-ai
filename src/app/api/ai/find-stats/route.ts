@@ -19,7 +19,7 @@ Today's date is ${TODAY}. Your mission is to find the best WTF Stats from the la
 3. NO BETTING TERMS: Phrases like "SU", "ATS", "Over/Under", or "Covered" are BANNED.
 4. SPORT PRIORITY: NFL, MLB, NBA, NHL only. No Soccer, Lacrosse, or WNBA unless once-in-a-century.
 5. RECENCY: All stats MUST relate to games or events from the last 24 hours (since ${TODAY}). Do not use old stats.
-6. SOURCES: Scan @ESPNinsights, @jaycuda, @mlbstats, @MLB, @NBA, @NFL, @OPTAStats, @slangonsports on X.
+6. SOURCES: Do NOT search X/Twitter. Use Google Search to find historical anomalies and recap articles from ESPN, CBS Sports, MLB.com, NBA.com, Elias Sports Bureau, or Opta Analyst for games played yesterday or today.
 
 ### OUTPUT ###
 Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
@@ -33,7 +33,7 @@ Today's date is ${TODAY}. Your mission is to find real MLB betting trends for ga
 
 ### MANDATORY COMPLIANCE RULES ###
 1. ZERO HALLUCINATION POLICY: You MUST extract literal, real betting trends. Do NOT invent or fabricate stats to make them look more impressive.
-2. EXTREME TRENDS ONLY: A "WTF Bet" must be a jaw-dropping anomaly. Hunt for massive, lopsided streaks (e.g., 9-1, 15-3, 12-0). Reject weak/random trends like 4-2, 6-4, or 5-3. The trend MUST have at least a 75% win rate over a minimum of 8 games. Keep searching until you find stats that meet this threshold.
+2. EXTREME TRENDS ONLY: A "WTF Bet" must be a jaw-dropping anomaly. Hunt for massive, lopsided streaks (e.g., 9-1, 15-3, 12-0). Reject weak/random trends like 4-2, 6-4, or 5-3. The trend MUST have at least a 75% win rate over a minimum of 8 games. If you cannot find 8 stats that meet this high bar, it is completely fine to return only 4 or 5 stats. Do NOT endlessly search.
 3. PRIORITIZE ODDSSHARK: You should aggressively attempt to find data from OddsShark first. Use search queries like 'site:oddsshark.com "MLB" "trends"'. Only fall back to Covers, Action Network, or VSiN if OddsShark yields zero results.
 4. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
 5. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
