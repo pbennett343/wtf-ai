@@ -28,34 +28,28 @@ Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each ob
 - "source": Source name only — never a full URL (e.g. "@OptaSTATS", "ESPN")
 - "text": The full stat string. Do NOT include the source inside the text.`;
 
-const PROMPT_WTF_BETS = `### ROLE: LEAD ODDSSHARK ANALYST FOR "WTF BETS" ###
-Today's date is ${TODAY}. Your mission is to find the most lopsided betting trends from OddsShark for games TODAY or TOMORROW ONLY.
+const PROMPT_WTF_BETS = `### ROLE: ODDSSHARK TREND RESEARCHER FOR "WTF BETS" ###
+Today's date is ${TODAY}. You MUST navigate to oddsshark.com/mlb/trends and find the most lopsided betting trends for MLB games scheduled TODAY (${TODAY}) or tomorrow ONLY.
 
 ### MANDATORY COMPLIANCE RULES ###
-1. IN-SEASON & ACTIVE ONLY: REJECT any team that is eliminated, out of season, or not playing in the next 48 hours.
-   Today is ${TODAY} — NO NFL stats in spring, NO NHL if playoffs are over, etc.
-2. LAST 24 HOURS: All trends must have been updated/verified within the last 24 hours.
-3. HIGHEST NUMBERS ONLY: Hunt for the most lopsided mathematical streaks. Prefer denominators of 15, 20, or 25+ games.
-4. MANDATORY CATEGORY QUOTA (8 slots, in this order):
-   1. OVER Trend (Highest ratio found)
-   2. OVER Trend (Second highest)
-   3. UNDER Trend (Highest ratio)
-   4. UNDER Trend (Second highest)
-   5. ATS/Runline/Puckline Trend (Highest ratio)
-   6. ATS/Runline/Puckline Trend (Second highest)
-   7. ANY Trend (Highest remaining, NO "SU")
-   8. ANY Trend (Second highest remaining, NO "SU")
-5. FORMAT: Start every stat with [SPORT] in brackets.
-6. NO SU RULE: Do NOT include Straight Up streaks unless the ratio is 20-1 or 15-0+.
-
-Navigate directly to oddsshark.com (/nba/trends, /nhl/trends, /mlb/trends) to find these trends.
+1. ONLY MLB: We are in MLB season. Do NOT include NBA (season is over), NFL (off-season), or any other sport.
+2. ACTIVE GAMES ONLY: Every single trend MUST be for a team that has a game scheduled TODAY or TOMORROW. Verify the team is playing.
+3. EXACT DATES: Use the exact game date (e.g. "May 10, 2026"). NEVER say "Tonight" or "Today".
+4. HIGHEST RATIOS: Find the most extreme/lopsided trends. Prefer 15+ game samples (e.g. 18-4, 21-3).
+5. NO BRACKETS: Do NOT prefix stats with [MLB] or any sport tag.
+6. CATEGORY MIX (8 slots):
+   - 2x OVER trends (highest ratios)
+   - 2x UNDER trends (highest ratios)  
+   - 2x ATS/Runline trends (highest ratios)
+   - 2x ANY remaining extreme trends (NO "SU" unless 15-0+)
+7. VERIFY ON ODDSSHARK: Every trend must come from oddsshark.com/mlb/trends. Cross-check that the team is playing.
 
 ### OUTPUT ###
 Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
-- "section": "WTF Bets Trend"
-- "date": "Today" or "Tonight" or the game date (e.g. "${TODAY}")
+- "section": "WTF Bets"
+- "date": Exact game date (e.g. "${TODAY}")
 - "source": "OddsShark"
-- "text": The full trend string starting with [SPORT]. Do NOT include the source in the text.`;
+- "text": The full trend string. No source or sport tags in the text.`;
 
 export async function POST(req: Request) {
     const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
