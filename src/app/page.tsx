@@ -43,7 +43,7 @@ export default function Home() {
     const [aiImageResult, setAiImageResult] = useState<{ url: string, prompt: string } | null>(null);
 
     // AI Find Stats state
-    const [foundStats, setFoundStats] = useState<{ section: string, text: string }[]>([]);
+    const [foundStats, setFoundStats] = useState<{ section: string, text: string, date?: string }[]>([]);
     const [isFindingStats, setIsFindingStats] = useState(false);
 
     const handleFindStats = async () => {
@@ -555,7 +555,10 @@ export default function Home() {
                                                     onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
                                                     onMouseLeave={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
                                                 >
-                                                    <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: BRAND.crimson }}>{stat.section}</span>
+                                                    <span className="text-[10px] uppercase tracking-wider font-bold flex items-center gap-1" style={{ color: BRAND.crimson }}>
+                                                        {stat.section}
+                                                        {stat.date && <span className="text-zinc-500 font-normal normal-case tracking-normal"> - {stat.date}</span>}
+                                                    </span>
                                                     <span className="text-zinc-200 leading-snug">{stat.text}</span>
                                                 </button>
                                             ))}
