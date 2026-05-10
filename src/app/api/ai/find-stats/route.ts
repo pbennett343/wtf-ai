@@ -24,10 +24,10 @@ Your mission is to generate a two-part data report for the "WTF Stats" app. Thes
 ---
 
 ### SECTION 1: THE DAILY WTF STATS (WEB & X SCOUTING) ###
-METHODOLOGY: Use your Google Search tool to find quantitative historical anomalies from the last 24 hours. To find viral stats from X, use search queries like "site:twitter.com/optastats" or "site:twitter.com/espnstatsinfo" along with phrases like "first time" or "since".
-- COMPLETED EVENTS ONLY: You MUST ONLY pull stats for games and events that have ALREADY FINISHED. Absolutely NO "aiming to," "on pace for," "if they win tonight," or future predictions. The stat must be locked in history.
+METHODOLOGY: Use Google Search and X (Twitter) to find quantitative historical anomalies from the last 24 hours.
+- SEARCH STRATEGY: Search for "MLB historical records," "NBA statistical anomalies," and scan posts from: @ESPNinsights, @jaycuda, @mlbstats, @MLB, @NBA, @NFL, @OPTAStats, and @slangonsports.
 - THE FILTER: Reject any post that is just a "cool video" or news update. (Example: "Bobby Witt Jr. hits an inside-the-park HR" is REJECTED. "Bobby Witt Jr. is the first player in MLB history to have 20/20 stats by May 10th" is ACCEPTED).
-- REQUIREMENT: Provide exactly 8 stats. Every entry MUST have a direct source URL (X link or credible sports news URL).
+- REQUIREMENT: Provide exactly 8 stats. You MUST use plain text numbering (1. 2. 3. etc.). Every entry MUST have a direct source URL (X link or credible sports news URL).
 
 ### SECTION 2: THE WTF BETTING TRENDS (STRICT QUOTA & HIGHEST NUMBERS) ###
 METHODOLOGY: Navigate directly to Oddsshark.com (e.g., /nba/trends, /nhl/trends, /mlb/trends).
@@ -49,7 +49,7 @@ You MUST return your final response as a pure JSON array containing exactly 16 o
 Each object must have the following properties:
 - "section": Either "WTF Stat" or "WTF Bets Stat"
 - "date": The date of the stat or game (e.g. "May 9, 2026", "Last Night", "Upcoming")
-- "source": The source of the stat (e.g. "X/@OptaSTATS", "OddsShark", "ESPN")
+- "source": The NAME of the source, NEVER a full URL (e.g. "@OptaSTATS", "OddsShark", "ESPN")
 - "text": The formatted stat string exactly as requested (Do NOT put the source or link inside the text string itself).
 
 Do NOT wrap the JSON in markdown formatting blocks like \`\`\`json. Return ONLY the raw JSON array string. DO NOT INCLUDE ANY OTHER TEXT.`;
