@@ -14,7 +14,7 @@ import {
     Loader2,
     Upload,
     Zap,
-    Home,
+    Home as HomeIcon,
     Search,
 } from "lucide-react";
 
@@ -477,7 +477,7 @@ export default function Home() {
     }, []);
 
     const steps = [
-        { id: 0, icon: <Home size={20} />, label: "Brand" },
+        { id: 0, icon: <HomeIcon size={20} />, label: "Brand" },
         { id: 1, icon: <Type size={20} />, label: "Enter Text" },
         { id: 2, icon: <Settings2 size={20} />, label: "Edit Text" },
         { id: 3, icon: <ImageIcon size={20} />, label: "Add Photo" },
