@@ -88,9 +88,9 @@ export default function Home() {
             } else {
                 alert("Failed to find stats. Check console.");
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Error finding stats");
+            alert("Error finding stats: " + (e.message || e));
         } finally {
             setIsFindingStats(false);
         }
