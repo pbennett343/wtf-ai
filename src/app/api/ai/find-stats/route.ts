@@ -33,7 +33,7 @@ Today's date is ${TODAY}. Your mission is to find real MLB betting trends for ga
 
 ### MANDATORY COMPLIANCE RULES ###
 1. ZERO HALLUCINATION POLICY: You MUST extract literal, real betting trends. Do NOT invent or fabricate stats to make them look more impressive. 
-2. BROADEN YOUR SEARCH: Use Google Search to find current MLB betting trends from OddsShark, Covers, Action Network, TeamRankings, or VSiN. Do NOT restrict yourself to only one site if you cannot find enough data.
+2. PRIORITIZE ODDSSHARK: You should aggressively attempt to find data from OddsShark first. Use search queries like `site:oddsshark.com "MLB" "trends"`. Only fall back to Covers, Action Network, or VSiN if OddsShark yields zero results after multiple searches.
 3. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
 4. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
 5. EXACT DATES ONLY: The date field MUST be the exact date of the game (e.g. "${TODAY}"). NEVER say "Today" or "Tonight".
