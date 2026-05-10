@@ -30,13 +30,13 @@ Search query examples:
 - "[player name] [team] action photo"
 - "[team] game photo 2026"
 
-Return ONLY a raw JSON array of 4 image URLs. Requirements:
-- URLs must point directly to an image file if possible.
-- Must be publicly accessible.
-- Prefer Wikipedia, Wikimedia, ESPN, or official team sites.
+Return ONLY a raw JSON array of up to 4 image URLs. Requirements:
+- URLs must point directly to an image file.
+- It is CRITICAL that you return at least 1 image. Do NOT return an empty array. If you can only find 1 or 2 good images, that is fine.
+- If you cannot find action photos, it is acceptable to return a direct link to the team's logo (e.g. ESPN CDN logo) or a player headshot.
 - NEVER use Getty Images or AP Images (they block embedding).
 
-Example format: ["https://upload.wikimedia.org/wikipedia/commons/...", "https://a.espncdn.com/photo/...", "https://...", "https://..."]
+Example format: ["https://upload.wikimedia.org/wikipedia/commons/...", "https://a.espncdn.com/i/teamlogos/..."]
 
 Return ONLY the JSON array. No markdown, no explanation, no other text.`;
 
