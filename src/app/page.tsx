@@ -466,9 +466,9 @@ export default function Home() {
             } else {
                 alert("Couldn't find images. Try a more specific stat.");
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Error finding images");
+            alert("Error finding images: " + (e.message || e));
         } finally {
             setIsFindingImages(false);
         }

@@ -26,6 +26,7 @@ INSTRUCTIONS:
 3. EXTREMELY IMPORTANT: You MUST ONLY return non-copyrighted, creative commons, or fair-use images that permit hotlinking. 
 4. Do NOT use images from Getty Images, AP Images, Reuters, or USA Today. They strictly block embedding and will break the app.
 5. Prioritize images from Wikipedia, Wikimedia Commons, Flickr (Creative Commons), or official team/league CDNs.
+6. ANTI-TIMEOUT RULE: Do NOT endlessly search. If you cannot find good Creative Commons action photos after 2 searches, immediately fallback to returning official ESPN/Wikipedia team logos or player headshots.
 
 Search query examples:
 - "[player name] [team] action photo 2026"
