@@ -214,7 +214,11 @@ export default function Home() {
             const nav = navigator as Navigator & {
                 canShare?: (data?: { files?: File[] }) => boolean;
             };
-            if (typeof nav.share === 'function') {
+            
+            // Only trigger native share sheet on mobile devices. Desktop (Mac) should force download.
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            if (isMobile && typeof nav.share === 'function') {
                 try {
                     const arr = dataUrl.split(',');
                     const mimeMatch = arr[0].match(/:(.*?);/);
@@ -227,19 +231,25 @@ export default function Home() {
                     const file = new File([blob], fileName, { type: 'image/jpeg' });
                     if (nav.canShare && nav.canShare({ files: [file] })) {
                         await nav.share({ files: [file], title: 'WTF Stat' });
+                        setIsExporting(false);
                         return;
                     }
                 } catch (shareErr) {
-                    if ((shareErr as Error).name === 'AbortError') return;
+                    if ((shareErr as Error).name === 'AbortError') {
+                        setIsExporting(false);
+                        return;
+                    }
                     // fall through to link download
                 }
             }
 
-            // Desktop fallback
+            // Desktop fallback (direct download)
             const a = document.createElement("a");
             a.href = dataUrl;
             a.download = fileName;
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
         } catch (err) {
             console.error("Failed to export:", err);
             alert("Failed to export the image. Check console for details.");
