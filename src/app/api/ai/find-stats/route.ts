@@ -50,7 +50,8 @@ You MUST return your final response as a pure JSON array containing exactly 16 o
 Each object must have the following properties:
 - "section": Either "WTF Stat" or "WTF Bets Stat"
 - "date": The date of the stat or game (e.g. "May 9, 2026", "Last Night", "Upcoming")
-- "text": The formatted stat string exactly as requested (including the link or source).
+- "source": The source of the stat (e.g. "X/@OptaSTATS", "OddsShark", "ESPN")
+- "text": The formatted stat string exactly as requested (Do NOT put the source or link inside the text string itself).
 
 Do NOT wrap the JSON in markdown formatting blocks like \`\`\`json. Return ONLY the raw JSON array string. DO NOT INCLUDE ANY OTHER TEXT.`;
 
