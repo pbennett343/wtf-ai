@@ -49,17 +49,23 @@ Return ONLY the JSON array. No markdown, no explanation, no other text.`;
             }
         });
 
-        let outputText = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-        outputText = outputText
-            .replace(/^```json\n/, "")
-            .replace(/^```\n/, "")
-            .replace(/\n```$/, "")
-            .trim();
+        const rawText = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        let outputText = rawText;
+        
+        // Extract JSON array using regex in case there is surrounding text
+        const jsonMatch = outputText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+            outputText = jsonMatch[0];
+        }
 
-        const images: string[] = JSON.parse(outputText);
-        const validImages = images.filter(u => typeof u === 'string' && u.startsWith('http'));
-
-        return NextResponse.json({ success: true, images: validImages.slice(0, 4) });
+        try {
+            const images: string[] = JSON.parse(outputText);
+            const validImages = images.filter(u => typeof u === 'string' && u.startsWith('http'));
+            return NextResponse.json({ success: true, images: validImages.slice(0, 4) });
+        } catch (parseError) {
+            console.error("JSON Parse Error. Raw text was:", rawText);
+            return NextResponse.json({ error: "Parse Error. AI said: " + rawText.substring(0, 200) + "..." }, { status: 500 });
+        }
 
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : "Failed to find images";

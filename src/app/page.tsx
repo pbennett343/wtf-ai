@@ -451,6 +451,8 @@ export default function Home() {
             const data = await res.json();
             if (data.images?.length) {
                 setFoundImages(data.images);
+            } else if (data.error) {
+                alert("API Error: " + data.error);
             } else {
                 alert("Couldn't find images. Try a more specific stat.");
             }
