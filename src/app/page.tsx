@@ -310,30 +310,30 @@ export default function Home() {
         setIsAILoading(true);
         setIsGeneratingImage(true);
         setAiImageResult(null);
-        console.log("Starting handleAIGenerate...");
         try {
             const res = await fetch("/api/ai/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     prompt: aiImagePrompt,
-                    context: statText,
                     referenceImage: aiRefImage || undefined,
                 }),
             });
             const data = await res.json();
 
-            if (data.generatedPrompt) {
-                console.log("AI Source:", data.source || "unknown", "Prompt:", data.generatedPrompt);
-                const encodedPrompt = encodeURIComponent(data.generatedPrompt);
-                const randomSeed = Math.floor(Math.random() * 1000000);
-                const mockUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`;
-                setAiImageResult({ url: mockUrl, prompt: `[${data.source || "?"}] ${data.generatedPrompt}` });
+            if (data.imageDataUrl) {
+                // Native Gemini image generation — true image-to-image result
+                setAiImageResult({ url: data.imageDataUrl, prompt: `[gemini-native] Clay transformation` });
+            } else if (data.imageUrl || data.generatedPrompt) {
+                // Pollinations fallback
+                const url = data.imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(data.generatedPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+                setAiImageResult({ url, prompt: `[${data.source || "pollinations"}] ${data.generatedPrompt || ""}` });
             } else if (data.error) {
                 alert("API ERROR: " + data.error);
             }
         } catch (error: any) {
             console.error("Generate fetch failed", error);
+            alert("Generation failed: " + error.message);
         } finally {
             setIsAILoading(false);
             setIsGeneratingImage(false);
@@ -376,11 +376,11 @@ export default function Home() {
     ];
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen md:h-screen text-white font-sans overflow-y-auto md:overflow-hidden" style={{ background: BRAND.navyDark }}>
+        <div className="flex flex-col md:flex-row min-h-screen text-white font-sans" style={{ background: BRAND.navyDark }}>
 
-            {/* SIDEBAR WIZARD / TOP PANEL (on mobile) */}
+            {/* SIDEBAR WIZARD — order-2 on mobile so preview shows first */}
             <div
-                className="w-full md:w-80 border-b-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0 md:h-full md:overflow-hidden pb-10 md:pb-0"
+                className="w-full md:w-80 border-t md:border-t-0 md:border-r flex flex-col z-10 shadow-2xl order-2 md:order-1 shrink-0"
                 style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '40' }}
             >
                 {!hasApiKey && (
@@ -430,7 +430,7 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-6 md:space-y-8">
+                <div className="overflow-y-auto p-4 space-y-6 md:space-y-8 pb-10">
 
                     {/* Step Navigation */}
                     <nav className="flex space-x-1 border-b pb-4 sticky top-0 z-50" style={{ borderColor: BRAND.navyLight + '40', background: BRAND.navy }}>
@@ -727,8 +727,14 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* MAIN STAGE PREVIEW (on mobile, this is ABOVE the controls) */}
-            <div className="w-full md:flex-1 relative overflow-hidden flex items-center justify-center order-1 md:order-2 min-h-[50vh] md:min-h-0" style={{ background: `linear-gradient(135deg, ${BRAND.navyDark} 0%, #1a1a2e 100%)` }}>
+            {/* MAIN STAGE PREVIEW — order-1 on mobile so it shows at top */}
+            <div
+                className="w-full md:flex-1 relative flex items-center justify-center order-1 md:order-2"
+                style={{
+                    background: `linear-gradient(135deg, ${BRAND.navyDark} 0%, #1a1a2e 100%)`,
+                    minHeight: '60vw',
+                }}
+            >
 
                 {/* Render-ready hidden target (Perfect for html2canvas) */}
                 <GraphicTemplate containerRef={exportRef} isHidden={true} />
