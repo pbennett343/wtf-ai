@@ -76,16 +76,22 @@ export async function POST(req: Request) {
             }
         });
 
-        let outputText = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-        outputText = outputText
-            .replace(/^```json\n/, "")
-            .replace(/^```\n/, "")
-            .replace(/\n```$/, "")
-            .trim();
+        const rawText = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        let outputText = rawText;
+        
+        // Extract JSON array using regex in case there is surrounding text
+        const jsonMatch = outputText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+            outputText = jsonMatch[0];
+        }
 
-        const stats = JSON.parse(outputText);
-
-        return NextResponse.json({ success: true, stats, brand });
+        try {
+            const stats = JSON.parse(outputText);
+            return NextResponse.json({ success: true, stats, brand });
+        } catch (parseError) {
+            console.error("JSON Parse Error. Raw text was:", rawText);
+            throw new Error("Failed to parse AI response as JSON.");
+        }
 
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : "Failed to find stats";
