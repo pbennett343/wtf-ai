@@ -40,17 +40,9 @@ Today's date is ${TODAY}. Your mission is to find real MLB betting trends for ga
 6. ONLY MLB: Do NOT include NBA, NFL, NHL, or any other sport.
 7. ACTIVE GAMES ONLY: REJECT any team that is not playing in the next 48 hours.
 8. EXACT DATES ONLY: The date field MUST be the exact date of the game (e.g. "${TODAY}"). NEVER say "Today" or "Tonight".
-9. MANDATORY CATEGORY QUOTA (8 slots, in this order):
-   1. OVER Trend (Highest ratio found)
-   2. OVER Trend (Second highest)
-   3. UNDER Trend (Highest ratio)
-   4. UNDER Trend (Second highest)
-   5. Runline Trend (Highest ratio)
-   6. Runline Trend (Second highest)
-   7. ANY Trend (Highest remaining, NO "SU")
-   8. ANY Trend (Second highest remaining, NO "SU")
+9. PURE EXTREMITY QUOTA (8 slots): Do NOT worry about balancing Over/Under/Runline categories. Your ONLY goal is to find the 8 absolute most extreme, statistically rare anomalies (e.g., 18-2, 12-0) across the entire MLB slate. Rank them from most extreme to least extreme.
 10. NO SPORT TAG: Do NOT start the stat with [MLB].
-11. NO SU RULE: Do NOT include Straight Up (SU) streaks unless you literally cannot find enough Over/Under/Runline trends to fill the 8 slots.
+11. NO SU RULE: Do NOT include Straight Up (SU) streaks unless you literally cannot find 8 extreme Over/Under/Runline trends.
 
 ### OUTPUT ###
 Return exactly 8 stats as a pure JSON array. No markdown, no extra text. Each object:
