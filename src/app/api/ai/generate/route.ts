@@ -22,10 +22,9 @@ export async function POST(req: Request) {
         // New @google/genai SDK — required for Nano Banana image generation
         const ai = new GoogleGenAI({ apiKey: key });
 
-        // Build the clay transformation instruction
         const clayInstruction = referenceImage
-            ? `Transform this image into a 3D clay figurine style. Keep the EXACT same pose, composition, player number, jersey colors, and body proportions from the original image. Only change the material/texture: make everything look like smooth matte clay or soft plastic. The face should remain recognizable but simplified. Keep the same background style. Do NOT change the pose or add new elements. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Additional context: ${prompt}` : ""}`
-            : `Create a 3D clay figurine style sports illustration based on this context: "${prompt}". IMPORTANT RESTRICTIONS: Do NOT generate or include any text, words, or numbers floating in the image. Do NOT include scoreboards, UI elements, or infographics. ONLY generate the clay figurine characters interacting on a clean, simple, plain background. Smooth matte clay material, soft studio lighting. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`;
+            ? `Transform this image into a 3D clay figurine style. Keep the EXACT same pose, composition, player number, jersey colors, and body proportions from the original image. Only change the material/texture: make everything look like smooth matte clay or soft plastic. The face should remain recognizable but simplified. Place the characters in a vibrant stadium, arena, or field backdrop relevant to their sport. Do NOT change the pose or add new elements. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Additional context: ${prompt}` : ""}`
+            : `Create a 3D clay figurine style sports illustration based on this context: "${prompt}". IMPORTANT RESTRICTIONS: Do NOT generate or include any text, words, or numbers floating in the image. Do NOT include scoreboards, UI elements, or infographics. ONLY generate the clay figurine characters interacting in a vibrant stadium, arena, or field backdrop relevant to their sport (NO blank/plain backgrounds). Smooth matte clay material, soft studio lighting. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`;
 
         // Build content parts array
         const contentParts: any[] = [{ text: clayInstruction }];

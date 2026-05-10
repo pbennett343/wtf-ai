@@ -370,6 +370,30 @@ export default function Home() {
         reader.readAsDataURL(file);
     };
 
+    const [isDragOver, setIsDragOver] = useState(false);
+
+    useEffect(() => {
+        const handlePaste = (e: ClipboardEvent) => {
+            if (currentStep !== 3) return;
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (file) {
+                        setAiRefImageName(file.name || "pasted-image.png");
+                        const reader = new FileReader();
+                        reader.onloadend = () => setAiRefImage(reader.result as string);
+                        reader.readAsDataURL(file);
+                        break;
+                    }
+                }
+            }
+        };
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [currentStep]);
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -609,7 +633,26 @@ export default function Home() {
                                 <div className="space-y-4">
                                     <div className="p-4 border rounded-xl space-y-4 shadow-inner" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
                                         {/* Reference Image Upload */}
-                                        <div className="border border-dashed rounded-lg p-3 transition-all" style={{ borderColor: BRAND.navyLight + '50' }}>
+                                        <div 
+                                            className="border border-dashed rounded-lg p-3 transition-all" 
+                                            style={{ 
+                                                borderColor: isDragOver ? BRAND.crimson : (BRAND.navyLight + '50'),
+                                                background: isDragOver ? (BRAND.crimson + '10') : 'transparent'
+                                            }}
+                                            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                                            onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                setIsDragOver(false);
+                                                const file = e.dataTransfer.files?.[0];
+                                                if (file && file.type.startsWith('image/')) {
+                                                    setAiRefImageName(file.name);
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => setAiRefImage(reader.result as string);
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        >
                                             {aiRefImage ? (
                                                 <div className="flex items-center gap-3">
                                                     <img src={aiRefImage} alt="Reference" className="w-14 h-14 rounded-md object-cover border" style={{ borderColor: BRAND.navyLight + '40' }} />
@@ -628,7 +671,7 @@ export default function Home() {
                                             ) : (
                                                 <label className="cursor-pointer flex items-center gap-3 py-1">
                                                     <Upload size={16} style={{ color: BRAND.navyLight }} />
-                                                    <span className="text-xs" style={{ color: BRAND.navyLight }}>Upload reference image <span className="text-[10px] opacity-60">(optional — instead of typing prompt)</span></span>
+                                                    <span className="text-xs" style={{ color: BRAND.navyLight }}>Upload Image</span>
                                                     <input type="file" className="hidden" accept="image/*" onChange={handleAIRefImageUpload} />
                                                 </label>
                                             )}
