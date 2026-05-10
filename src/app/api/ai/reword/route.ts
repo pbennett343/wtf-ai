@@ -46,7 +46,7 @@ export async function POST(req: Request) {
             }
         });
 
-        const rewordedText = response.candidates?.[0]?.content?.parts?.[0]?.text || "Failed to generate text.";
+        const rewordedText = response.text || response.candidates?.[0]?.content?.parts?.find(p => p.text)?.text || "Failed to generate text.";
         return NextResponse.json({ text: rewordedText.trim() });
     } catch (error: any) {
         console.error("Reword Error:", error);
