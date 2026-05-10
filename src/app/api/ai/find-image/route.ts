@@ -1,0 +1,69 @@
+import { GoogleGenAI } from "@google/genai";
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+export async function POST(req: Request) {
+    const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    if (!key) return NextResponse.json({ error: "GEMINI_API_KEY missing" }, { status: 500 });
+
+    let statText = "";
+    try {
+        const body = await req.json();
+        statText = body.statText || "";
+    } catch (_) { }
+
+    if (!statText) return NextResponse.json({ error: "No stat text provided" }, { status: 400 });
+
+    const prompt = `You are a sports image researcher. I need you to find 4 high-quality, publicly accessible sports action photos related to this stat:
+
+"${statText}"
+
+Search Google Images and sports news sites (ESPN, Getty Images, AP Images, USA Today Sports, Reuters) for recent photos (last 7 days) of the specific player or team mentioned.
+
+Search queries to use:
+- [player name] [team] action photo 2026
+- [player name] [team] game May 2026
+- site:espn.com OR site:nba.com OR site:mlb.com [player name] photo
+
+Return ONLY a raw JSON array of exactly 4 direct image URLs. Requirements:
+- Must be direct image URLs ending in .jpg, .jpeg, .png, or .webp
+- Must be publicly accessible (no paywalls)
+- Prefer high resolution action shots (no headshots, no graphics)
+- Different poses/moments if possible
+
+Example format: ["https://a.espncdn.com/photo/...", "https://...", "https://...", "https://..."]
+
+Return ONLY the JSON array. No markdown, no explanation, no other text.`;
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: key });
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                tools: [{ googleSearch: {} }],
+                temperature: 0.1,
+            }
+        });
+
+        let outputText = response.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+        outputText = outputText
+            .replace(/^```json\n/, "")
+            .replace(/^```\n/, "")
+            .replace(/\n```$/, "")
+            .trim();
+
+        const images: string[] = JSON.parse(outputText);
+        const validImages = images.filter(u => typeof u === 'string' && u.startsWith('http'));
+
+        return NextResponse.json({ success: true, images: validImages.slice(0, 4) });
+
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : "Failed to find images";
+        console.error("Find Image Error:", msg);
+        return NextResponse.json({ error: msg }, { status: 500 });
+    }
+}

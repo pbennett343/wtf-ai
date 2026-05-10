@@ -14,6 +14,8 @@ import {
     Loader2,
     Upload,
     Zap,
+    Home,
+    Search,
 } from "lucide-react";
 
 const INITIAL_STAT = ``;
@@ -68,10 +70,13 @@ export default function Home() {
         }
     };
 
-    // AI Image state (declared before useEffect that references them — Bug #1 fix)
+    // AI Image state
     const [aiImagePrompt, setAiImagePrompt] = useState("");
     const [aiRefImage, setAiRefImage] = useState<string | null>(null);
     const [aiRefImageName, setAiRefImageName] = useState<string | null>(null);
+    const [aiInputMode, setAiInputMode] = useState<'image' | 'text' | null>(null);
+    const [foundImages, setFoundImages] = useState<string[]>([]);
+    const [isFindingImages, setIsFindingImages] = useState(false);
 
     // Layout Engine
     const [leftIndent, setLeftIndent] = useState(160);
@@ -150,12 +155,15 @@ export default function Home() {
         alert('Layout Defaults Locked Successfully!');
     };
 
-    // Autopopulate AI Prompt
+    // Step 3 initialization: auto-populate prompt + auto-select input mode
     useEffect(() => {
-        if (currentStep === 3 && !aiImagePrompt) {
-            setAiImagePrompt(statText);
+        if (currentStep === 3) {
+            if (!aiImagePrompt) setAiImagePrompt(statText);
+            if (!aiRefImage) setAiInputMode('text');
+            else if (!aiInputMode) setAiInputMode('image');
         }
-    }, [currentStep, statText, aiImagePrompt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentStep]);
 
     const [photoUrl, setPhotoUrl] = useState<string | null>(null);
     const [photoZoom, setPhotoZoom] = useState(100);
@@ -399,8 +407,33 @@ export default function Home() {
         const reader = new FileReader();
         reader.onloadend = () => {
             setAiRefImage(reader.result as string);
+            setAiInputMode('image');
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleFindImages = async () => {
+        if (!statText) return;
+        setIsFindingImages(true);
+        setFoundImages([]);
+        try {
+            const res = await fetch("/api/ai/find-image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ statText }),
+            });
+            const data = await res.json();
+            if (data.images?.length) {
+                setFoundImages(data.images);
+            } else {
+                alert("Couldn't find images. Try a more specific stat.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error finding images");
+        } finally {
+            setIsFindingImages(false);
+        }
     };
 
     const [isDragOver, setIsDragOver] = useState(false);
@@ -444,6 +477,7 @@ export default function Home() {
     }, []);
 
     const steps = [
+        { id: 0, icon: <Home size={20} />, label: "Brand" },
         { id: 1, icon: <Type size={20} />, label: "Enter Text" },
         { id: 2, icon: <Settings2 size={20} />, label: "Edit Text" },
         { id: 3, icon: <ImageIcon size={20} />, label: "Add Photo" },
@@ -556,24 +590,28 @@ export default function Home() {
                                 <div className="flex justify-between items-center">
                                     <h2 className="text-lg font-bold flex items-center gap-2"><Type style={{ color: BRAND.crimson }} /> Step 1: Enter Stat</h2>
                                     <div className="flex flex-wrap gap-2">
-                                        <button
-                                            onClick={handleFindStats}
-                                            disabled={isFindingStats}
-                                            className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2"
-                                            style={{ background: BRAND.crimson, borderColor: BRAND.crimsonDark }}
-                                        >
-                                            {isFindingStats ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
-                                            <span className="font-bold">Find Stats</span>
-                                        </button>
-                                        <button
-                                            onClick={handleAIReword}
-                                            disabled={isAILoading || !statText}
-                                            className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2"
-                                            style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
-                                        >
-                                            {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} style={{ color: BRAND.crimson }} />}
-                                            <span>WTF Style</span>
-                                        </button>
+                                        {(brand === 'wtf-x-logo.jpg' || brand === 'bets-x-logo.jpg') && (
+                                            <button
+                                                onClick={handleFindStats}
+                                                disabled={isFindingStats}
+                                                className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2 disabled:opacity-40"
+                                                style={{ background: BRAND.crimson, borderColor: BRAND.crimsonDark }}
+                                            >
+                                                {isFindingStats ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
+                                                <span className="font-bold">Find Stats</span>
+                                            </button>
+                                        )}
+                                        {(brand === 'wtf-x-logo.jpg' || brand === 'bets-x-logo.jpg') && (
+                                            <button
+                                                onClick={handleAIReword}
+                                                disabled={isAILoading || !statText}
+                                                className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2 disabled:opacity-40"
+                                                style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                            >
+                                                {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} style={{ color: BRAND.crimson }} />}
+                                                <span>WTF Style</span>
+                                            </button>
+                                        )}
                                         {prevStatText && (
                                             <button
                                                 onClick={() => {
@@ -692,97 +730,106 @@ export default function Home() {
                         )}
 
                         {currentStep === 3 && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><ImageIcon style={{ color: BRAND.crimson }} /> Step 3: Add Photo</h2>
 
-                                <div className="space-y-4">
-                                    <div className="p-4 border rounded-xl space-y-4 shadow-inner" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
-                                        {/* Reference Image Upload */}
-                                        <div 
-                                            className="border border-dashed rounded-lg p-3 transition-all" 
-                                            style={{ 
-                                                borderColor: isDragOver ? BRAND.crimson : (BRAND.navyLight + '50'),
-                                                background: isDragOver ? (BRAND.crimson + '10') : 'transparent'
-                                            }}
-                                            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                                            onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                setIsDragOver(false);
-                                                const file = e.dataTransfer.files?.[0];
-                                                if (file && file.type.startsWith('image/')) {
-                                                    setAiRefImageName(file.name);
-                                                    const reader = new FileReader();
-                                                    reader.onloadend = () => setAiRefImage(reader.result as string);
-                                                    reader.readAsDataURL(file);
-                                                }
-                                            }}
-                                        >
-                                            {aiRefImage ? (
-                                                <div className="flex items-center gap-3">
-                                                    <img src={aiRefImage} alt="Reference" className="w-14 h-14 rounded-md object-cover border" style={{ borderColor: BRAND.navyLight + '40' }} />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs text-white font-bold truncate">{aiRefImageName}</p>
-                                                        <p className="text-[10px]" style={{ color: BRAND.navyLight }}>Reference image loaded</p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => { setAiRefImage(null); setAiRefImageName(null); }}
-                                                        className="text-[10px] px-2 py-1 rounded border transition-all"
-                                                        style={{ borderColor: BRAND.navyLight + '40', color: BRAND.navyLight }}
-                                                    >
-                                                        Clear
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <label className="cursor-pointer flex items-center gap-3 py-1">
-                                                    <Upload size={16} style={{ color: BRAND.navyLight }} />
-                                                    <span className="text-xs" style={{ color: BRAND.navyLight }}>Upload Image</span>
-                                                    <input type="file" className="hidden" accept="image/*" onChange={handleAIRefImageUpload} />
-                                                </label>
-                                            )}
+                                {/* INPUT SOURCE SELECTION */}
+                                <div className="space-y-2">
+                                    {/* Stat Text radio */}
+                                    <label className="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all" style={{ borderColor: aiInputMode === 'text' ? BRAND.crimson : BRAND.navyLight + '40', background: aiInputMode === 'text' ? BRAND.crimson + '18' : BRAND.navyDark }}>
+                                        <input type="radio" name="aiInputMode" checked={aiInputMode === 'text'} onChange={() => setAiInputMode('text')} style={{ accentColor: BRAND.crimson, width: 16, height: 16, flexShrink: 0 }} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-white">Stat Text</p>
+                                            <p className="text-[10px] text-zinc-400 truncate">{statText || 'No stat entered yet'}</p>
                                         </div>
+                                    </label>
+                                    {/* Photo radio or upload button */}
+                                    {aiRefImage ? (
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all" style={{ borderColor: aiInputMode === 'image' ? BRAND.crimson : BRAND.navyLight + '40', background: aiInputMode === 'image' ? BRAND.crimson + '18' : BRAND.navyDark }}>
+                                            <input type="radio" name="aiInputMode" checked={aiInputMode === 'image'} onChange={() => setAiInputMode('image')} style={{ accentColor: BRAND.crimson, width: 16, height: 16, flexShrink: 0 }} />
+                                            <img src={aiRefImage} alt="Ref" className="w-10 h-10 rounded-md object-cover flex-shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-white truncate">{aiRefImageName}</p>
+                                                <button onClick={(e) => { e.preventDefault(); setAiRefImage(null); setAiRefImageName(null); setAiInputMode('text'); }} className="text-[10px] hover:text-white transition-colors" style={{ color: BRAND.navyLight }}>Clear photo</button>
+                                            </div>
+                                        </label>
+                                    ) : (
+                                        <label className="flex items-center gap-3 p-4 rounded-xl border-2 border-dashed cursor-pointer transition-all" style={{ borderColor: isDragOver ? BRAND.crimson : BRAND.navyLight + '60', background: isDragOver ? BRAND.crimson + '10' : 'transparent' }} onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }} onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }} onDrop={(e) => { e.preventDefault(); setIsDragOver(false); const file = e.dataTransfer.files?.[0]; if (file && file.type.startsWith('image/')) { setAiRefImageName(file.name); const reader = new FileReader(); reader.onloadend = () => { setAiRefImage(reader.result as string); setAiInputMode('image'); }; reader.readAsDataURL(file); } }}>
+                                            <Upload size={20} style={{ color: BRAND.crimson }} className="flex-shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-bold text-white">Upload a Photo</p>
+                                                <p className="text-[10px]" style={{ color: BRAND.navyLight }}>JPG, PNG — drag &amp; drop or tap</p>
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleAIRefImageUpload} />
+                                        </label>
+                                    )}
+                                </div>
 
-                                        {/* Divider */}
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
-                                            <span className="text-[9px] uppercase tracking-widest font-bold" style={{ color: BRAND.navyLight + '80' }}>or type prompt</span>
-                                            <div className="flex-1 h-px" style={{ background: BRAND.navyLight + '30' }}></div>
-                                        </div>
 
-                                        <textarea
-                                            value={aiImagePrompt}
-                                            onChange={(e) => setAiImagePrompt(e.target.value)}
-                                            className="w-full bg-transparent border-none p-0 text-sm text-zinc-300 focus:ring-0 resize-none h-16"
-                                            style={{ outline: 'none' }}
-                                            placeholder="Describe your vision... (e.g. 'Epic stadium tunnel walk')"
-                                        />
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    if (aiRefImage) {
-                                                        setPhotoUrl(aiRefImage);
-                                                        alert("Applied uploaded image to canvas!");
-                                                    }
-                                                }}
-                                                disabled={!aiRefImage}
-                                                className="text-xs px-5 py-2.5 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 border"
-                                                style={{ color: BRAND.navyLight, borderColor: BRAND.navyLight + '40' }}
-                                            >
-                                                <span>USE UPLOADED IMAGE</span>
-                                            </button>
-                                            <button
-                                                onClick={handleAIGenerate}
-                                                disabled={isAILoading || (!aiImagePrompt && !aiRefImage)}
-                                                className="text-white text-xs px-5 py-2.5 rounded-lg font-black transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-                                                style={{ background: BRAND.crimson }}
-                                            >
-                                                {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
-                                                <span>AI GENERATE IMAGE</span>
-                                            </button>
+                                {/* Optional extra prompt when text mode active */}
+                                {aiInputMode === 'text' && (
+                                    <textarea
+                                        value={aiImagePrompt}
+                                        onChange={(e) => setAiImagePrompt(e.target.value)}
+                                        className="w-full border rounded-lg p-3 text-sm text-zinc-300 focus:outline-none resize-none h-14"
+                                        style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                        onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                        onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                        placeholder="Add extra details... (optional)"
+                                    />
+                                )}
+
+                                {/* 3 Action Buttons */}
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={handleFindImages}
+                                        disabled={isFindingImages || !statText}
+                                        className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg border text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
+                                        style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40', color: 'white' }}
+                                    >
+                                        {isFindingImages ? <Loader2 className="animate-spin" size={16} /> : <Search size={16} style={{ color: BRAND.crimson }} />}
+                                        <span>FIND IMAGE</span>
+                                    </button>
+                                    <button
+                                        onClick={() => { if (aiRefImage) setPhotoUrl(aiRefImage); }}
+                                        disabled={!aiRefImage}
+                                        className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg border text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
+                                        style={{ background: BRAND.navyDark, borderColor: aiRefImage ? BRAND.crimson : BRAND.navyLight + '40', color: aiRefImage ? 'white' : BRAND.navyLight }}
+                                    >
+                                        <Upload size={16} style={{ color: aiRefImage ? BRAND.crimson : BRAND.navyLight }} />
+                                        <span>USE PHOTO</span>
+                                    </button>
+                                    <button
+                                        onClick={handleAIGenerate}
+                                        disabled={isAILoading || !aiInputMode}
+                                        className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg text-white text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
+                                        style={{ background: aiInputMode ? BRAND.crimson : BRAND.navyLight }}
+                                    >
+                                        {isAILoading ? <Loader2 className="animate-spin" size={16} /> : <Zap size={16} />}
+                                        <span>AI IMAGE</span>
+                                    </button>
+                                </div>
+
+                                {/* Found Images Grid */}
+                                {foundImages.length > 0 && (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: BRAND.navyLight }}>Found Images — tap to select</p>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {foundImages.map((url, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => { setAiRefImage(url); setAiRefImageName(`Found Image ${i + 1}`); setAiInputMode('image'); }}
+                                                    className="aspect-square rounded-lg overflow-hidden border-2 transition-all active:scale-95"
+                                                    style={{ borderColor: aiRefImage === url ? BRAND.crimson : 'transparent' }}
+                                                >
+                                                    <img src={url} alt={`Found ${i + 1}`} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
+                                )}
 
-                                    {/* AI RESULT PREVIEW (visible in both modes once generated) */}
+
                                     {aiImageResult && (
                                         <div className="border rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-500" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }} key={genCount}>
                                             <div className="aspect-square bg-black relative group" key={aiImageResult.url}>
