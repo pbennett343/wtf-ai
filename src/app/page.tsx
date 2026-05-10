@@ -879,7 +879,6 @@ export default function Home() {
                                     )}
 
                                     {photoUrl && <p className="text-xs text-green-400 flex items-center gap-1 font-bold"><CheckCircle2 size={12} /> Live on Canvas</p>}
-                                </div>
                             </div>
                         )}
 
