@@ -22,13 +22,14 @@ STAT: "${statText}"
 
 INSTRUCTIONS:
 1. Identify the main Player or Team mentioned in the stat.
-2. Search Google Images for recent action photos of THAT specific player or team. Do NOT search the exact stat text.
-3. EXTREMELY IMPORTANT: Do NOT use images from Getty Images, AP Images, or Reuters. They block embedding and will break the app.
-4. Prefer images from Wikipedia, Wikimedia Commons, official team sites, or ESPN.
+2. Search Google Images for action photos of THAT specific player or team from the last month. Do NOT search the exact stat text.
+3. EXTREMELY IMPORTANT: You MUST ONLY return non-copyrighted, creative commons, or fair-use images that permit hotlinking. 
+4. Do NOT use images from Getty Images, AP Images, Reuters, or USA Today. They strictly block embedding and will break the app.
+5. Prioritize images from Wikipedia, Wikimedia Commons, Flickr (Creative Commons), or official team/league CDNs.
 
 Search query examples:
-- "[player name] [team] action photo"
-- "[team] game photo 2026"
+- "[player name] [team] action photo 2026"
+- "[team] game photo 2026 creative commons"
 
 Return ONLY a raw JSON array of up to 4 image URLs. Requirements:
 - URLs must point directly to an image file.
