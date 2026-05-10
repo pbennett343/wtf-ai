@@ -49,7 +49,11 @@ export default function Home() {
     const handleFindStats = async () => {
         setIsFindingStats(true);
         try {
-            const res = await fetch("/api/ai/find-stats", { method: "POST" });
+            const res = await fetch("/api/ai/find-stats", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brand }),
+            });
             const data = await res.json();
             if (data.stats) {
                 setFoundStats(data.stats);
@@ -450,13 +454,15 @@ export default function Home() {
     return (
         <div className="flex flex-col md:flex-row h-screen overflow-hidden text-white font-sans relative" style={{ background: BRAND.navyDark }}>
 
-            {/* Mobile Header Overlay */}
-            <div className="md:hidden absolute top-4 left-4 z-50 flex flex-col items-start gap-0 pointer-events-none">
-                <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-10 w-auto object-contain mb-1 drop-shadow-sm" />
-                <h1 className="text-xl font-black italic tracking-tighter drop-shadow-md leading-none">
-                    <span style={{ color: BRAND.crimson }}>WTF</span>
-                    <span className="text-white">.AI</span>
-                </h1>
+            {/* Mobile Header Overlay — tapping logo goes to Step 0 */}
+            <div className="md:hidden absolute top-4 left-4 z-50 flex flex-col items-start gap-0">
+                <button onClick={() => setCurrentStep(0)} className="flex flex-col items-start gap-0 active:opacity-70">
+                    <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-10 w-auto object-contain mb-1 drop-shadow-sm" />
+                    <h1 className="text-xl font-black italic tracking-tighter drop-shadow-md leading-none">
+                        <span style={{ color: BRAND.crimson }}>WTF</span>
+                        <span className="text-white">.AI</span>
+                    </h1>
+                </button>
             </div>
 
             {/* SIDEBAR WIZARD — order-2 on mobile so preview shows first */}
@@ -469,15 +475,16 @@ export default function Home() {
                         ⚠️ GEMINI_API_KEY MISSING
                     </div>
                 )}
+                {/* Desktop sidebar header — click logo to go back to Step 0 */}
                 <div className="p-4 md:p-6 border-b space-y-3 md:space-y-4 hidden md:block" style={{ borderColor: BRAND.navyLight + '40' }}>
-                    <div className="flex flex-col items-start">
+                    <button onClick={() => setCurrentStep(0)} className="flex flex-col items-start text-left hover:opacity-80 transition-opacity active:opacity-60">
                         <img src="/wtf-logo-transparent.png" alt="WTF Sports" className="h-12 w-auto object-contain mb-1 drop-shadow-sm" />
                         <h1 className="text-xl md:text-2xl font-black italic tracking-tighter leading-none mt-1">
                             <span style={{ color: BRAND.crimson }}>WTF</span>
                             <span className="text-white">.AI</span>
                         </h1>
                         <p className="text-[10px] md:text-sm md:mt-1 hidden md:block" style={{ color: BRAND.navyLight }}>Sports Stats Engine</p>
-                    </div>
+                    </button>
                 </div>
 
                 <div className="overflow-y-auto flex-1 p-4 space-y-4 md:space-y-6 pb-10">
@@ -511,39 +518,36 @@ export default function Home() {
                         {/* ── STEP 0: BRAND HOME ── */}
                         {currentStep === 0 && (
                             <div className="space-y-3 animate-in fade-in duration-300 pt-1">
-                                <div className="text-center pb-1">
+                                <div className="text-center pb-2">
                                     <h2 className="text-lg font-black italic tracking-tight">
                                         <span style={{ color: BRAND.crimson }}>SELECT</span>
                                         <span className="text-white"> BRAND</span>
                                     </h2>
-                                    <p className="text-xs mt-0.5" style={{ color: BRAND.navyLight }}>Choose a brand to get started</p>
                                 </div>
-                                {[
-                                    { file: 'wtf-x-logo.jpg', label: 'WTF Stats', desc: 'Historical sports anomalies' },
-                                    { file: 'bets-x-logo.jpg', label: 'WTF Bets', desc: 'Premium picks & analysis' },
-                                    { file: 'vfl-x-logo.jpg', label: 'VFL', desc: 'Virtual Football League' },
-                                    { file: 'pod-x-logo.jpg', label: 'Willing To Fail', desc: 'Podcast content' },
-                                ].map((b) => (
-                                    <button
-                                        key={b.file}
-                                        onClick={() => { setBrand(b.file); setCurrentStep(1); }}
-                                        className="w-full flex items-center gap-4 p-3 rounded-xl border transition-all active:scale-95"
-                                        style={{ background: BRAND.navyDark, borderColor: brand === b.file ? BRAND.crimson : BRAND.navyLight + '40' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
-                                        onMouseLeave={(e) => e.currentTarget.style.borderColor = brand === b.file ? BRAND.crimson : BRAND.navyLight + '40'}
-                                    >
-                                        <img
-                                            src={`/${b.file}`}
-                                            alt={b.label}
-                                            className="h-9 w-auto object-contain flex-shrink-0"
-                                            onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
-                                        />
-                                        <div className="text-left">
-                                            <p className="font-bold text-sm text-white">{b.label}</p>
-                                            <p className="text-[10px]" style={{ color: BRAND.navyLight }}>{b.desc}</p>
-                                        </div>
-                                    </button>
-                                ))}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { file: 'wtf-x-logo.jpg', label: 'WTF Stats' },
+                                        { file: 'bets-x-logo.jpg', label: 'WTF Bets' },
+                                        { file: 'vfl-x-logo.jpg', label: 'VFL' },
+                                        { file: 'pod-x-logo.jpg', label: 'Willing To Fail' },
+                                    ].map((b) => (
+                                        <button
+                                            key={b.file}
+                                            onClick={() => { setBrand(b.file); setCurrentStep(1); }}
+                                            className="flex items-center justify-center p-4 rounded-xl border-2 transition-all active:scale-95 bg-white"
+                                            style={{ borderColor: brand === b.file ? BRAND.crimson : 'transparent' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                            onMouseLeave={(e) => e.currentTarget.style.borderColor = brand === b.file ? BRAND.crimson : 'transparent'}
+                                        >
+                                            <img
+                                                src={`/${b.file}`}
+                                                alt={b.label}
+                                                className="w-full h-12 object-contain"
+                                                onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
 
@@ -644,24 +648,6 @@ export default function Home() {
                         {currentStep === 2 && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Settings2 style={{ color: BRAND.crimson }} /> Step 2: Edit Text</h2>
-
-                                <div className="p-4 rounded-xl border mb-6" style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}>
-                                    <label className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: BRAND.navyLight }}>
-                                        <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: BRAND.crimson }}></div>
-                                        Brand Persona
-                                    </label>
-                                    <select
-                                        className="w-full border rounded-lg p-4 text-base font-bold text-white focus:outline-none transition-all shadow-inner"
-                                        style={{ background: BRAND.navy, borderColor: BRAND.navyLight + '60' }}
-                                        value={brand}
-                                        onChange={(e) => setBrand(e.target.value)}
-                                    >
-                                        <option value="wtf-x-logo.jpg">WTF Stats</option>
-                                        <option value="bets-x-logo.jpg">WTF Bets</option>
-                                        <option value="vfl-x-logo.jpg">VFL</option>
-                                        <option value="pod-x-logo.jpg">Willing To Fail</option>
-                                    </select>
-                                </div>
 
                                 <div className="space-y-4 pr-2 pb-12">
                                     {[
