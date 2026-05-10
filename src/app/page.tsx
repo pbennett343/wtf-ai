@@ -527,7 +527,7 @@ export default function Home() {
                                         }}
                                         onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
                                         onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
-                                        placeholder="Type, paste, or scan an image to extract text..."
+                                        placeholder="Type or paste text from found stat below..."
                                     />
                                     {isAILoading && (
                                         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
