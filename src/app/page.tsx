@@ -858,7 +858,7 @@ export default function Home() {
                                             {foundImages.map((url, i) => (
                                                 <button
                                                     key={i}
-                                                    onClick={() => { setAiRefImage(url); setAiRefImageName(`Found Image ${i + 1}`); setAiInputMode('image'); }}
+                                                    onClick={() => { setPhotoUrl(proxyUrl(url)); setAiRefImage(url); setAiRefImageName(`Found Image ${i + 1}`); setAiInputMode('image'); }}
                                                     className="aspect-square rounded-lg overflow-hidden border-2 transition-all active:scale-95 relative bg-zinc-100 flex flex-col items-center justify-center p-2"
                                                     style={{ borderColor: aiRefImage === url ? BRAND.crimson : 'transparent' }}
                                                 >
