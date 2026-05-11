@@ -305,7 +305,7 @@ export default function Home() {
             <div className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
                 {photoUrl ? (
                     <img
-                        src={photoUrl.startsWith('blob:') ? photoUrl : proxyUrl(photoUrl)}
+                        src={photoUrl.startsWith('blob:') || photoUrl.startsWith('data:') ? photoUrl : proxyUrl(photoUrl)}
                         alt="Background"
                         className="absolute max-w-none"
                         style={{
