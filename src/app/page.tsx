@@ -831,7 +831,7 @@ export default function Home() {
                                         <span>FIND IMAGE</span>
                                     </button>
                                     <button
-                                        onClick={() => { if (aiRefImage) setPhotoUrl(proxyUrl(aiRefImage)); }}
+                                        onClick={() => { if (aiRefImage) setPhotoUrl(aiRefImage.startsWith('http') ? proxyUrl(aiRefImage) : aiRefImage); }}
                                         disabled={!aiRefImage}
                                         className="flex flex-col items-center justify-center gap-1 py-3 rounded-lg border text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
                                         style={{ background: BRAND.navyDark, borderColor: aiRefImage ? BRAND.crimson : BRAND.navyLight + '40', color: aiRefImage ? 'white' : BRAND.navyLight }}
@@ -912,7 +912,7 @@ export default function Home() {
                                                         </button>
                                                         <button
                                                             onClick={() => {
-                                                                setPhotoUrl(proxyUrl(aiImageResult.url));
+                                                                setPhotoUrl(aiImageResult.url.startsWith('http') ? proxyUrl(aiImageResult.url) : aiImageResult.url);
                                                                 alert("Applied to canvas!");
                                                             }}
                                                             className="flex-1 py-2 rounded font-black text-xs transition-all shadow-xl"
