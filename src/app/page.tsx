@@ -56,11 +56,59 @@ const BRAND = {
     crimsonDark: "#8a1a25",
 };
 
+const MLB_TEAMS = [
+    { abbr: "ari", name: "D-backs" },
+    { abbr: "atl", name: "Braves" },
+    { abbr: "bal", name: "Orioles" },
+    { abbr: "bos", name: "Red Sox" },
+    { abbr: "chw", name: "White Sox" },
+    { abbr: "chc", name: "Cubs" },
+    { abbr: "cin", name: "Reds" },
+    { abbr: "cle", name: "Guardians" },
+    { abbr: "col", name: "Rockies" },
+    { abbr: "det", name: "Tigers" },
+    { abbr: "hou", name: "Astros" },
+    { abbr: "kc", name: "Royals" },
+    { abbr: "laa", name: "Angels" },
+    { abbr: "lad", name: "Dodgers" },
+    { abbr: "mia", name: "Marlins" },
+    { abbr: "mil", name: "Brewers" },
+    { abbr: "min", name: "Twins" },
+    { abbr: "nyy", name: "Yankees" },
+    { abbr: "nym", name: "Mets" },
+    { abbr: "oak", name: "Athletics" },
+    { abbr: "phi", name: "Phillies" },
+    { abbr: "pit", name: "Pirates" },
+    { abbr: "sd", name: "Padres" },
+    { abbr: "sf", name: "Giants" },
+    { abbr: "sea", name: "Mariners" },
+    { abbr: "stl", name: "Cardinals" },
+    { abbr: "tb", name: "Rays" },
+    { abbr: "tex", name: "Rangers" },
+    { abbr: "tor", name: "Blue Jays" },
+    { abbr: "wsh", name: "Nationals" }
+];
+
 type Step = 0 | 1 | 2 | 3 | 5 | 6;
 
 export default function Home() {
     const [currentStep, setCurrentStep] = useState<Step>(0);
     const [isExporting, setIsExporting] = useState(false);
+
+    // Matchup Overlay State
+    const [showMatchupOverlay, setShowMatchupOverlay] = useState(false);
+    const [matchupLeague, setMatchupLeague] = useState("MLB");
+    const [matchupTime, setMatchupTime] = useState("Today, 6:10 PM EST");
+    const [awayTeamAbbr, setAwayTeamAbbr] = useState("");
+    const [awayTeamName, setAwayTeamName] = useState("");
+    const [awayTeamRecord, setAwayTeamRecord] = useState("");
+    const [awayMl, setAwayMl] = useState("");
+    const [awayRl, setAwayRl] = useState("");
+    const [homeTeamAbbr, setHomeTeamAbbr] = useState("");
+    const [homeTeamName, setHomeTeamName] = useState("");
+    const [homeTeamRecord, setHomeTeamRecord] = useState("");
+    const [homeMl, setHomeMl] = useState("");
+    const [homeRl, setHomeRl] = useState("");
 
     // App State
     const [statText, setStatText] = useState(INITIAL_STAT);
@@ -322,6 +370,80 @@ export default function Home() {
                     </div>
                 )}
 
+                {/* Matchup Overlay Card */}
+                {showMatchupOverlay && (
+                    <div className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2200px] bg-[#1c1c24]/90 backdrop-blur-3xl rounded-[80px] p-[100px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col gap-[60px] z-30 font-sans">
+                        {/* Header: MLB · Today, 6:10 PM */}
+                        <div className="text-[70px] font-semibold text-white/50 tracking-wider uppercase text-center">
+                            {matchupLeague} &middot; {matchupTime}
+                        </div>
+
+                        {/* Matchup main content */}
+                        <div className="flex items-center justify-between w-full px-[100px]">
+                            {/* Away Team */}
+                            <div className="flex flex-col items-center gap-[30px] w-[750px]">
+                                {awayTeamAbbr ? (
+                                    <img
+                                        src={`https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${awayTeamAbbr.toLowerCase()}.png`}
+                                        alt="Away Logo"
+                                        className="w-[320px] h-[320px] object-contain"
+                                        crossOrigin="anonymous"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-[320px] h-[320px] bg-white/5 rounded-full flex items-center justify-center text-[100px] font-black text-white/20">A</div>
+                                )}
+                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full mt-3">{awayTeamName || 'Away'}</div>
+                                {awayTeamRecord && (
+                                    <div className="text-[55px] font-bold text-white/40 tracking-wider">({awayTeamRecord})</div>
+                                )}
+                                <div className="flex flex-col items-center mt-6 text-center w-full">
+                                    {awayMl && (
+                                        <div className="text-[70px] font-black tracking-tight text-[#58a6ff]">ML {awayMl}</div>
+                                    )}
+                                    {awayRl && (
+                                        <div className="text-[60px] font-bold text-white/60 mt-1">RL {awayRl}</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* "at" text */}
+                            <div className="text-[80px] font-medium italic text-white/30 lowercase">at</div>
+
+                            {/* Home Team */}
+                            <div className="flex flex-col items-center gap-[30px] w-[750px]">
+                                {homeTeamAbbr ? (
+                                    <img
+                                        src={`https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${homeTeamAbbr.toLowerCase()}.png`}
+                                        alt="Home Logo"
+                                        className="w-[320px] h-[320px] object-contain"
+                                        crossOrigin="anonymous"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-[320px] h-[320px] bg-white/5 rounded-full flex items-center justify-center text-[100px] font-black text-white/20">H</div>
+                                )}
+                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full mt-3">{homeTeamName || 'Home'}</div>
+                                {homeTeamRecord && (
+                                    <div className="text-[55px] font-bold text-white/40 tracking-wider">({homeTeamRecord})</div>
+                                )}
+                                <div className="flex flex-col items-center mt-6 text-center w-full">
+                                    {homeMl && (
+                                        <div className="text-[70px] font-black tracking-tight text-[#58a6ff]">ML {homeMl}</div>
+                                    )}
+                                    {homeRl && (
+                                        <div className="text-[60px] font-bold text-white/60 mt-1">RL {homeRl}</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* AI Generation Overlay */}
                 {isGeneratingImage && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center z-50 animate-in fade-in duration-300">
@@ -335,7 +457,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -946,6 +1068,212 @@ export default function Home() {
                                         />
                                     </div>
                                 ))}
+
+                                <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Matchup Overlay</h3>
+                                        <button
+                                            onClick={() => setShowMatchupOverlay(!showMatchupOverlay)}
+                                            className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                showMatchupOverlay ? 'text-white' : 'text-white/40'
+                                            }`}
+                                            style={{
+                                                background: showMatchupOverlay ? BRAND.crimson : BRAND.navyDark,
+                                                border: `1px solid ${showMatchupOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                            }}
+                                        >
+                                            {showMatchupOverlay ? 'ON' : 'OFF'}
+                                        </button>
+                                    </div>
+
+                                    {showMatchupOverlay && (
+                                        <div className="space-y-4 animate-in fade-in duration-300">
+                                            {/* Game Info */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] uppercase font-bold text-white/50 tracking-wider">League</label>
+                                                    <input
+                                                        type="text"
+                                                        value={matchupLeague}
+                                                        onChange={(e) => setMatchupLeague(e.target.value)}
+                                                        className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white focus:border-[#b42434]"
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] uppercase font-bold text-white/50 tracking-wider">Time</label>
+                                                    <input
+                                                        type="text"
+                                                        value={matchupTime}
+                                                        onChange={(e) => setMatchupTime(e.target.value)}
+                                                        className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white focus:border-[#b42434]"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* AWAY TEAM */}
+                                            <div className="border border-white/5 bg-white/3 rounded-xl p-3.5 space-y-3">
+                                                <div className="text-xs font-black text-[#58a6ff] uppercase tracking-wider">Away Team (Visitor)</div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] uppercase font-bold text-white/40 block">Select MLB Team</label>
+                                                    <select
+                                                        onChange={(e) => {
+                                                            const selected = MLB_TEAMS.find(t => t.abbr === e.target.value);
+                                                            if (selected) {
+                                                                setAwayTeamAbbr(selected.abbr);
+                                                                setAwayTeamName(selected.name);
+                                                            } else {
+                                                                setAwayTeamAbbr("");
+                                                                setAwayTeamName("");
+                                                            }
+                                                        }}
+                                                        className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        value={awayTeamAbbr}
+                                                    >
+                                                        <option value="">-- Custom Team --</option>
+                                                        {MLB_TEAMS.map(team => (
+                                                            <option key={team.abbr} value={team.abbr}>{team.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Name</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Rockies"
+                                                            value={awayTeamName}
+                                                            onChange={(e) => setAwayTeamName(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Abbr (Logo)</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="col"
+                                                            value={awayTeamAbbr}
+                                                            onChange={(e) => setAwayTeamAbbr(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Record</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="15-28"
+                                                            value={awayTeamRecord}
+                                                            onChange={(e) => setAwayTeamRecord(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Moneyline</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="+180"
+                                                            value={awayMl}
+                                                            onChange={(e) => setAwayMl(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Runline</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="+1.5 (-115)"
+                                                            value={awayRl}
+                                                            onChange={(e) => setAwayRl(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* HOME TEAM */}
+                                            <div className="border border-white/5 bg-white/3 rounded-xl p-3.5 space-y-3">
+                                                <div className="text-xs font-black text-[#b42434] uppercase tracking-wider">Home Team</div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] uppercase font-bold text-white/40 block">Select MLB Team</label>
+                                                    <select
+                                                        onChange={(e) => {
+                                                            const selected = MLB_TEAMS.find(t => t.abbr === e.target.value);
+                                                            if (selected) {
+                                                                setHomeTeamAbbr(selected.abbr);
+                                                                setHomeTeamName(selected.name);
+                                                            } else {
+                                                                setHomeTeamAbbr("");
+                                                                setHomeTeamName("");
+                                                            }
+                                                        }}
+                                                        className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        value={homeTeamAbbr}
+                                                    >
+                                                        <option value="">-- Custom Team --</option>
+                                                        {MLB_TEAMS.map(team => (
+                                                            <option key={team.abbr} value={team.abbr}>{team.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Name</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Dodgers"
+                                                            value={homeTeamName}
+                                                            onChange={(e) => setHomeTeamName(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Abbr (Logo)</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="lad"
+                                                            value={homeTeamAbbr}
+                                                            onChange={(e) => setHomeTeamAbbr(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Record</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="29-17"
+                                                            value={homeTeamRecord}
+                                                            onChange={(e) => setHomeTeamRecord(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Moneyline</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="-220"
+                                                            value={homeMl}
+                                                            onChange={(e) => setHomeMl(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[9px] uppercase font-bold text-white/40 block">Runline</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="-1.5 (-105)"
+                                                            value={homeRl}
+                                                            onChange={(e) => setHomeRl(e.target.value)}
+                                                            className="w-full bg-[#161622] border border-white/10 rounded-lg p-2 text-xs focus:outline-none text-white"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 
