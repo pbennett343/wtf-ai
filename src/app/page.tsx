@@ -109,6 +109,44 @@ export default function Home() {
     const [homeTeamRecord, setHomeTeamRecord] = useState("");
     const [homeMl, setHomeMl] = useState("");
     const [homeRl, setHomeRl] = useState("");
+    const [isSearchingMatchup, setIsSearchingMatchup] = useState(false);
+
+    const handleMatchupSearch = async (text: string) => {
+        if (!text || brand !== 'bets-x-logo.jpg') return;
+        setIsSearchingMatchup(true);
+        try {
+            const res = await fetch("/api/ai/matchup-search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ statText: text }),
+            });
+            const data = await res.json();
+            if (data.success && data.matchup) {
+                const m = data.matchup;
+                setShowMatchupOverlay(true);
+                if (m.league) setMatchupLeague(m.league);
+                if (m.time) setMatchupTime(m.time);
+                if (m.awayTeam) {
+                    if (m.awayTeam.abbr) setAwayTeamAbbr(m.awayTeam.abbr);
+                    if (m.awayTeam.name) setAwayTeamName(m.awayTeam.name);
+                    if (m.awayTeam.record) setAwayTeamRecord(m.awayTeam.record);
+                    if (m.awayTeam.ml) setAwayMl(m.awayTeam.ml);
+                    if (m.awayTeam.rl) setAwayRl(m.awayTeam.rl);
+                }
+                if (m.homeTeam) {
+                    if (m.homeTeam.abbr) setHomeTeamAbbr(m.homeTeam.abbr);
+                    if (m.homeTeam.name) setHomeTeamName(m.homeTeam.name);
+                    if (m.homeTeam.record) setHomeTeamRecord(m.homeTeam.record);
+                    if (m.homeTeam.ml) setHomeMl(m.homeTeam.ml);
+                    if (m.homeTeam.rl) setHomeRl(m.homeTeam.rl);
+                }
+            }
+        } catch (e: any) {
+            console.error("Matchup search error:", e);
+        } finally {
+            setIsSearchingMatchup(false);
+        }
+    };
 
     // App State
     const [statText, setStatText] = useState(INITIAL_STAT);
@@ -812,7 +850,7 @@ export default function Home() {
                                             {foundStats.map((stat, idx) => (
                                                 <button
                                                     key={idx}
-                                                    onClick={() => setStatText(stat.text)}
+                                                    onClick={() => { setStatText(stat.text); handleMatchupSearch(stat.text); }}
                                                     className="text-left p-3 rounded-lg border transition-all text-xs hover:scale-[1.02] active:scale-95 flex flex-col gap-1"
                                                     style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
                                                     onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
@@ -1024,6 +1062,9 @@ export default function Home() {
                                                         <button
                                                             onClick={() => {
                                                                 setPhotoUrl(aiImageResult.url.startsWith('http') ? proxyUrl(aiImageResult.url) : aiImageResult.url);
+                                                                setPhotoZoom(188);
+                                                                setPhotoPanY(688);
+                                                                setPhotoPanX(0);
                                                                 alert("Applied to canvas!");
                                                             }}
                                                             className="flex-1 py-2 rounded font-black text-xs transition-all shadow-xl"
@@ -1071,19 +1112,33 @@ export default function Home() {
 
                                 <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Matchup Overlay</h3>
-                                        <button
-                                            onClick={() => setShowMatchupOverlay(!showMatchupOverlay)}
-                                            className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
-                                                showMatchupOverlay ? 'text-white' : 'text-white/40'
-                                            }`}
-                                            style={{
-                                                background: showMatchupOverlay ? BRAND.crimson : BRAND.navyDark,
-                                                border: `1px solid ${showMatchupOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
-                                            }}
-                                        >
-                                            {showMatchupOverlay ? 'ON' : 'OFF'}
-                                        </button>
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                            Matchup Overlay
+                                            {isSearchingMatchup && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
+                                        </h3>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleMatchupSearch(statText)}
+                                                disabled={isSearchingMatchup || !statText}
+                                                className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
+                                                style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
+                                            >
+                                                {isSearchingMatchup ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
+                                                Auto
+                                            </button>
+                                            <button
+                                                onClick={() => setShowMatchupOverlay(!showMatchupOverlay)}
+                                                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                    showMatchupOverlay ? 'text-white' : 'text-white/40'
+                                                }`}
+                                                style={{
+                                                    background: showMatchupOverlay ? BRAND.crimson : BRAND.navyDark,
+                                                    border: `1px solid ${showMatchupOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                                }}
+                                            >
+                                                {showMatchupOverlay ? 'ON' : 'OFF'}
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {showMatchupOverlay && (
