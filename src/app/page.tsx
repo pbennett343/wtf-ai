@@ -641,17 +641,6 @@ export default function Home() {
                                                 <span className="font-bold">Find Stats</span>
                                             </button>
                                         )}
-                                        {(brand === 'wtf-x-logo.jpg' || brand === 'bets-x-logo.jpg') && (
-                                            <button
-                                                onClick={handleAIReword}
-                                                disabled={isAILoading || !statText}
-                                                className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2 disabled:opacity-40"
-                                                style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
-                                            >
-                                                {isAILoading ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} style={{ color: BRAND.crimson }} />}
-                                                <span>WTF Style</span>
-                                            </button>
-                                        )}
                                         {prevStatText && (
                                             <button
                                                 onClick={() => {
