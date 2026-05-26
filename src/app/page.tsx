@@ -210,6 +210,21 @@ export default function Home() {
         }
     };
 
+    const handleClearAll = () => {
+        setStatText("");
+        setPhotoUrl(null);
+        setAiImagePrompt("");
+        setAiImageResult(null);
+        setAiRefImage(null);
+        setAiRefImageName(null);
+        setStatContextData(null);
+        setShowStatContextOverlay(false);
+        setShowMatchupOverlay(false);
+        setFoundStats([]);
+        setFoundImages([]);
+        setPrevStatText(null);
+    };
+
     // AI Image state
     const [aiImagePrompt, setAiImagePrompt] = useState("");
     const [aiRefImage, setAiRefImage] = useState<string | null>(null);
@@ -253,7 +268,7 @@ export default function Home() {
     useEffect(() => {
         if (brand === 'wtf-x-logo.jpg') {
             setFontSize(140);
-            setLineHeight(1.0);
+            setLineHeight(1.45);
             setLeftIndent(140);
             setLogoHeight(260);
             setLogoTopPadding(42);
@@ -622,7 +637,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showStatContextOverlay, statContextData]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -941,6 +956,15 @@ export default function Home() {
                                                 <span>Undo</span>
                                             </button>
                                         )}
+                                        {(statText || photoUrl || foundStats.length > 0) && (
+                                            <button
+                                                onClick={handleClearAll}
+                                                className="border p-2 rounded-lg transition-all text-xs flex items-center gap-2 hover:scale-[1.02] active:scale-95"
+                                                style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40', color: BRAND.navyLight }}
+                                            >
+                                                <span>Clear</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -1132,6 +1156,16 @@ export default function Home() {
                                         <span>AI IMAGE</span>
                                     </button>
                                 </div>
+
+                                {(photoUrl || statText) && (
+                                    <button
+                                        onClick={handleClearAll}
+                                        className="w-full py-2 border rounded-lg text-xs font-bold transition-all active:scale-95 text-zinc-400 hover:text-white"
+                                        style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                    >
+                                        CLEAR WORKSPACE
+                                    </button>
+                                )}
 
                                 {/* Found Images Grid */}
                                 {foundImages.length > 0 && (
