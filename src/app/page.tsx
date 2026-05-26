@@ -233,6 +233,14 @@ export default function Home() {
             setLogoTopPadding(42);
             setLogoBottomPadding(68);
             setTextTopPadding(0);
+        } else if (brand === 'bets-x-logo.jpg') {
+            setFontSize(140);
+            setLineHeight(1.45);
+            setLeftIndent(140);
+            setLogoHeight(260);
+            setLogoTopPadding(42);
+            setLogoBottomPadding(68);
+            setTextTopPadding(0);
         } else if (brand === 'vfl-logo.png') {
             setFontSize(110);
             setLineHeight(1.4);
@@ -410,16 +418,16 @@ export default function Home() {
 
                 {/* Matchup Overlay Card */}
                 {showMatchupOverlay && (
-                    <div className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2200px] bg-[#1c1c24]/90 backdrop-blur-3xl rounded-[80px] p-[100px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col gap-[60px] z-30 font-sans">
+                    <div className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2600px] bg-[#1c1c24]/92 backdrop-blur-3xl rounded-[80px] p-[100px] pb-[80px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col gap-[50px] z-30 font-sans">
                         {/* Header: MLB · Today, 6:10 PM */}
                         <div className="text-[70px] font-semibold text-white/50 tracking-wider uppercase text-center">
                             {matchupLeague} &middot; {matchupTime}
                         </div>
 
-                        {/* Matchup main content */}
-                        <div className="flex items-center justify-between w-full px-[100px]">
+                        {/* Teams Row: Logos, Names, Records */}
+                        <div className="flex items-center justify-between w-full px-[60px]">
                             {/* Away Team */}
-                            <div className="flex flex-col items-center gap-[30px] w-[750px]">
+                            <div className="flex flex-col items-center gap-[20px] w-[900px]">
                                 {awayTeamAbbr ? (
                                     <img
                                         src={`https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${awayTeamAbbr.toLowerCase()}.png`}
@@ -433,25 +441,17 @@ export default function Home() {
                                 ) : (
                                     <div className="w-[320px] h-[320px] bg-white/5 rounded-full flex items-center justify-center text-[100px] font-black text-white/20">A</div>
                                 )}
-                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full mt-3">{awayTeamName || 'Away'}</div>
+                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full">{awayTeamName || 'Away'}</div>
                                 {awayTeamRecord && (
                                     <div className="text-[55px] font-bold text-white/40 tracking-wider">({awayTeamRecord})</div>
                                 )}
-                                <div className="flex flex-col items-center mt-6 text-center w-full">
-                                    {awayMl && (
-                                        <div className="text-[70px] font-black tracking-tight text-[#58a6ff]">ML {awayMl}</div>
-                                    )}
-                                    {awayRl && (
-                                        <div className="text-[60px] font-bold text-white/60 mt-1">RL {awayRl}</div>
-                                    )}
-                                </div>
                             </div>
 
-                            {/* "at" text */}
+                            {/* "at" badge */}
                             <div className="text-[80px] font-medium italic text-white/30 lowercase">at</div>
 
                             {/* Home Team */}
-                            <div className="flex flex-col items-center gap-[30px] w-[750px]">
+                            <div className="flex flex-col items-center gap-[20px] w-[900px]">
                                 {homeTeamAbbr ? (
                                     <img
                                         src={`https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${homeTeamAbbr.toLowerCase()}.png`}
@@ -465,20 +465,54 @@ export default function Home() {
                                 ) : (
                                     <div className="w-[320px] h-[320px] bg-white/5 rounded-full flex items-center justify-center text-[100px] font-black text-white/20">H</div>
                                 )}
-                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full mt-3">{homeTeamName || 'Home'}</div>
+                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full">{homeTeamName || 'Home'}</div>
                                 {homeTeamRecord && (
                                     <div className="text-[55px] font-bold text-white/40 tracking-wider">({homeTeamRecord})</div>
                                 )}
-                                <div className="flex flex-col items-center mt-6 text-center w-full">
-                                    {homeMl && (
-                                        <div className="text-[70px] font-black tracking-tight text-[#58a6ff]">ML {homeMl}</div>
-                                    )}
-                                    {homeRl && (
-                                        <div className="text-[60px] font-bold text-white/60 mt-1">RL {homeRl}</div>
-                                    )}
-                                </div>
                             </div>
                         </div>
+
+                        {/* Odds Bar — dedicated bottom section */}
+                        {(awayMl || homeMl || awayRl || homeRl) && (
+                            <div className="w-full bg-white/5 rounded-[50px] border border-white/10 px-[80px] py-[60px]">
+                                <div className="flex items-stretch justify-between w-full">
+                                    {/* Away Odds */}
+                                    <div className="flex flex-col items-center gap-[25px] w-[900px]">
+                                        {awayMl && (
+                                            <div className="flex items-center gap-[30px]">
+                                                <span className="text-[48px] font-bold text-white/40 uppercase tracking-widest">ML</span>
+                                                <span className="text-[80px] font-black tracking-tight text-[#58a6ff]">{awayMl}</span>
+                                            </div>
+                                        )}
+                                        {awayRl && (
+                                            <div className="flex items-center gap-[30px]">
+                                                <span className="text-[48px] font-bold text-white/40 uppercase tracking-widest">RL</span>
+                                                <span className="text-[68px] font-bold text-white/70 tracking-tight">{awayRl}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div className="w-[4px] bg-white/10 rounded-full mx-[40px]"></div>
+
+                                    {/* Home Odds */}
+                                    <div className="flex flex-col items-center gap-[25px] w-[900px]">
+                                        {homeMl && (
+                                            <div className="flex items-center gap-[30px]">
+                                                <span className="text-[48px] font-bold text-white/40 uppercase tracking-widest">ML</span>
+                                                <span className="text-[80px] font-black tracking-tight text-[#58a6ff]">{homeMl}</span>
+                                            </div>
+                                        )}
+                                        {homeRl && (
+                                            <div className="flex items-center gap-[30px]">
+                                                <span className="text-[48px] font-bold text-white/40 uppercase tracking-widest">RL</span>
+                                                <span className="text-[68px] font-bold text-white/70 tracking-tight">{homeRl}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
