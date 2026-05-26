@@ -152,9 +152,15 @@ export default function Home() {
     const [showStatContextOverlay, setShowStatContextOverlay] = useState(false);
     const [statContextData, setStatContextData] = useState<any>(null);
     const [isSearchingStatContext, setIsSearchingStatContext] = useState(false);
+    const [statContextScale, setStatContextScale] = useState(100);
+    const [statContextPanY, setStatContextPanY] = useState(200);
+    const [isStatContextLocked, setIsStatContextLocked] = useState(false);
+    const [isEditingStatContext, setIsEditingStatContext] = useState(false);
+    const [statContextJsonStr, setStatContextJsonStr] = useState("");
 
-    const handleStatContextSearch = async (text: string) => {
+    const handleStatContextSearch = async (text: string, force = false) => {
         if (!text || brand !== 'wtf-x-logo.jpg') return;
+        if (isStatContextLocked && !force) return;
         setIsSearchingStatContext(true);
         try {
             const res = await fetch("/api/ai/stat-context", {
@@ -219,6 +225,10 @@ export default function Home() {
         setAiRefImageName(null);
         setStatContextData(null);
         setShowStatContextOverlay(false);
+        setStatContextScale(100);
+        setStatContextPanY(200);
+        setIsStatContextLocked(false);
+        setIsEditingStatContext(false);
         setShowMatchupOverlay(false);
         setFoundStats([]);
         setFoundImages([]);
@@ -563,8 +573,12 @@ export default function Home() {
                 {/* Stat Context Overlay Card */}
                 {showStatContextOverlay && statContextData && (
                     <div 
-                        className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2600px] rounded-[80px] p-[100px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col z-30 font-sans"
-                        style={{ backgroundColor: 'rgba(28, 28, 36, 0.95)' }}
+                        className="absolute left-1/2 -translate-x-1/2 w-[2600px] rounded-[80px] p-[100px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col z-30 font-sans origin-bottom"
+                        style={{ 
+                            backgroundColor: 'rgba(28, 28, 36, 0.95)',
+                            bottom: `${statContextPanY}px`,
+                            transform: `translateX(-50%) scale(${statContextScale / 100})`
+                        }}
                     >
                         {/* Header Title & Subtitle */}
                         <div className="text-center mb-[80px]">
@@ -637,7 +651,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showStatContextOverlay, statContextData]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showStatContextOverlay, statContextData, statContextScale, statContextPanY]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1006,7 +1020,7 @@ export default function Home() {
                                                         if (brand === 'bets-x-logo.jpg') {
                                                             handleMatchupSearch(stat.text); 
                                                         } else if (brand === 'wtf-x-logo.jpg') {
-                                                            handleStatContextSearch(stat.text);
+                                                            handleStatContextSearch(stat.text, false);
                                                         }
                                                     }}
                                                     className="text-left p-3 rounded-lg border transition-all text-xs hover:scale-[1.02] active:scale-95 flex flex-col gap-1"
@@ -1512,7 +1526,7 @@ export default function Home() {
                                                 </h3>
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => handleStatContextSearch(statText)}
+                                                        onClick={() => handleStatContextSearch(statText, true)}
                                                         disabled={isSearchingStatContext || !statText}
                                                         className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
                                                         style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
@@ -1539,9 +1553,89 @@ export default function Home() {
                                                 <div className="text-xs text-white/50 italic text-center py-4">Click AUTO to generate chart data from stat.</div>
                                             )}
                                             {showStatContextOverlay && statContextData && (
-                                                <div className="text-xs text-white/70 bg-[#161622] border border-white/10 rounded-lg p-3 mt-4">
-                                                    <span className="font-bold text-white block mb-1">{statContextData.title}</span>
-                                                    Loaded {statContextData.rows?.length || 0} context rows. Click Auto to regenerate if needed.
+                                                <div className="mt-4 space-y-4">
+                                                    {!isEditingStatContext ? (
+                                                        <div className="text-xs text-white/70 bg-[#161622] border border-white/10 rounded-lg p-3">
+                                                            <span className="font-bold text-white block mb-1">{statContextData.title}</span>
+                                                            Loaded {statContextData.rows?.length || 0} context rows. Click Auto to regenerate if needed.
+                                                            
+                                                            <div className="flex gap-2 mt-3">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setStatContextJsonStr(JSON.stringify(statContextData, null, 2));
+                                                                        setIsEditingStatContext(true);
+                                                                    }}
+                                                                    className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded transition-colors text-white text-[10px] font-bold"
+                                                                >
+                                                                    EDIT DATA
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setIsStatContextLocked(!isStatContextLocked)}
+                                                                    className="px-2 py-1 hover:opacity-80 rounded transition-colors text-white text-[10px] font-bold"
+                                                                    style={{ background: isStatContextLocked ? BRAND.crimson : 'rgba(255,255,255,0.1)' }}
+                                                                >
+                                                                    {isStatContextLocked ? 'LOCKED' : 'LOCK DATA'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            <textarea
+                                                                className="w-full h-48 bg-[#161622] border border-white/10 rounded-lg p-2 text-[10px] font-mono text-zinc-300 focus:outline-none"
+                                                                value={statContextJsonStr}
+                                                                onChange={(e) => setStatContextJsonStr(e.target.value)}
+                                                            />
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        try {
+                                                                            const parsed = JSON.parse(statContextJsonStr);
+                                                                            setStatContextData(parsed);
+                                                                            setIsEditingStatContext(false);
+                                                                        } catch (e) {
+                                                                            alert("Invalid JSON format");
+                                                                        }
+                                                                    }}
+                                                                    className="flex-1 py-1 bg-emerald-600/50 hover:bg-emerald-600 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setIsEditingStatContext(false)}
+                                                                    className="flex-1 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="space-y-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Scale</span>
+                                                                <span className="text-white">{statContextScale}%</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="50" max="150" step="1"
+                                                                value={statContextScale}
+                                                                onChange={(e) => setStatContextScale(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Bottom Offset</span>
+                                                                <span className="text-white">{statContextPanY}px</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="-500" max="1500" step="10"
+                                                                value={statContextPanY}
+                                                                onChange={(e) => setStatContextPanY(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </>
