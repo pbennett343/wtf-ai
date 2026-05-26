@@ -148,6 +148,32 @@ export default function Home() {
         }
     };
 
+    // Stat Context Overlay State
+    const [showStatContextOverlay, setShowStatContextOverlay] = useState(false);
+    const [statContextData, setStatContextData] = useState<any>(null);
+    const [isSearchingStatContext, setIsSearchingStatContext] = useState(false);
+
+    const handleStatContextSearch = async (text: string) => {
+        if (!text || brand !== 'wtf-x-logo.jpg') return;
+        setIsSearchingStatContext(true);
+        try {
+            const res = await fetch("/api/ai/stat-context", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ statText: text }),
+            });
+            const data = await res.json();
+            if (data.success && data.context) {
+                setStatContextData(data.context);
+                setShowStatContextOverlay(true);
+            }
+        } catch (e: any) {
+            console.error("Stat context search error:", e);
+        } finally {
+            setIsSearchingStatContext(false);
+        }
+    };
+
     // App State
     const [statText, setStatText] = useState(INITIAL_STAT);
     const [prevStatText, setPrevStatText] = useState<string | null>(null);
@@ -418,7 +444,10 @@ export default function Home() {
 
                 {/* Matchup Overlay Card */}
                 {showMatchupOverlay && (
-                    <div className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2600px] bg-[#1c1c24]/92 backdrop-blur-3xl rounded-[80px] p-[100px] pb-[80px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col gap-[50px] z-30 font-sans">
+                    <div 
+                        className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2600px] rounded-[80px] p-[100px] pb-[80px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col gap-[50px] z-30 font-sans"
+                        style={{ backgroundColor: 'rgba(28, 28, 36, 0.95)' }}
+                    >
                         {/* Header: MLB · Today, 6:10 PM */}
                         <div className="text-[70px] font-semibold text-white/50 tracking-wider uppercase text-center">
                             {matchupLeague} &middot; {matchupTime}
@@ -511,6 +540,70 @@ export default function Home() {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Stat Context Overlay Card */}
+                {showStatContextOverlay && statContextData && (
+                    <div 
+                        className="absolute bottom-[200px] left-1/2 -translate-x-1/2 w-[2600px] rounded-[80px] p-[100px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col z-30 font-sans"
+                        style={{ backgroundColor: 'rgba(28, 28, 36, 0.95)' }}
+                    >
+                        {/* Header Title & Subtitle */}
+                        <div className="text-center mb-[80px]">
+                            <h2 className="text-[100px] font-black uppercase tracking-tight text-white leading-none">{statContextData.title}</h2>
+                            {statContextData.subtitle && (
+                                <p className="text-[50px] font-bold text-white/50 tracking-widest uppercase mt-4">{statContextData.subtitle}</p>
+                            )}
+                        </div>
+
+                        {/* Table Header */}
+                        <div className="flex items-center w-full px-[60px] pb-[40px] border-b-[4px] border-white/10 mb-[40px]">
+                            <div className="w-[150px] text-[40px] font-black text-white/40 uppercase tracking-widest">{statContextData.columns?.[0] || 'Rank'}</div>
+                            <div className="flex-1 text-[40px] font-black text-white/40 uppercase tracking-widest">{statContextData.columns?.[1] || 'Player'}</div>
+                            <div className="w-[500px] text-[40px] font-black text-white/40 uppercase tracking-widest text-center">{statContextData.columns?.[2] || 'Team'}</div>
+                            <div className="w-[450px] text-[40px] font-black text-white/40 uppercase tracking-widest text-center">{statContextData.columns?.[3] || 'Date'}</div>
+                            <div className="w-[400px] text-[40px] font-black text-white/40 uppercase tracking-widest text-right">{statContextData.columns?.[4] || 'Stat'}</div>
+                        </div>
+
+                        {/* Table Rows */}
+                        <div className="flex flex-col gap-[30px] w-full px-[40px]">
+                            {statContextData.rows?.map((row: any, idx: number) => {
+                                const isHighlight = row.isHighlight || (statContextData.highlight && row.player?.includes(statContextData.highlight));
+                                return (
+                                    <div 
+                                        key={idx} 
+                                        className="flex items-center w-full px-[40px] py-[30px] rounded-[40px] transition-all"
+                                        style={{ backgroundColor: isHighlight ? 'rgba(180, 36, 52, 0.15)' : 'transparent', border: isHighlight ? '4px solid rgba(180, 36, 52, 0.5)' : '4px solid transparent' }}
+                                    >
+                                        <div className="w-[150px] text-[65px] font-bold text-white/60">{row.rank || idx + 1}</div>
+                                        <div className="flex-1 text-[85px] font-black text-white uppercase tracking-tight truncate pr-8">{row.player}</div>
+                                        <div className="w-[500px] flex justify-center items-center">
+                                            {row.teamAbbr ? (
+                                                <img
+                                                    src={`https://a.espncdn.com/i/teamlogos/${statContextData.title?.toLowerCase().includes('nba') ? 'nba' : statContextData.title?.toLowerCase().includes('nfl') ? 'nfl' : 'mlb'}/500/scoreboard/${row.teamAbbr.toLowerCase()}.png`}
+                                                    alt="Team Logo"
+                                                    className="w-[180px] h-[180px] object-contain"
+                                                    crossOrigin="anonymous"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <span className="text-[55px] font-bold text-white/50">{row.team}</span>
+                                            )}
+                                        </div>
+                                        <div className="w-[450px] text-[55px] font-bold text-white/60 text-center">{row.date}</div>
+                                        <div className="w-[400px] text-[80px] font-black text-[#58a6ff] text-right">{row.value}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Footnote */}
+                        {statContextData.footnote && (
+                            <div className="text-[40px] font-medium italic text-white/30 text-right mt-[60px] pr-[60px]">
+                                {statContextData.footnote}
                             </div>
                         )}
                     </div>
@@ -884,7 +977,14 @@ export default function Home() {
                                             {foundStats.map((stat, idx) => (
                                                 <button
                                                     key={idx}
-                                                    onClick={() => { setStatText(stat.text); handleMatchupSearch(stat.text); }}
+                                                    onClick={() => { 
+                                                        setStatText(stat.text); 
+                                                        if (brand === 'bets-x-logo.jpg') {
+                                                            handleMatchupSearch(stat.text); 
+                                                        } else if (brand === 'wtf-x-logo.jpg') {
+                                                            handleStatContextSearch(stat.text);
+                                                        }
+                                                    }}
                                                     className="text-left p-3 rounded-lg border transition-all text-xs hover:scale-[1.02] active:scale-95 flex flex-col gap-1"
                                                     style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
                                                     onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
@@ -1145,40 +1245,43 @@ export default function Home() {
                                 ))}
 
                                 <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                                            Matchup Overlay
-                                            {isSearchingMatchup && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
-                                        </h3>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleMatchupSearch(statText)}
-                                                disabled={isSearchingMatchup || !statText}
-                                                className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
-                                                style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
-                                            >
-                                                {isSearchingMatchup ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
-                                                Auto
-                                            </button>
-                                            <button
-                                                onClick={() => setShowMatchupOverlay(!showMatchupOverlay)}
-                                                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
-                                                    showMatchupOverlay ? 'text-white' : 'text-white/40'
-                                                }`}
-                                                style={{
-                                                    background: showMatchupOverlay ? BRAND.crimson : BRAND.navyDark,
-                                                    border: `1px solid ${showMatchupOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
-                                                }}
-                                            >
-                                                {showMatchupOverlay ? 'ON' : 'OFF'}
-                                            </button>
-                                        </div>
-                                    </div>
+                                    {/* MATCHUP OVERLAY CONTROLS (WTF BETS) */}
+                                    {brand === 'bets-x-logo.jpg' && (
+                                        <>
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                                    Matchup Overlay
+                                                    {isSearchingMatchup && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
+                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleMatchupSearch(statText)}
+                                                        disabled={isSearchingMatchup || !statText}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
+                                                        style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
+                                                    >
+                                                        {isSearchingMatchup ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
+                                                        Auto
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowMatchupOverlay(!showMatchupOverlay)}
+                                                        className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                            showMatchupOverlay ? 'text-white' : 'text-white/40'
+                                                        }`}
+                                                        style={{
+                                                            background: showMatchupOverlay ? BRAND.crimson : BRAND.navyDark,
+                                                            border: `1px solid ${showMatchupOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                                        }}
+                                                    >
+                                                        {showMatchupOverlay ? 'ON' : 'OFF'}
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                                    {showMatchupOverlay && (
-                                        <div className="space-y-4 animate-in fade-in duration-300">
-                                            {/* Game Info */}
-                                            <div className="grid grid-cols-2 gap-3">
+                                            {showMatchupOverlay && (
+                                                <div className="space-y-4 animate-in fade-in duration-300">
+                                                    {/* Game Info */}
+                                                    <div className="grid grid-cols-2 gap-3">
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] uppercase font-bold text-white/50 tracking-wider">League</label>
                                                     <input
@@ -1361,6 +1464,52 @@ export default function Home() {
                                                 </div>
                                             </div>
                                         </div>
+                                        </div>
+                                    )}
+
+                                    {/* STAT CONTEXT OVERLAY CONTROLS (WTF STATS) */}
+                                    {brand === 'wtf-x-logo.jpg' && (
+                                        <>
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                                    Stat Context Chart
+                                                    {isSearchingStatContext && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
+                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleStatContextSearch(statText)}
+                                                        disabled={isSearchingStatContext || !statText}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
+                                                        style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
+                                                    >
+                                                        {isSearchingStatContext ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
+                                                        Auto
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowStatContextOverlay(!showStatContextOverlay)}
+                                                        className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                            showStatContextOverlay ? 'text-white' : 'text-white/40'
+                                                        }`}
+                                                        style={{
+                                                            background: showStatContextOverlay ? BRAND.crimson : BRAND.navyDark,
+                                                            border: `1px solid ${showStatContextOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                                        }}
+                                                    >
+                                                        {showStatContextOverlay ? 'ON' : 'OFF'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {showStatContextOverlay && !statContextData && (
+                                                <div className="text-xs text-white/50 italic text-center py-4">Click AUTO to generate chart data from stat.</div>
+                                            )}
+                                            {showStatContextOverlay && statContextData && (
+                                                <div className="text-xs text-white/70 bg-[#161622] border border-white/10 rounded-lg p-3 mt-4">
+                                                    <span className="font-bold text-white block mb-1">{statContextData.title}</span>
+                                                    Loaded {statContextData.rows?.length || 0} context rows. Click Auto to regenerate if needed.
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
