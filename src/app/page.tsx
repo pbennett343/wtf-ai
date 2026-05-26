@@ -1464,7 +1464,7 @@ export default function Home() {
                                                 </div>
                                             </div>
                                         </div>
-                                        </div>
+                                        </>
                                     )}
 
                                     {/* STAT CONTEXT OVERLAY CONTROLS (WTF STATS) */}
