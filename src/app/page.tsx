@@ -470,7 +470,7 @@ export default function Home() {
                                 ) : (
                                     <div className="w-[320px] h-[320px] bg-white/5 rounded-full flex items-center justify-center text-[100px] font-black text-white/20">A</div>
                                 )}
-                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full">{awayTeamName || 'Away'}</div>
+                                <div className="text-[90px] font-black uppercase tracking-tight leading-none text-center w-full px-[20px]">{awayTeamName || 'Away'}</div>
                                 {awayTeamRecord && (
                                     <div className="text-[55px] font-bold text-white/40 tracking-wider">({awayTeamRecord})</div>
                                 )}
@@ -494,7 +494,7 @@ export default function Home() {
                                 ) : (
                                     <div className="w-[320px] h-[320px] bg-white/5 rounded-full flex items-center justify-center text-[100px] font-black text-white/20">H</div>
                                 )}
-                                <div className="text-[90px] font-black uppercase tracking-tight text-center truncate w-full">{homeTeamName || 'Home'}</div>
+                                <div className="text-[90px] font-black uppercase tracking-tight leading-none text-center w-full px-[20px]">{homeTeamName || 'Home'}</div>
                                 {homeTeamRecord && (
                                     <div className="text-[55px] font-bold text-white/40 tracking-wider">({homeTeamRecord})</div>
                                 )}
@@ -579,7 +579,7 @@ export default function Home() {
                                         style={{ backgroundColor: isHighlight ? 'rgba(180, 36, 52, 0.15)' : 'transparent', border: isHighlight ? '4px solid rgba(180, 36, 52, 0.5)' : '4px solid transparent' }}
                                     >
                                         <div className="w-[150px] text-[65px] font-bold text-white/60">{row.rank || idx + 1}</div>
-                                        <div className="flex-1 text-[85px] font-black text-white uppercase tracking-tight truncate pr-8">{row.player}</div>
+                                        <div className="flex-1 text-[85px] font-black text-white uppercase tracking-tight leading-none pr-8 break-words">{row.player}</div>
                                         <div className="w-[500px] flex justify-center items-center">
                                             {row.teamAbbr ? (
                                                 <img
