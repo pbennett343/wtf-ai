@@ -92,7 +92,7 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                 const easingPower = [4, 5, 6, 7][Math.floor(Math.random() * 4)];
 
                 // ── Stable Confetti Particles (falling at half speed) ──
-                const numParticles = 100;
+                const numParticles = 120;
                 const particles: Array<{
                     x: number;
                     y: number;
@@ -106,7 +106,8 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                 for (let i = 0; i < numParticles; i++) {
                     particles.push({
                         x: Math.random() * size,
-                        y: Math.random() * -size, // start above screen
+                        // y starts distributed across the screen and some above the screen
+                        y: Math.random() * (size * 1.5) - (size * 0.5),
                         w: 10 + Math.random() * 15,
                         h: 10 + Math.random() * 15,
                         color: BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)],
@@ -197,31 +198,22 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                     const x = size - logoW - padding;
                     const y = padding;
 
-                    // Draw a white rounded border around the logo
-                    ctx.save();
-                    const radius = 16;
-                    ctx.strokeStyle = "#ffffff";
-                    ctx.lineWidth = 4;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(x - 6 + radius, y - 6);
-                    ctx.lineTo(x + logoW + 6 - radius, y - 6);
-                    ctx.arcTo(x + logoW + 6, y - 6, x + logoW + 6, y - 6 + radius, radius);
-                    ctx.lineTo(x + logoW + 6, y + logoH + 6 - radius);
-                    ctx.arcTo(x + logoW + 6, y + logoH + 6, x + logoW + 6 - radius, y + logoH + 6, radius);
-                    ctx.lineTo(x - 6 + radius, y + logoH + 6);
-                    ctx.arcTo(x - 6, y + logoH + 6, x - 6, y + logoH + 6 - radius, radius);
-                    ctx.lineTo(x - 6, y - 6 + radius);
-                    ctx.arcTo(x - 6, y - 6, x - 6 + radius, y - 6, radius);
-                    ctx.closePath();
-                    ctx.stroke();
-                    ctx.restore();
-
-                    // Draw the logo image
+                    // Draw the logo image directly (no white border)
                     ctx.drawImage(logoImg, x, y, logoW, logoH);
                 };
 
-                const drawCelebration = (lastAngle: number, elapsedCel: number) => {
+                const drawConfetti = (elapsedConfettiMs: number) => {
+                    for (const p of particles) {
+                        const current_y = p.y + p.speed * (elapsedConfettiMs / 1000) * 24;
+                        const wrapped_y = ((current_y % (size + 100)) + (size + 100)) % (size + 100) - 50;
+                        const wrapped_x = ((p.x + p.drift * (elapsedConfettiMs / 1000) * 24) % size + size) % size;
+
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(wrapped_x, wrapped_y, p.w, p.h);
+                    }
+                };
+
+                const drawCelebration = (lastAngle: number, elapsedConfettiMs: number) => {
                     // Redraw the stopped wheel as background
                     ctx.fillStyle = "#111114";
                     ctx.fillRect(0, 0, size, size);
@@ -288,14 +280,7 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                     ctx.fillText(winner, center, bodyCenter);
 
                     // Confetti particles (animated falling at half speed)
-                    for (const p of particles) {
-                        const current_y = p.y + p.speed * (elapsedCel / 1000) * 24;
-                        const wrapped_y = ((current_y % (size + 100)) + (size + 100)) % (size + 100) - 50;
-                        const wrapped_x = ((p.x + p.drift * (elapsedCel / 1000) * 24) % size + size) % size;
-
-                        ctx.fillStyle = p.color;
-                        ctx.fillRect(wrapped_x, wrapped_y, p.w, p.h);
-                    }
+                    drawConfetti(elapsedConfettiMs);
                 };
 
                 // ── MediaRecorder Setup ──
@@ -348,14 +333,20 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                         drawWheel(currentAngle);
                         drawPointer();
                         drawTopRightLogo();
+
+                        // Start confetti 1 second before spin ends (at elapsed >= 7000ms)
+                        if (elapsed >= 7000) {
+                            drawConfetti(elapsed - 7000);
+                        }
+
                         requestAnimationFrame(drawFrame);
                     } else if (elapsed < totalMs) {
                         // Celebration phase
-                        drawCelebration(finalAngle, elapsed - spinMs);
+                        drawCelebration(finalAngle, elapsed - 7000);
                         requestAnimationFrame(drawFrame);
                     } else {
                         // Done — draw one last frame and stop
-                        drawCelebration(finalAngle, totalMs - spinMs);
+                        drawCelebration(finalAngle, totalMs - 7000);
                         mediaRecorder.stop();
                     }
                 };
