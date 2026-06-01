@@ -100,7 +100,7 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                 const drawWheel = (angle: number) => {
                     ctx.save();
                     ctx.translate(center, center);
-                    ctx.rotate(-angle);
+                    ctx.rotate(angle);
 
                     const textRadius = radius * 0.65;
                     const maxTextWidth = radius * 0.50;
