@@ -67,26 +67,50 @@ export default function GiveawayPage() {
 
             if (frames.length > 0) {
                 const totalBatches = Math.ceil(frames.length / BATCH_SIZE);
+                let someBatchesFailed = false;
+
                 for (let i = 0; i < frames.length; i += BATCH_SIZE) {
                     const batchNum = Math.floor(i / BATCH_SIZE) + 1;
                     setScanProgress(`Scanning batch ${batchNum} of ${totalBatches}...`);
                     const batch = frames.slice(i, i + BATCH_SIZE);
-                    const res = await fetch("/api/ai/giveaway-scanner", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            text: i === 0 ? rawText : "", // Only send text with the first batch
-                            images: batch,
-                            winningAnswer,
-                            acceptMisspellings
-                        }),
-                    });
-                    const data = await res.json();
-                    if (data.usernames) {
-                        allUsernames.push(...data.usernames);
-                    } else if (data.error) {
-                        console.error(`Batch ${batchNum} error:`, data.error);
+
+                    try {
+                        const res = await fetch("/api/ai/giveaway-scanner", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                text: i === 0 ? rawText : "", // Only send text with the first batch
+                                images: batch,
+                                winningAnswer,
+                                acceptMisspellings
+                            }),
+                        });
+
+                        if (!res.ok) {
+                            throw new Error(`HTTP error ${res.status}`);
+                        }
+
+                        const data = await res.json();
+                        if (data.usernames && Array.isArray(data.usernames)) {
+                            allUsernames.push(...data.usernames);
+                            // Update usernames incrementally in real-time so the list populates live!
+                            const uniqueSoFar = [...new Set(allUsernames.map(u => String(u).toLowerCase()))];
+                            setUsernames(uniqueSoFar);
+                            setShowResults(true);
+                        } else if (data.error) {
+                            console.error(`Batch ${batchNum} API error:`, data.error);
+                            someBatchesFailed = true;
+                        } else {
+                            someBatchesFailed = true;
+                        }
+                    } catch (batchErr: any) {
+                        console.error(`Batch ${batchNum} exception:`, batchErr);
+                        someBatchesFailed = true;
                     }
+                }
+
+                if (someBatchesFailed) {
+                    alert("Notice: Some video frame batches failed to scan due to network timeouts, but all successfully scanned names have been added to the list.");
                 }
             } else {
                 setScanProgress("Scanning text...");
@@ -108,8 +132,8 @@ export default function GiveawayPage() {
                 }
             }
 
-            // Deduplicate
-            const unique = [...new Set(allUsernames.map(u => u.toLowerCase()))];
+            // Final Deduplicate and clean
+            const unique = [...new Set(allUsernames.map(u => String(u).toLowerCase()))];
             setUsernames(unique);
             setShowResults(true);
 
