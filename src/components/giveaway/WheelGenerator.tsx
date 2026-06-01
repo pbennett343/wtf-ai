@@ -221,65 +221,68 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                     drawPointer();
                     drawTopRightLogo();
 
-                    // Semi-transparent overlay
-                    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
-                    ctx.fillRect(0, 0, size, size);
+                    // Only draw overlay and winner congrats card after a 500ms delay
+                    if (elapsedConfettiMs >= 500) {
+                        // Semi-transparent overlay
+                        ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+                        ctx.fillRect(0, 0, size, size);
 
-                    // Winner card
-                    const cardW = 800;
-                    const cardH = 400;
-                    const cardX = (size - cardW) / 2;
-                    const cardY = (size - cardH) / 2;
-                    const cornerR = 20;
+                        // Winner card
+                        const cardW = 800;
+                        const cardH = 400;
+                        const cardX = (size - cardW) / 2;
+                        const cardY = (size - cardH) / 2;
+                        const cornerR = 20;
 
-                    // Rounded rect
-                    ctx.beginPath();
-                    ctx.moveTo(cardX + cornerR, cardY);
-                    ctx.lineTo(cardX + cardW - cornerR, cardY);
-                    ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + cornerR, cornerR);
-                    ctx.lineTo(cardX + cardW, cardY + cardH - cornerR);
-                    ctx.arcTo(cardX + cardW, cardY + cardH, cardX + cardW - cornerR, cardY + cardH, cornerR);
-                    ctx.lineTo(cardX + cornerR, cardY + cardH);
-                    ctx.arcTo(cardX, cardY + cardH, cardX, cardY + cardH - cornerR, cornerR);
-                    ctx.lineTo(cardX, cardY + cornerR);
-                    ctx.arcTo(cardX, cardY, cardX + cornerR, cardY, cornerR);
-                    ctx.closePath();
-                    ctx.fillStyle = "#1a1a1a";
-                    ctx.fill();
+                        // Rounded rect
+                        ctx.beginPath();
+                        ctx.moveTo(cardX + cornerR, cardY);
+                        ctx.lineTo(cardX + cardW - cornerR, cardY);
+                        ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + cornerR, cornerR);
+                        ctx.lineTo(cardX + cardW, cardY + cardH - cornerR);
+                        ctx.arcTo(cardX + cardW, cardY + cardH, cardX + cardW - cornerR, cardY + cardH, cornerR);
+                        ctx.lineTo(cardX + cornerR, cardY + cardH);
+                        ctx.arcTo(cardX, cardY + cardH, cardX, cardY + cardH - cornerR, cornerR);
+                        ctx.lineTo(cardX, cardY + cornerR);
+                        ctx.arcTo(cardX, cardY, cardX + cornerR, cardY, cornerR);
+                        ctx.closePath();
+                        ctx.fillStyle = "#1a1a1a";
+                        ctx.fill();
 
-                    // Red header (top 35%)
-                    const headerH = cardH * 0.35;
-                    ctx.beginPath();
-                    ctx.moveTo(cardX + cornerR, cardY);
-                    ctx.lineTo(cardX + cardW - cornerR, cardY);
-                    ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + cornerR, cornerR);
-                    ctx.lineTo(cardX + cardW, cardY + headerH);
-                    ctx.lineTo(cardX, cardY + headerH);
-                    ctx.lineTo(cardX, cardY + cornerR);
-                    ctx.arcTo(cardX, cardY, cardX + cornerR, cardY, cornerR);
-                    ctx.closePath();
-                    ctx.fillStyle = "#b42434";
-                    ctx.fill();
+                        // Red header (top 35%)
+                        const headerH = cardH * 0.35;
+                        ctx.beginPath();
+                        ctx.moveTo(cardX + cornerR, cardY);
+                        ctx.lineTo(cardX + cardW - cornerR, cardY);
+                        ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + cornerR, cornerR);
+                        ctx.lineTo(cardX + cardW, cardY + headerH);
+                        ctx.lineTo(cardX, cardY + headerH);
+                        ctx.lineTo(cardX, cardY + cornerR);
+                        ctx.arcTo(cardX, cardY, cardX + cornerR, cardY, cornerR);
+                        ctx.closePath();
+                        ctx.fillStyle = "#b42434";
+                        ctx.fill();
 
-                    // Header text
-                    ctx.fillStyle = "#ffffff";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.font = "bold 60px sans-serif";
-                    ctx.fillText("congrats!", center, cardY + headerH / 2);
+                        // Header text
+                        ctx.fillStyle = "#ffffff";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+                        ctx.font = "bold 60px sans-serif";
+                        ctx.fillText("congrats!", center, cardY + headerH / 2);
 
-                    // Winner name (dynamic sizing)
-                    const maxNameWidth = cardW - 40;
-                    let nameFontSize = 90;
-                    ctx.font = `bold ${nameFontSize}px sans-serif`;
-                    while (ctx.measureText(winner).width > maxNameWidth && nameFontSize > 20) {
-                        nameFontSize -= 5;
+                        // Winner name (dynamic sizing)
+                        const maxNameWidth = cardW - 40;
+                        let nameFontSize = 90;
                         ctx.font = `bold ${nameFontSize}px sans-serif`;
+                        while (ctx.measureText(winner).width > maxNameWidth && nameFontSize > 20) {
+                            nameFontSize -= 5;
+                            ctx.font = `bold ${nameFontSize}px sans-serif`;
+                        }
+                        const bodyCenter = cardY + headerH + (cardH - headerH) / 2;
+                        ctx.fillText(winner, center, bodyCenter);
                     }
-                    const bodyCenter = cardY + headerH + (cardH - headerH) / 2;
-                    ctx.fillText(winner, center, bodyCenter);
 
-                    // Confetti particles (animated falling at half speed)
+                    // Confetti particles (always drawn once the wheel stops spinning)
                     drawConfetti(elapsedConfettiMs);
                 };
 
@@ -334,19 +337,14 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                         drawPointer();
                         drawTopRightLogo();
 
-                        // Start confetti 1 second before spin ends (at elapsed >= 7000ms)
-                        if (elapsed >= 7000) {
-                            drawConfetti(elapsed - 7000);
-                        }
-
                         requestAnimationFrame(drawFrame);
                     } else if (elapsed < totalMs) {
                         // Celebration phase
-                        drawCelebration(finalAngle, elapsed - 7000);
+                        drawCelebration(finalAngle, elapsed - spinMs);
                         requestAnimationFrame(drawFrame);
                     } else {
                         // Done — draw one last frame and stop
-                        drawCelebration(finalAngle, totalMs - 7000);
+                        drawCelebration(finalAngle, totalMs - spinMs);
                         mediaRecorder.stop();
                     }
                 };
