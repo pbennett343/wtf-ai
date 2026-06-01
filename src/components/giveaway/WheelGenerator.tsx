@@ -14,18 +14,26 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
 
     useImperativeHandle(ref, () => ({
         generateVideo: (names: string[], winner: string) => {
-            return new Promise((resolve, reject) => {
+            return new Promise<string>(async (resolve, reject) => {
                 const canvas = canvasRef.current;
                 if (!canvas) return reject("No canvas found");
 
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return reject("No 2d context");
 
+                // Load Logo Image first
+                const logoImg = new Image();
+                logoImg.src = "/wtf-logo-transparent.png";
+                await new Promise((resolveLogo) => {
+                    logoImg.onload = resolveLogo;
+                    logoImg.onerror = resolveLogo;
+                });
+
                 const size = 1080;
                 const center = size / 2;
                 const radius = 450;
                 const spinDuration = 8; // seconds
-                const celebrationDuration = 4; // seconds
+                const celebrationDuration = 2; // seconds (cut off last 2 seconds)
                 const totalDuration = spinDuration + celebrationDuration;
                 const fps = 24;
 
@@ -82,6 +90,30 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                 const totalRotation = rotations * 2 * Math.PI + finalAdjustment;
 
                 const easingPower = [4, 5, 6, 7][Math.floor(Math.random() * 4)];
+
+                // ── Stable Confetti Particles (falling at half speed) ──
+                const numParticles = 100;
+                const particles: Array<{
+                    x: number;
+                    y: number;
+                    w: number;
+                    h: number;
+                    color: string;
+                    speed: number;
+                    drift: number;
+                }> = [];
+
+                for (let i = 0; i < numParticles; i++) {
+                    particles.push({
+                        x: Math.random() * size,
+                        y: Math.random() * -size, // start above screen
+                        w: 10 + Math.random() * 15,
+                        h: 10 + Math.random() * 15,
+                        color: BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)],
+                        speed: (5 + Math.random() * 10) * 0.5, // half the speed!
+                        drift: -1 + Math.random() * 2
+                    });
+                }
 
                 // ── Draw helpers ──
                 const fitText = (text: string, maxWidth: number, maxHeight: number): number => {
@@ -157,12 +189,45 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                     ctx.stroke();
                 };
 
-                const drawCelebration = (lastAngle: number) => {
+                const drawTopRightLogo = () => {
+                    const logoW = 160;
+                    const aspect = logoImg.naturalWidth ? (logoImg.naturalHeight / logoImg.naturalWidth) : 0.6;
+                    const logoH = logoW * aspect;
+                    const padding = 40;
+                    const x = size - logoW - padding;
+                    const y = padding;
+
+                    // Draw a white rounded border around the logo
+                    ctx.save();
+                    const radius = 16;
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 4;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x - 6 + radius, y - 6);
+                    ctx.lineTo(x + logoW + 6 - radius, y - 6);
+                    ctx.arcTo(x + logoW + 6, y - 6, x + logoW + 6, y - 6 + radius, radius);
+                    ctx.lineTo(x + logoW + 6, y + logoH + 6 - radius);
+                    ctx.arcTo(x + logoW + 6, y + logoH + 6, x + logoW + 6 - radius, y + logoH + 6, radius);
+                    ctx.lineTo(x - 6 + radius, y + logoH + 6);
+                    ctx.arcTo(x - 6, y + logoH + 6, x - 6, y + logoH + 6 - radius, radius);
+                    ctx.lineTo(x - 6, y - 6 + radius);
+                    ctx.arcTo(x - 6, y - 6, x - 6 + radius, y - 6, radius);
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Draw the logo image
+                    ctx.drawImage(logoImg, x, y, logoW, logoH);
+                };
+
+                const drawCelebration = (lastAngle: number, elapsedCel: number) => {
                     // Redraw the stopped wheel as background
                     ctx.fillStyle = "#111114";
                     ctx.fillRect(0, 0, size, size);
                     drawWheel(lastAngle);
                     drawPointer();
+                    drawTopRightLogo();
 
                     // Semi-transparent overlay
                     ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
@@ -222,14 +287,14 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                     const bodyCenter = cardY + headerH + (cardH - headerH) / 2;
                     ctx.fillText(winner, center, bodyCenter);
 
-                    // Confetti particles
-                    for (let i = 0; i < 80; i++) {
-                        const cx = Math.random() * size;
-                        const cy = Math.random() * size;
-                        const cw = 8 + Math.random() * 14;
-                        const ch = 8 + Math.random() * 14;
-                        ctx.fillStyle = BRAND_COLORS[Math.floor(Math.random() * BRAND_COLORS.length)];
-                        ctx.fillRect(cx, cy, cw, ch);
+                    // Confetti particles (animated falling at half speed)
+                    for (const p of particles) {
+                        const current_y = p.y + p.speed * (elapsedCel / 1000) * 24;
+                        const wrapped_y = ((current_y % (size + 100)) + (size + 100)) % (size + 100) - 50;
+                        const wrapped_x = ((p.x + p.drift * (elapsedCel / 1000) * 24) % size + size) % size;
+
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(wrapped_x, wrapped_y, p.w, p.h);
                     }
                 };
 
@@ -282,14 +347,15 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
 
                         drawWheel(currentAngle);
                         drawPointer();
+                        drawTopRightLogo();
                         requestAnimationFrame(drawFrame);
                     } else if (elapsed < totalMs) {
                         // Celebration phase
-                        drawCelebration(finalAngle);
+                        drawCelebration(finalAngle, elapsed - spinMs);
                         requestAnimationFrame(drawFrame);
                     } else {
                         // Done — draw one last frame and stop
-                        drawCelebration(finalAngle);
+                        drawCelebration(finalAngle, totalMs - spinMs);
                         mediaRecorder.stop();
                     }
                 };
