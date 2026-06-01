@@ -938,6 +938,11 @@ export default function Home() {
                                         </button>
                                     ))}
                                 </div>
+                                <div className="text-center pt-8">
+                                    <a href="/giveaway" className="text-xs font-bold text-white/30 hover:text-white/70 uppercase tracking-widest transition-colors">
+                                        WTF Giveaway
+                                    </a>
+                                </div>
                             </div>
                         )}
 
