@@ -39,6 +39,7 @@ export default function GiveawayPage() {
     const [rawText, setRawText] = useState("");
     const [winningAnswer, setWinningAnswer] = useState("");
     const [acceptMisspellings, setAcceptMisspellings] = useState(true);
+    const [acceptAllComments, setAcceptAllComments] = useState(false);
     
     // Stats Standing State
     const [trackStats, setTrackStats] = useState(true);
@@ -111,7 +112,7 @@ export default function GiveawayPage() {
     };
 
     const handleScan = async () => {
-        if (!winningAnswer) {
+        if (!winningAnswer && !acceptAllComments) {
             alert("Please enter a winning answer to search for.");
             return;
         }
@@ -146,7 +147,8 @@ export default function GiveawayPage() {
                                 text: i === 0 ? rawText : "", // Only send text with the first batch
                                 images: batch,
                                 winningAnswer,
-                                acceptMisspellings
+                                acceptMisspellings,
+                                acceptAllComments
                             }),
                         });
 
@@ -185,7 +187,8 @@ export default function GiveawayPage() {
                         text: rawText,
                         images: [],
                         winningAnswer,
-                        acceptMisspellings
+                        acceptMisspellings,
+                        acceptAllComments
                     }),
                 });
                 const data = await res.json();
@@ -439,8 +442,19 @@ export default function GiveawayPage() {
                                     checked={acceptMisspellings}
                                     onChange={e => setAcceptMisspellings(e.target.checked)}
                                     className="w-5 h-5 rounded accent-[#b42434]"
+                                    disabled={acceptAllComments}
                                 />
-                                <span className="text-xs font-bold">Accept Misspellings (AI interprets intent)</span>
+                                <span className={`text-xs font-bold transition-opacity ${acceptAllComments ? 'opacity-40' : ''}`}>Accept Misspellings (AI interprets intent)</span>
+                            </label>
+
+                            <label className="flex items-center gap-3 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    checked={acceptAllComments}
+                                    onChange={e => setAcceptAllComments(e.target.checked)}
+                                    className="w-5 h-5 rounded accent-[#b42434]"
+                                />
+                                <span className="text-xs font-bold">Accept All Comments <span className="text-white/40 font-normal">(ignore winning answer — add every commenter)</span></span>
                             </label>
 
                             <div className="pt-3 border-t border-white/5 space-y-3">

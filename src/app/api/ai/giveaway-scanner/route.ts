@@ -10,12 +10,12 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { text, images, winningAnswer, acceptMisspellings } = body;
+        const { text, images, winningAnswer, acceptMisspellings, acceptAllComments } = body;
 
         if (!text && (!images || images.length === 0)) {
             return NextResponse.json({ error: "No text or images provided" }, { status: 400 });
         }
-        if (!winningAnswer) {
+        if (!winningAnswer && !acceptAllComments) {
             return NextResponse.json({ error: "No winning answer provided" }, { status: 400 });
         }
 
@@ -26,7 +26,24 @@ export async function POST(req: Request) {
             ? "Accept reasonable misspellings, abbreviations, or variations of the winning answer. For example if the answer is 'Spurs', accept 'spurs', 'SPURS', 'San Antonio Spurs', 'Spurss', etc." 
             : "Only accept EXACT text matches of the winning answer (case-insensitive).";
 
-        const prompt = `You are a Giveaway Comment Scanner. You will be given screenshots or text from Instagram comments on a giveaway post.
+        const prompt = acceptAllComments
+            ? `You are an Instagram Comment Scanner. You will be given screenshots or text from Instagram comments.
+
+YOUR TASK:
+1. Look at every comment in the provided images/text.
+2. Return the Instagram username of EVERY person who left a comment — regardless of what they wrote.
+3. Do NOT filter by any answer or keyword. Include all commenters.
+
+IMPORTANT:
+- Instagram usernames look like: mrj_2620, austin_sanchez_55, happy_thoughts_4days, etc.
+- The username appears ABOVE or BEFORE the comment text.
+- Do NOT include the @ symbol in your output.
+- Remove duplicates — if a user commented multiple times, include them only once.
+
+Return your answer as a pure JSON array of strings. No markdown, no explanation, no code fences.
+Example: ["mrj_2620", "austin_sanchez_55"]
+If no comments are found, return: []`
+            : `You are a Giveaway Comment Scanner. You will be given screenshots or text from Instagram comments on a giveaway post.
 
 YOUR TASK:
 1. Look at each comment in the provided images/text.
