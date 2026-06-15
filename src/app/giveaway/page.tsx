@@ -1,15 +1,79 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Loader2, Settings2, Sparkles, Video, Download, CheckCircle2, ChevronLeft, Upload } from "lucide-react";
+import { Loader2, Settings2, Sparkles, Video, Download, CheckCircle2, ChevronLeft, Upload, Trophy, X } from "lucide-react";
 import VideoFrameExtractor from "@/components/giveaway/VideoFrameExtractor";
 import WheelGenerator, { WheelGeneratorRef } from "@/components/giveaway/WheelGenerator";
+
+const INITIAL_STANDINGS = [
+  { igHandle: "walker_theaussie94", pwa: 20, w: 3, totalWinnings: 85.00 },
+  { igHandle: "daddy_dan12345", pwa: 21, w: 2, totalWinnings: 60.00 },
+  { igHandle: "bwright4_3", pwa: 19, w: 2, totalWinnings: 60.00 },
+  { igHandle: "connorpapaya", pwa: 11, w: 2, totalWinnings: 50.00 },
+  { igHandle: "georgiastvfl", pwa: 3, w: 2, totalWinnings: 50.00 },
+  { igHandle: "bnobach13", pwa: 29, w: 1, totalWinnings: 38.40 },
+  { igHandle: "bodie_maxon54", pwa: 22, w: 1, totalWinnings: 25.00 },
+  { igHandle: "adler.meek", pwa: 21, w: 1, totalWinnings: 25.00 },
+  { igHandle: "jacksonkuntz5", pwa: 21, w: 1, totalWinnings: 25.00 },
+  { igHandle: "cthenry7", pwa: 20, w: 1, totalWinnings: 38.40 },
+  { igHandle: "drewgillis7", pwa: 20, w: 1, totalWinnings: 38.40 },
+  { igHandle: "maddox0514", pwa: 19, w: 1, totalWinnings: 25.00 },
+  { igHandle: "mrj_2620", pwa: 19, w: 1, totalWinnings: 25.00 },
+  { igHandle: "madixwesterlund", pwa: 19, w: 1, totalWinnings: 25.00 },
+  { igHandle: "miamijp_1181", pwa: 18, w: 1, totalWinnings: 25.00 },
+  { igHandle: "happy_thoughts_4days", pwa: 17, w: 1, totalWinnings: 25.00 },
+  { igHandle: "bdc29", pwa: 16, w: 1, totalWinnings: 25.00 },
+  { igHandle: "nick.curth", pwa: 15, w: 1, totalWinnings: 25.00 },
+  { igHandle: "isaachadlow30", pwa: 14, w: 1, totalWinnings: 38.40 },
+  { igHandle: "titusburkhardt", pwa: 13, w: 1, totalWinnings: 35.00 },
+  { igHandle: "jakerss2", pwa: 12, w: 1, totalWinnings: 35.00 },
+  { igHandle: "dylan_crozier", pwa: 12, w: 1, totalWinnings: 25.00 },
+  { igHandle: "dangabay914", pwa: 10, w: 1, totalWinnings: 25.00 },
+  { igHandle: "sahilhazari327", pwa: 9, w: 1, totalWinnings: 25.00 },
+  { igHandle: "minnichtrey", pwa: 9, w: 1, totalWinnings: 25.00 },
+  { igHandle: "jimmy_lasceski", pwa: 8, w: 1, totalWinnings: 25.00 }
+];
 
 export default function GiveawayPage() {
     // Inputs
     const [rawText, setRawText] = useState("");
     const [winningAnswer, setWinningAnswer] = useState("");
     const [acceptMisspellings, setAcceptMisspellings] = useState(true);
+    
+    // Stats Standing State
+    const [trackStats, setTrackStats] = useState(true);
+    const [prizeAmount, setPrizeAmount] = useState("25.00");
+    const [showStandings, setShowStandings] = useState(false);
+    const [showImportExport, setShowImportExport] = useState(false);
+    const [importText, setImportText] = useState("");
+    const [standings, setStandings] = useState<any[]>([]);
+    const [totalGiveaways, setTotalGiveaways] = useState(36);
+    const [totalPrizeMoney, setTotalPrizeMoney] = useState(1093.80);
+    const [isStatsLoaded, setIsStatsLoaded] = useState(false);
+
+    React.useEffect(() => {
+        const savedStandings = localStorage.getItem("wtf_giveaway_standings");
+        const savedTotal = localStorage.getItem("wtf_giveaway_total_count");
+        const savedMoney = localStorage.getItem("wtf_giveaway_total_money");
+
+        if (savedStandings) {
+            try {
+                setStandings(JSON.parse(savedStandings));
+            } catch (e) {
+                setStandings(INITIAL_STANDINGS);
+            }
+        } else {
+            setStandings(INITIAL_STANDINGS);
+        }
+
+        if (savedTotal) {
+            setTotalGiveaways(parseInt(savedTotal, 10));
+        }
+        if (savedMoney) {
+            setTotalPrizeMoney(parseFloat(savedMoney));
+        }
+        setIsStatsLoaded(true);
+    }, []);
     
     // Media
     const [file, setFile] = useState<File | null>(null);
@@ -191,6 +255,55 @@ export default function GiveawayPage() {
             // Generate the video
             const url = await wheelRef.current.generateVideo(usernames, winner);
             setVideoUrl(url);
+
+            // Update stats if tracked
+            if (trackStats) {
+                const prize = parseFloat(prizeAmount) || 0;
+                setTotalGiveaways(prev => {
+                    const next = prev + 1;
+                    localStorage.setItem("wtf_giveaway_total_count", next.toString());
+                    return next;
+                });
+                setTotalPrizeMoney(prev => {
+                    const next = prev + prize;
+                    localStorage.setItem("wtf_giveaway_total_money", next.toFixed(2));
+                    return next;
+                });
+                setStandings(prev => {
+                    const candidateSet = new Set(usernames.map(u => u.toLowerCase().trim()));
+                    const existingKeys = new Set(prev.map(p => p.igHandle.toLowerCase().trim()));
+                    
+                    const updated = prev.map(p => {
+                        const key = p.igHandle.toLowerCase().trim();
+                        if (candidateSet.has(key)) {
+                            const isWinner = key === winner.toLowerCase().trim();
+                            return {
+                                ...p,
+                                pwa: p.pwa + 1,
+                                w: isWinner ? p.w + 1 : p.w,
+                                totalWinnings: isWinner ? p.totalWinnings + prize : p.totalWinnings
+                            };
+                        }
+                        return p;
+                    });
+
+                    usernames.forEach(u => {
+                        const key = u.toLowerCase().trim();
+                        if (!existingKeys.has(key)) {
+                            const isWinner = key === winner.toLowerCase().trim();
+                            updated.push({
+                                igHandle: u.trim(),
+                                pwa: 1,
+                                w: isWinner ? 1 : 0,
+                                totalWinnings: isWinner ? prize : 0
+                            });
+                        }
+                    });
+
+                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(updated));
+                    return updated;
+                });
+            }
             
             // Auto-download with iOS Web Share API support
             const fileName = `giveaway_winner_${winner}.mp4`;
@@ -208,6 +321,82 @@ export default function GiveawayPage() {
         setUsernames(prev => prev.filter((_, i) => i !== idx));
     };
 
+    const handleImportData = (rawInput: string) => {
+        try {
+            const trimmed = rawInput.trim();
+            if (trimmed.startsWith("{")) {
+                const data = JSON.parse(trimmed);
+                if (typeof data.totalGiveaways === 'number' && typeof data.totalPrizeMoney === 'number' && Array.isArray(data.standings)) {
+                    setTotalGiveaways(data.totalGiveaways);
+                    setTotalPrizeMoney(data.totalPrizeMoney);
+                    setStandings(data.standings);
+                    localStorage.setItem("wtf_giveaway_total_count", data.totalGiveaways.toString());
+                    localStorage.setItem("wtf_giveaway_total_money", data.totalPrizeMoney.toString());
+                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(data.standings));
+                    alert("Successfully imported JSON stats!");
+                    return true;
+                }
+                throw new Error("Invalid JSON schema. Must contain totalGiveaways, totalPrizeMoney, and standings array.");
+            } else {
+                const lines = trimmed.split("\n");
+                const parsedStandings: any[] = [];
+                let calculatedMoney = 0;
+
+                lines.forEach((line) => {
+                    const cols = line.split("\t").map(c => c.trim());
+                    if (cols.length >= 3) {
+                        if (cols[0].toLowerCase().includes("rank") || cols[1].toLowerCase().includes("handle") || cols[1].toLowerCase().includes("ig")) {
+                            return;
+                        }
+                        let igIndex = 0;
+                        if (!isNaN(Number(cols[0])) && cols[0] !== "") {
+                            igIndex = 1;
+                        }
+                        
+                        const igHandle = cols[igIndex]?.replace(/^@/, '');
+                        if (!igHandle) return;
+
+                        const pwa = parseInt(cols[igIndex + 1], 10) || 0;
+                        const w = parseInt(cols[igIndex + 2], 10) || 0;
+                        
+                        const rawWinnings = cols[cols.length - 1] || "";
+                        const winningsCleaned = rawWinnings.replace(/[^0-9.]/g, "");
+                        const totalWinnings = parseFloat(winningsCleaned) || 0;
+
+                        parsedStandings.push({
+                            igHandle,
+                            pwa,
+                            w,
+                            totalWinnings
+                        });
+                        calculatedMoney += totalWinnings;
+                    }
+                });
+
+                if (parsedStandings.length > 0) {
+                    const gCountStr = prompt("Enter Total Giveaways count:", totalGiveaways.toString());
+                    const totalG = parseInt(gCountStr || "0", 10) || 0;
+                    const mCountStr = prompt("Enter Total Prize Money amount ($):", calculatedMoney.toFixed(2));
+                    const totalM = parseFloat(mCountStr || "0") || 0;
+
+                    setTotalGiveaways(totalG);
+                    setTotalPrizeMoney(totalM);
+                    setStandings(parsedStandings);
+                    
+                    localStorage.setItem("wtf_giveaway_total_count", totalG.toString());
+                    localStorage.setItem("wtf_giveaway_total_money", totalM.toString());
+                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(parsedStandings));
+                    alert(`Successfully imported ${parsedStandings.length} players from spreadsheet data!`);
+                    return true;
+                }
+                throw new Error("Could not parse data. Ensure it is copy-pasted directly from a spreadsheet tab-separated table (containing handle, pwa, and wins columns).");
+            }
+        } catch (err: any) {
+            alert("Import failed: " + err.message);
+            return false;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#111114] text-white font-sans">
             {/* Mobile-first sticky header */}
@@ -219,6 +408,12 @@ export default function GiveawayPage() {
                     <h1 className="text-xl font-black italic uppercase tracking-tighter text-[#b42434] truncate">WTF Giveaway</h1>
                     <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">AI Comment Scanner & Wheel Generator</p>
                 </div>
+                <button 
+                    onClick={() => setShowStandings(true)}
+                    className="ml-auto px-3 py-1.5 md:px-4 md:py-2 bg-[#b42434] hover:bg-[#b42434]/90 active:scale-95 text-white font-bold text-[10px] md:text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 select-none shrink-0"
+                >
+                    <Trophy className="w-3.5 h-3.5" /> Standings
+                </button>
             </div>
 
             <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-6">
@@ -247,6 +442,31 @@ export default function GiveawayPage() {
                                 />
                                 <span className="text-xs font-bold">Accept Misspellings (AI interprets intent)</span>
                             </label>
+
+                            <div className="pt-3 border-t border-white/5 space-y-3">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={trackStats}
+                                        onChange={e => setTrackStats(e.target.checked)}
+                                        className="w-5 h-5 rounded accent-[#b42434]"
+                                    />
+                                    <span className="text-xs font-bold">Track Stats towards WTF Giveaway Games</span>
+                                </label>
+                                
+                                {trackStats && (
+                                    <div className="flex items-center gap-3 bg-black/20 p-2.5 rounded-xl border border-white/5">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50 whitespace-nowrap">Prize Value per Win ($):</label>
+                                        <input
+                                            type="text"
+                                            value={prizeAmount}
+                                            onChange={e => setPrizeAmount(e.target.value)}
+                                            placeholder="25.00"
+                                            className="w-24 bg-black/40 border border-white/10 rounded-lg p-1.5 px-3 text-xs font-bold focus:outline-none focus:border-[#b42434] transition-colors"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Input Methods */}
@@ -386,6 +606,194 @@ export default function GiveawayPage() {
             
             {/* Hidden Canvas Generator */}
             <WheelGenerator ref={wheelRef} />
+
+            {/* Standings Modal */}
+            {showStandings && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+                    <div className="bg-[#111114] border border-white/10 rounded-3xl w-full max-w-4xl shadow-2xl flex flex-col relative my-8 overflow-hidden">
+                        {/* Header styled exactly like image */}
+                        <div className="bg-[#1e295d] p-6 relative text-center flex flex-col items-center select-none">
+                            {/* Logo in top right */}
+                            <div className="absolute top-4 right-4 md:right-6">
+                                <img src="/wtf-logo-transparent.png" alt="WTF Logo" className="h-8 md:h-10 w-auto object-contain" />
+                            </div>
+                            
+                            <h2 className="text-xl md:text-2xl font-black uppercase tracking-wider text-white">
+                                2026 WTF GIVEAWAY GAMES
+                            </h2>
+                            
+                            {/* Subheader values */}
+                            <div className="w-full max-w-2xl flex justify-between items-center mt-6 text-white text-xs md:text-sm font-bold uppercase tracking-wider">
+                                <span className="italic opacity-90">Total Giveaways: {totalGiveaways}</span>
+                                <span className="italic opacity-90 text-right">
+                                    ${totalPrizeMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        </div>
+
+                        {showImportExport ? (
+                            <div className="p-6 space-y-4 flex flex-col flex-grow">
+                                <h3 className="text-sm font-black italic uppercase tracking-wider text-white">Import / Export Standings</h3>
+                                <p className="text-xs text-white/60 leading-relaxed">
+                                    Paste tab-separated columns directly from your **Excel / Google Sheet** or paste a raw JSON export.
+                                    To export, copy the JSON block generated below.
+                                </p>
+                                <textarea
+                                    value={importText}
+                                    onChange={(e) => setImportText(e.target.value)}
+                                    placeholder={`Spreadsheet column order (simply select cells in sheets/excel and copy):\nHandle\tAppearance\tWins\tTotal Winnings\n\nExample lines:\nwalker_theaussie94\t20\t3\t$85.00\ndaddy_dan12345\t21\t2\t$60.00`}
+                                    className="w-full h-60 bg-black/40 border border-white/10 rounded-xl p-3 text-xs font-mono resize-none focus:outline-none focus:border-[#b42434] transition-colors text-white"
+                                />
+                                <div className="flex flex-wrap gap-2 justify-end pt-2">
+                                    <button
+                                        onClick={() => {
+                                            const currentExport = {
+                                                totalGiveaways,
+                                                totalPrizeMoney,
+                                                standings
+                                            };
+                                            setImportText(JSON.stringify(currentExport, null, 2));
+                                        }}
+                                        className="px-4 py-2 border border-white/10 hover:bg-white/5 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                    >
+                                        Export Current JSON
+                                    </button>
+                                    <button
+                                        onClick={() => setShowImportExport(false)}
+                                        className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (handleImportData(importText)) {
+                                                setShowImportExport(false);
+                                            }
+                                        }}
+                                        className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all"
+                                    >
+                                        Import Data
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex-1 overflow-x-auto p-4 md:p-6 max-h-[50vh] overflow-y-auto">
+                                    {standings.length === 0 ? (
+                                        <div className="text-center py-12 text-white/40 font-bold uppercase tracking-wider text-xs">
+                                            No standings entries yet. Run a giveaway or import data.
+                                        </div>
+                                    ) : (
+                                        <table className="w-full border-collapse text-left">
+                                            <thead>
+                                                <tr className="bg-[#1e295d] text-white text-[10px] font-black uppercase tracking-wider border-b border-white/20 select-none">
+                                                    <th className="py-3 px-4 rounded-tl-xl text-center w-16">Rank</th>
+                                                    <th className="py-3 px-4">IG Handle</th>
+                                                    <th className="py-3 px-4 text-center">PWA</th>
+                                                    <th className="py-3 px-4 text-center">W</th>
+                                                    <th className="py-3 px-4 text-center">L</th>
+                                                    <th className="py-3 px-4 text-center">Win %</th>
+                                                    <th className="py-3 px-4 text-right pr-6 rounded-tr-xl">Total Winnings</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(() => {
+                                                    const sorted = [...standings].sort((a, b) => {
+                                                        if (b.w !== a.w) return b.w - a.w;
+                                                        return b.pwa - a.pwa;
+                                                    });
+                                                    let currentRank = 1;
+                                                    return sorted.map((player, idx) => {
+                                                        if (idx > 0) {
+                                                            const prev = sorted[idx - 1];
+                                                            if (player.w !== prev.w || player.pwa !== prev.pwa) {
+                                                                currentRank = idx + 1;
+                                                            }
+                                                        }
+                                                        const lCount = player.pwa - player.w;
+                                                        const winPercent = player.pwa > 0 ? (player.w / player.pwa) * 100 : 0;
+                                                        return (
+                                                            <tr 
+                                                                key={idx} 
+                                                                className="border-b border-[#cbd5e1] hover:bg-[#e2e8f0] transition-colors odd:bg-white even:bg-[#f8fafc] text-slate-800 text-xs font-bold"
+                                                            >
+                                                                <td className="py-2.5 px-4 text-center text-slate-500 font-black">{currentRank}</td>
+                                                                <td className="py-2.5 px-4 text-[#1e295d] font-bold">@{player.igHandle}</td>
+                                                                <td className="py-2.5 px-4 text-center font-extrabold">{player.pwa}</td>
+                                                                <td className="py-2.5 px-4 text-center font-extrabold text-green-700">{player.w}</td>
+                                                                <td className="py-2.5 px-4 text-center font-extrabold text-slate-500">{lCount}</td>
+                                                                <td className="py-2.5 px-4 text-center font-extrabold text-indigo-700">
+                                                                    {winPercent.toFixed(2)}%
+                                                                </td>
+                                                                <td className="py-2.5 px-4 text-right pr-6 font-black text-emerald-700">
+                                                                    ${player.totalWinnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    });
+                                                })()}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+
+                                <div className="bg-black/20 p-4 border-t border-white/5 flex flex-wrap gap-3 justify-between items-center shrink-0">
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (confirm("Are you sure you want to reset standings to the default initial values?")) {
+                                                    setStandings(INITIAL_STANDINGS);
+                                                    setTotalGiveaways(36);
+                                                    setTotalPrizeMoney(1093.80);
+                                                    localStorage.removeItem("wtf_giveaway_standings");
+                                                    localStorage.removeItem("wtf_giveaway_total_count");
+                                                    localStorage.removeItem("wtf_giveaway_total_money");
+                                                }
+                                            }}
+                                            className="px-3 py-2 border border-red-500/30 hover:bg-red-500/10 active:scale-95 text-red-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                        >
+                                            Reset to Default
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (confirm("Are you sure you want to clear all standings to 0?")) {
+                                                    setStandings([]);
+                                                    setTotalGiveaways(0);
+                                                    setTotalPrizeMoney(0);
+                                                    localStorage.setItem("wtf_giveaway_standings", "[]");
+                                                    localStorage.setItem("wtf_giveaway_total_count", "0");
+                                                    localStorage.setItem("wtf_giveaway_total_money", "0");
+                                                }
+                                            }}
+                                            className="px-3 py-2 border border-white/10 hover:bg-white/5 active:scale-95 text-white/60 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                        >
+                                            Clear All
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setImportText("");
+                                                setShowImportExport(true);
+                                            }}
+                                            className="px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                        >
+                                            Import / Export
+                                        </button>
+                                        <button
+                                            onClick={() => setShowStandings(false)}
+                                            className="px-5 py-2 bg-[#b42434] hover:bg-[#b42434]/90 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

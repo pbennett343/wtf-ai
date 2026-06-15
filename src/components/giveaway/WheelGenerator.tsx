@@ -215,7 +215,7 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
 
                 const drawCelebration = (lastAngle: number, elapsedConfettiMs: number) => {
                     // Redraw the stopped wheel as background
-                    ctx.fillStyle = "#111114";
+                    ctx.fillStyle = "#000000";
                     ctx.fillRect(0, 0, size, size);
                     drawWheel(lastAngle);
                     drawPointer();
@@ -320,7 +320,7 @@ const WheelGenerator = forwardRef<WheelGeneratorRef, {}>((props, ref) => {
                 const drawFrame = (time: number) => {
                     const elapsed = time - startTime;
 
-                    ctx.fillStyle = "#111114";
+                    ctx.fillStyle = "#000000";
                     ctx.fillRect(0, 0, size, size);
 
                     if (elapsed < spinMs) {
