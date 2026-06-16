@@ -388,6 +388,132 @@ export default function GiveawayPage() {
         }
     };
 
+    const performGeminiScan = async (text: string, images: string[]) => {
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+        if (!apiKey) {
+            return await callScannerApiRoute(text, images);
+        }
+
+        try {
+            const misspellingRule = acceptMisspellings 
+                ? "Accept reasonable misspellings, abbreviations, or variations of the winning answer. For example if the answer is 'Spurs', accept 'spurs', 'SPURS', 'San Antonio Spurs', 'Spurss', etc." 
+                : "Only accept EXACT text matches of the winning answer (case-insensitive).";
+
+            const prompt = acceptAllComments
+                ? `You are an Instagram Comment Scanner. You will be given screenshots or text from Instagram comments.
+
+YOUR TASK:
+1. Look at every comment in the provided images/text.
+2. Return the Instagram username of EVERY person who left a comment — regardless of what they wrote.
+3. Do NOT filter by any answer or keyword. Include all commenters.
+
+IMPORTANT:
+- Instagram usernames look like: mrj_2620, austin_sanchez_55, happy_thoughts_4days, etc.
+- The username appears ABOVE or BEFORE the comment text.
+- Do NOT include the @ symbol in your output.
+- Remove duplicates — if a user commented multiple times, include them only once.
+
+Return your answer as a pure JSON array of strings. No markdown, no explanation, no code fences.
+Example: ["mrj_2620", "austin_sanchez_55"]
+If no comments are found, return: []`
+                : `You are a Giveaway Comment Scanner. You will be given screenshots or text from Instagram comments on a giveaway post.
+
+YOUR TASK:
+1. Look at each comment in the provided images/text.
+2. Each comment has an Instagram username and their answer/guess.
+3. Compare each person's answer against the WINNING ANSWER(S) below.
+4. Return ONLY the usernames of people whose answer matches.
+
+WINNING ANSWER(S): ${winningAnswer}
+MATCHING RULE: ${misspellingRule}
+
+IMPORTANT:
+- Instagram usernames look like: mrj_2620, austin_sanchez_55, happy_thoughts_4days, etc.
+- The username appears ABOVE or BEFORE the comment text.
+- Do NOT include the @ symbol in your output.
+- Remove duplicates.
+- If you see the same username multiple times, include it only once.
+
+Return your answer as a pure JSON array of strings. No markdown, no explanation, no code fences.
+Example: ["mrj_2620", "austin_sanchez_55"]
+If no one matched, return: []`;
+
+            const parts: any[] = [{ text: prompt }];
+            if (text) {
+                parts.push({ text: `\n\nTEXT INPUT:\n${text}` });
+            }
+
+            if (images && images.length > 0) {
+                for (const img of images) {
+                    const mimeMatch = img.match(/^data:(image\/\w+);base64,/);
+                    const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+                    parts.push({
+                        inlineData: {
+                            data: img.split(",")[1],
+                            mimeType
+                        }
+                    });
+                }
+            }
+
+            // Using gemini-2.5-flash which is extremely fast and robust for multi-modal tasks
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts }]
+                })
+            });
+
+            if (!res.ok) {
+                throw new Error(`Direct Gemini API failed with status ${res.status}`);
+            }
+
+            const data = await res.json();
+            const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            let usernames: string[] = [];
+            try {
+                const parsed = JSON.parse(responseText.trim());
+                if (Array.isArray(parsed)) usernames = parsed;
+            } catch (e) {
+                const match = responseText.match(/\[[\s\S]*?\]/);
+                if (match) {
+                    try {
+                        const parsed = JSON.parse(match[0]);
+                        if (Array.isArray(parsed)) usernames = parsed;
+                    } catch (e2) {}
+                }
+            }
+            return usernames;
+        } catch (err) {
+            console.warn("Direct Gemini call failed, falling back to Next.js API route:", err);
+            return await callScannerApiRoute(text, images);
+        }
+    };
+
+    const callScannerApiRoute = async (text: string, images: string[]) => {
+        const res = await fetch("/api/ai/giveaway-scanner", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                text,
+                images,
+                winningAnswer,
+                acceptMisspellings,
+                acceptAllComments
+            }),
+        });
+
+        if (!res.ok) {
+            throw new Error(`API route failed: HTTP error ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return data.usernames || [];
+    };
+
     const handleScan = async (isReverse = false) => {
         if (!winningAnswer && !acceptAllComments) {
             alert("Please enter a winning answer to search for.");
@@ -407,7 +533,7 @@ export default function GiveawayPage() {
 
         try {
             const allUsernames: string[] = isReverse ? [...usernames] : [];
-            const BATCH_SIZE = 3; // Max 3 frames per request to stay under Vercel's 4.5MB body limit
+            const BATCH_SIZE = 6; // Direct to Gemini allows larger batches safely!
 
             if (frames.length > 0) {
                 const scanFrames = isReverse ? [...frames].reverse() : frames;
@@ -420,35 +546,12 @@ export default function GiveawayPage() {
                     const batch = scanFrames.slice(i, i + BATCH_SIZE);
 
                     try {
-                        const res = await fetch("/api/ai/giveaway-scanner", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                text: (i === 0 && !isReverse) ? rawText : "", // Only send text with the first batch if not reverse
-                                images: batch,
-                                winningAnswer,
-                                acceptMisspellings,
-                                acceptAllComments
-                            }),
-                        });
-
-                        if (!res.ok) {
-                            throw new Error(`HTTP error ${res.status}`);
-                        }
-
-                        const data = await res.json();
-                        if (data.usernames && Array.isArray(data.usernames)) {
-                            allUsernames.push(...data.usernames);
-                            // Update usernames incrementally in real-time so the list populates live!
-                            const uniqueSoFar = [...new Set(allUsernames.map(u => String(u).toLowerCase()))];
-                            setUsernames(uniqueSoFar);
-                            setShowResults(true);
-                        } else if (data.error) {
-                            console.error(`Batch ${batchNum} API error:`, data.error);
-                            someBatchesFailed = true;
-                        } else {
-                            someBatchesFailed = true;
-                        }
+                        const batchUsernames = await performGeminiScan((i === 0 && !isReverse) ? rawText : "", batch);
+                        allUsernames.push(...batchUsernames);
+                        // Update usernames incrementally in real-time so the list populates live!
+                        const uniqueSoFar = [...new Set(allUsernames.map(u => String(u).toLowerCase()))];
+                        setUsernames(uniqueSoFar);
+                        setShowResults(true);
                     } catch (batchErr: any) {
                         console.error(`Batch ${batchNum} exception:`, batchErr);
                         someBatchesFailed = true;
@@ -460,22 +563,11 @@ export default function GiveawayPage() {
                 }
             } else {
                 setScanProgress("Scanning text...");
-                const res = await fetch("/api/ai/giveaway-scanner", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        text: rawText,
-                        images: [],
-                        winningAnswer,
-                        acceptMisspellings,
-                        acceptAllComments
-                    }),
-                });
-                const data = await res.json();
-                if (data.usernames) {
-                    allUsernames.push(...data.usernames);
-                } else if (data.error) {
-                    alert("API Error: " + data.error);
+                try {
+                    const textUsernames = await performGeminiScan(rawText, []);
+                    allUsernames.push(...textUsernames);
+                } catch (err: any) {
+                    alert("Scan failed: " + err.message);
                 }
             }
 
