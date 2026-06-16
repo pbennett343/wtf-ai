@@ -92,6 +92,36 @@ export default function VideoFrameExtractor({
                 currentTime += interval;
             }
 
+            // Ensure the very final frame of the video is captured if the interval didn't land exactly on it
+            const lastFrameTime = currentTime - interval;
+            if (lastFrameTime < duration) {
+                video.currentTime = duration;
+                await new Promise((resolve) => {
+                    let isResolved = false;
+                    const onSeeked = () => {
+                        if (isResolved) return;
+                        isResolved = true;
+                        video.removeEventListener('seeked', onSeeked);
+                        resolve(null);
+                    };
+                    video.addEventListener('seeked', onSeeked);
+                    setTimeout(() => {
+                        if (isResolved) return;
+                        isResolved = true;
+                        video.removeEventListener('seeked', onSeeked);
+                        resolve(null);
+                    }, 500);
+                });
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                extractedFrames.push(dataUrl);
+                setFrameCount(prev => prev + 1);
+            }
+
             onFramesExtracted(extractedFrames);
             setStatus('completed');
             setProgress(100);

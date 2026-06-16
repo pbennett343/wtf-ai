@@ -533,7 +533,8 @@ If no one matched, return: []`;
 
         try {
             const allUsernames: string[] = isReverse ? [...usernames] : [];
-            const BATCH_SIZE = 6; // Direct to Gemini allows larger batches safely!
+            const hasApiKey = !!(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
+            const BATCH_SIZE = hasApiKey ? 6 : 2; // Direct client-side calls support 6 frames; server route fallback needs 2 to avoid Vercel timeouts/payload limits
 
             if (frames.length > 0) {
                 const scanFrames = isReverse ? [...frames].reverse() : frames;
