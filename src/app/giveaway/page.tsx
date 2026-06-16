@@ -5,33 +5,154 @@ import { Loader2, Settings2, Sparkles, Video, Download, CheckCircle2, ChevronLef
 import VideoFrameExtractor from "@/components/giveaway/VideoFrameExtractor";
 import WheelGenerator, { WheelGeneratorRef } from "@/components/giveaway/WheelGenerator";
 
+const SEED_TOTAL_GIVEAWAYS = 36;
+const SEED_TOTAL_MONEY = 1193.80;
+
 const INITIAL_STANDINGS = [
-  { igHandle: "walker_theaussie94", pwa: 20, w: 3, totalWinnings: 85.00 },
-  { igHandle: "daddy_dan12345", pwa: 21, w: 2, totalWinnings: 60.00 },
-  { igHandle: "bwright4_3", pwa: 19, w: 2, totalWinnings: 60.00 },
-  { igHandle: "connorpapaya", pwa: 11, w: 2, totalWinnings: 50.00 },
-  { igHandle: "georgiastvfl", pwa: 3, w: 2, totalWinnings: 50.00 },
-  { igHandle: "bnobach13", pwa: 29, w: 1, totalWinnings: 38.40 },
-  { igHandle: "bodie_maxon54", pwa: 22, w: 1, totalWinnings: 25.00 },
-  { igHandle: "adler.meek", pwa: 21, w: 1, totalWinnings: 25.00 },
-  { igHandle: "jacksonkuntz5", pwa: 21, w: 1, totalWinnings: 25.00 },
-  { igHandle: "cthenry7", pwa: 20, w: 1, totalWinnings: 38.40 },
-  { igHandle: "drewgillis7", pwa: 20, w: 1, totalWinnings: 38.40 },
-  { igHandle: "maddox0514", pwa: 19, w: 1, totalWinnings: 25.00 },
-  { igHandle: "mrj_2620", pwa: 19, w: 1, totalWinnings: 25.00 },
-  { igHandle: "madixwesterlund", pwa: 19, w: 1, totalWinnings: 25.00 },
-  { igHandle: "miamijp_1181", pwa: 18, w: 1, totalWinnings: 25.00 },
-  { igHandle: "happy_thoughts_4days", pwa: 17, w: 1, totalWinnings: 25.00 },
-  { igHandle: "bdc29", pwa: 16, w: 1, totalWinnings: 25.00 },
-  { igHandle: "nick.curth", pwa: 15, w: 1, totalWinnings: 25.00 },
-  { igHandle: "isaachadlow30", pwa: 14, w: 1, totalWinnings: 38.40 },
-  { igHandle: "titusburkhardt", pwa: 13, w: 1, totalWinnings: 35.00 },
-  { igHandle: "jakerss2", pwa: 12, w: 1, totalWinnings: 35.00 },
-  { igHandle: "dylan_crozier", pwa: 12, w: 1, totalWinnings: 25.00 },
-  { igHandle: "dangabay914", pwa: 10, w: 1, totalWinnings: 25.00 },
-  { igHandle: "sahilhazari327", pwa: 9, w: 1, totalWinnings: 25.00 },
-  { igHandle: "minnichtrey", pwa: 9, w: 1, totalWinnings: 25.00 },
-  { igHandle: "jimmy_lasceski", pwa: 8, w: 1, totalWinnings: 25.00 }
+  // ── Winners ranked by W desc, then PWA desc ─────────────────────────────────
+  { igHandle: "walker_theaussie94",    pwa: 22, w: 3, l: 19, totalWinnings: 85.00  },
+  { igHandle: "daddy_dan12345",        pwa: 24, w: 3, l: 21, totalWinnings: 60.00  },
+  { igHandle: "georgiastvfl",          pwa: 7,  w: 3, l: 4,  totalWinnings: 75.00  },
+  { igHandle: "minnichtrey",           pwa: 13, w: 2, l: 11, totalWinnings: 50.00  },
+  { igHandle: "bwright4_3",            pwa: 22, w: 2, l: 20, totalWinnings: 60.00  },
+  { igHandle: "connorpapaya",          pwa: 14, w: 2, l: 12, totalWinnings: 50.00  },
+  { igHandle: "bnobach13",             pwa: 32, w: 1, l: 31, totalWinnings: 38.40  },
+  { igHandle: "bodie_maxon54",         pwa: 23, w: 1, l: 22, totalWinnings: 25.00  },
+  { igHandle: "adler.meek",            pwa: 24, w: 1, l: 23, totalWinnings: 25.00  },
+  { igHandle: "jacksonkuntz5",         pwa: 24, w: 1, l: 23, totalWinnings: 25.00  },
+  { igHandle: "cthenry7",              pwa: 23, w: 1, l: 22, totalWinnings: 38.40  },
+  { igHandle: "drewgillis7",           pwa: 21, w: 1, l: 20, totalWinnings: 38.40  },
+  { igHandle: "maddox0514",            pwa: 23, w: 1, l: 22, totalWinnings: 25.00  },
+  { igHandle: "mrj_2620",              pwa: 24, w: 1, l: 23, totalWinnings: 25.00  },
+  { igHandle: "madixwesterlund",       pwa: 23, w: 1, l: 22, totalWinnings: 25.00  },
+  { igHandle: "miamijp_1181",          pwa: 21, w: 1, l: 20, totalWinnings: 25.00  },
+  { igHandle: "happy_thoughts_4days",  pwa: 21, w: 1, l: 20, totalWinnings: 25.00  },
+  { igHandle: "bdc29",                 pwa: 19, w: 1, l: 18, totalWinnings: 25.00  },
+  { igHandle: "nick.curth",            pwa: 15, w: 1, l: 14, totalWinnings: 25.00  },
+  { igHandle: "isaachadlow30",         pwa: 19, w: 1, l: 18, totalWinnings: 38.40  },
+  { igHandle: "titusburkhardt",        pwa: 16, w: 1, l: 15, totalWinnings: 35.00  },
+  { igHandle: "jakerss2",              pwa: 14, w: 1, l: 13, totalWinnings: 35.00  },
+  { igHandle: "dylan_crozier",         pwa: 12, w: 1, l: 11, totalWinnings: 25.00  },
+  { igHandle: "dangabay914",           pwa: 10, w: 1, l: 9,  totalWinnings: 25.00  },
+  { igHandle: "sahilhazari327",        pwa: 12, w: 1, l: 11, totalWinnings: 25.00  },
+  { igHandle: "jimmy_lasceski",        pwa: 8,  w: 1, l: 7,  totalWinnings: 25.00  },
+  { igHandle: "cpetruska5",            pwa: 7,  w: 1, l: 6,  totalWinnings: 25.00  },
+  { igHandle: "the.chefs.corner",      pwa: 4,  w: 1, l: 3,  totalWinnings: 25.00  },
+  { igHandle: "kushpatel.58",          pwa: 7,  w: 1, l: 6,  totalWinnings: 25.00  },
+  { igHandle: "anthonyevangelista",    pwa: 4,  w: 1, l: 3,  totalWinnings: 38.40  },
+  { igHandle: "caleblara__",           pwa: 2,  w: 1, l: 1,  totalWinnings: 38.40  },
+  { igHandle: "prudencio.logan",       pwa: 1,  w: 1, l: 0,  totalWinnings: 38.40  },
+  { igHandle: "petekman",              pwa: 21, w: 1, l: 20, totalWinnings: 25.00  },
+  { igHandle: "zachbaunburner",        pwa: 15, w: 1, l: 14, totalWinnings: 25.00  },
+  { igHandle: "austin_sanchez_55",     pwa: 24, w: 1, l: 23, totalWinnings: 25.00  },
+  // ── 0-win participants ───────────────────────────────────────────────────────
+  { igHandle: "imramon24",             pwa: 24, w: 0, l: 24, totalWinnings: 0  },
+  { igHandle: "drew.bingamon01",       pwa: 22, w: 0, l: 22, totalWinnings: 0  },
+  { igHandle: "darth_paider",          pwa: 22, w: 0, l: 22, totalWinnings: 0  },
+  { igHandle: "bojangles2724",         pwa: 20, w: 0, l: 20, totalWinnings: 0  },
+  { igHandle: "edwardl426",            pwa: 23, w: 0, l: 23, totalWinnings: 0  },
+  { igHandle: "ppparker25",            pwa: 19, w: 0, l: 19, totalWinnings: 0  },
+  { igHandle: "phoenix_spotter",       pwa: 21, w: 0, l: 21, totalWinnings: 0  },
+  { igHandle: "a_aburkhardt",          pwa: 21, w: 0, l: 21, totalWinnings: 0  },
+  { igHandle: "riley_manz",            pwa: 20, w: 0, l: 20, totalWinnings: 0  },
+  { igHandle: "alex_oconnor__",        pwa: 16, w: 0, l: 16, totalWinnings: 0  },
+  { igHandle: "vfl_bluehens",          pwa: 16, w: 0, l: 16, totalWinnings: 0  },
+  { igHandle: "elias.dafniotis",       pwa: 15, w: 0, l: 15, totalWinnings: 0  },
+  { igHandle: "jb_keller",             pwa: 15, w: 0, l: 15, totalWinnings: 0  },
+  { igHandle: "jzmes18",               pwa: 15, w: 0, l: 15, totalWinnings: 0  },
+  { igHandle: "josiahhurd1",           pwa: 14, w: 0, l: 14, totalWinnings: 0  },
+  { igHandle: "5braeden5",             pwa: 14, w: 0, l: 14, totalWinnings: 0  },
+  { igHandle: "jackburnett502",        pwa: 15, w: 0, l: 15, totalWinnings: 0  },
+  { igHandle: "packenator_",           pwa: 12, w: 0, l: 12, totalWinnings: 0  },
+  { igHandle: "luke_friedl",           pwa: 12, w: 0, l: 12, totalWinnings: 0  },
+  { igHandle: "vince_basile83",        pwa: 14, w: 0, l: 14, totalWinnings: 0  },
+  { igHandle: "binktastic_",           pwa: 14, w: 0, l: 14, totalWinnings: 0  },
+  { igHandle: "jtriles518",            pwa: 12, w: 0, l: 12, totalWinnings: 0  },
+  { igHandle: "jalensauer4",           pwa: 10, w: 0, l: 10, totalWinnings: 0  },
+  { igHandle: "albert_qiao",           pwa: 9,  w: 0, l: 9,  totalWinnings: 0  },
+  { igHandle: "briannarmrz",           pwa: 9,  w: 0, l: 9,  totalWinnings: 0  },
+  { igHandle: "liam.prokop",           pwa: 10, w: 0, l: 10, totalWinnings: 0  },
+  { igHandle: "a.sweens.2",            pwa: 8,  w: 0, l: 8,  totalWinnings: 0  },
+  { igHandle: "colorado.icebreakers.nef", pwa: 6, w: 0, l: 6, totalWinnings: 0 },
+  { igHandle: "kjgrand",               pwa: 6,  w: 0, l: 6,  totalWinnings: 0  },
+  { igHandle: "numbanine",             pwa: 6,  w: 0, l: 6,  totalWinnings: 0  },
+  { igHandle: "mcanipe10",             pwa: 7,  w: 0, l: 7,  totalWinnings: 0  },
+  { igHandle: "mackenzi.thomasson",    pwa: 6,  w: 0, l: 6,  totalWinnings: 0  },
+  { igHandle: "sparkiousx",            pwa: 6,  w: 0, l: 6,  totalWinnings: 0  },
+  { igHandle: "a.aaron.aa",            pwa: 8,  w: 0, l: 8,  totalWinnings: 0  },
+  { igHandle: "c.brown17",             pwa: 5,  w: 0, l: 5,  totalWinnings: 0  },
+  { igHandle: "rileythestreet",        pwa: 7,  w: 0, l: 7,  totalWinnings: 0  },
+  { igHandle: "5ktwxnuzi",             pwa: 4,  w: 0, l: 4,  totalWinnings: 0  },
+  { igHandle: "brogan.fitzgerald",     pwa: 4,  w: 0, l: 4,  totalWinnings: 0  },
+  { igHandle: "theaustinbates",        pwa: 4,  w: 0, l: 4,  totalWinnings: 0  },
+  { igHandle: "tyler_m2003",           pwa: 5,  w: 0, l: 5,  totalWinnings: 0  },
+  { igHandle: "vasili.sachlas",        pwa: 4,  w: 0, l: 4,  totalWinnings: 0  },
+  { igHandle: "ike__baker",            pwa: 7,  w: 0, l: 7,  totalWinnings: 0  },
+  { igHandle: "turkmtman",             pwa: 6,  w: 0, l: 6,  totalWinnings: 0  },
+  { igHandle: "restinpeat",            pwa: 7,  w: 0, l: 7,  totalWinnings: 0  },
+  { igHandle: "liamzimbric",           pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "matthew_hansmann",      pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "riley6ty9",             pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "rjhentz",               pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "singhtucker",           pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "unknxwn_ixn",           pwa: 4,  w: 0, l: 4,  totalWinnings: 0  },
+  { igHandle: "diego.14.rdz",          pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "jonboone25",            pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "matt.kenzo",            pwa: 5,  w: 0, l: 5,  totalWinnings: 0  },
+  { igHandle: "__numbanine__",         pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "alex_kubin",            pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "andrewrobey18",         pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "engnk_1",              pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "franknbeans25",         pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "ilovejimmybutler15",    pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "keaton4104",            pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "los.molina.44",         pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "mbn_nik0",              pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "nate__s.p.o.r.t.s",    pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "nol_ro",                pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "peepeepoopooweinerballs", pwa: 2, w: 0, l: 2, totalWinnings: 0  },
+  { igHandle: "pfannenstiel56",        pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "sboucher4646",          pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "tyler_gogurtz",         pwa: 3,  w: 0, l: 3,  totalWinnings: 0  },
+  { igHandle: "boganbicyclist",        pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "drxppy.twan25",         pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "_los.molina.44_",       pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "201.jon_",              pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "benjagrammer",          pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "birdsong_blake",        pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "blake.miller_17",       pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "conner.short2",         pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "donnie_w92",            pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "dylwall_852",           pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "evanlikeheaven",        pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "indianagoatfarm",       pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "jaketurer",             pwa: 2,  w: 0, l: 2,  totalWinnings: 0  },
+  { igHandle: "jayydeezee",            pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "jeremy.wilczak",        pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "jetskii_m",             pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "jk_8860",              pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "joshrivera_5",          pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "lu5th",                 pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "m.dangelo12",           pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "malsuasan",             pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "mattrh34",              pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "mauricenjeru_",         pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "noahk__704",            pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "noahpalso_88",          pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "reedwilson52",          pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "riseandgrind_ro",       pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "roryball468",           pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "santi.padillaa",        pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "scoutvacek",            pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "skinama_rink",          pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "theianforster",         pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "vruniversityavatars.vfl", pwa: 1, w: 0, l: 1, totalWinnings: 0  },
+  { igHandle: "vfl_coachsins",         pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "hunter.z.mcfarland",    pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "ram.karuppiah",         pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "alex_oconnor_",         pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "mike_wesselman",        pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
+  { igHandle: "theconnorjoyce",        pwa: 1,  w: 0, l: 1,  totalWinnings: 0  },
 ];
 
 export default function GiveawayPage() {
@@ -48,30 +169,44 @@ export default function GiveawayPage() {
     const [showImportExport, setShowImportExport] = useState(false);
     const [importText, setImportText] = useState("");
     const [standings, setStandings] = useState<any[]>([]);
-    const [totalGiveaways, setTotalGiveaways] = useState(36);
-    const [totalPrizeMoney, setTotalPrizeMoney] = useState(1093.80);
+    const [totalGiveaways, setTotalGiveaways] = useState(SEED_TOTAL_GIVEAWAYS);
+    const [totalPrizeMoney, setTotalPrizeMoney] = useState(SEED_TOTAL_MONEY);
     const [isStatsLoaded, setIsStatsLoaded] = useState(false);
 
     React.useEffect(() => {
-        const savedStandings = localStorage.getItem("wtf_giveaway_standings");
-        const savedTotal = localStorage.getItem("wtf_giveaway_total_count");
-        const savedMoney = localStorage.getItem("wtf_giveaway_total_money");
+        const DATA_VERSION = "v2"; // bump this whenever INITIAL_STANDINGS is updated
+        const savedVersion = localStorage.getItem("wtf_giveaway_version");
 
-        if (savedStandings) {
-            try {
-                setStandings(JSON.parse(savedStandings));
-            } catch (e) {
+        if (savedVersion !== DATA_VERSION) {
+            // Fresh seed: wipe old stale data and write the new baseline
+            localStorage.setItem("wtf_giveaway_version", DATA_VERSION);
+            localStorage.setItem("wtf_giveaway_standings", JSON.stringify(INITIAL_STANDINGS));
+            localStorage.setItem("wtf_giveaway_total_count", SEED_TOTAL_GIVEAWAYS.toString());
+            localStorage.setItem("wtf_giveaway_total_money", SEED_TOTAL_MONEY.toString());
+            setStandings(INITIAL_STANDINGS);
+            setTotalGiveaways(SEED_TOTAL_GIVEAWAYS);
+            setTotalPrizeMoney(SEED_TOTAL_MONEY);
+        } else {
+            const savedStandings = localStorage.getItem("wtf_giveaway_standings");
+            const savedTotal = localStorage.getItem("wtf_giveaway_total_count");
+            const savedMoney = localStorage.getItem("wtf_giveaway_total_money");
+
+            if (savedStandings) {
+                try {
+                    setStandings(JSON.parse(savedStandings));
+                } catch (e) {
+                    setStandings(INITIAL_STANDINGS);
+                }
+            } else {
                 setStandings(INITIAL_STANDINGS);
             }
-        } else {
-            setStandings(INITIAL_STANDINGS);
-        }
 
-        if (savedTotal) {
-            setTotalGiveaways(parseInt(savedTotal, 10));
-        }
-        if (savedMoney) {
-            setTotalPrizeMoney(parseFloat(savedMoney));
+            if (savedTotal) {
+                setTotalGiveaways(parseInt(savedTotal, 10));
+            }
+            if (savedMoney) {
+                setTotalPrizeMoney(parseFloat(savedMoney));
+            }
         }
         setIsStatsLoaded(true);
     }, []);
@@ -284,6 +419,7 @@ export default function GiveawayPage() {
                                 ...p,
                                 pwa: p.pwa + 1,
                                 w: isWinner ? p.w + 1 : p.w,
+                                l: isWinner ? (p.l ?? 0) : (p.l ?? 0) + 1,
                                 totalWinnings: isWinner ? p.totalWinnings + prize : p.totalWinnings
                             };
                         }
@@ -298,6 +434,7 @@ export default function GiveawayPage() {
                                 igHandle: u.trim(),
                                 pwa: 1,
                                 w: isWinner ? 1 : 0,
+                                l: isWinner ? 0 : 1,
                                 totalWinnings: isWinner ? prize : 0
                             });
                         }
@@ -757,8 +894,8 @@ export default function GiveawayPage() {
                                             onClick={() => {
                                                 if (confirm("Are you sure you want to reset standings to the default initial values?")) {
                                                     setStandings(INITIAL_STANDINGS);
-                                                    setTotalGiveaways(36);
-                                                    setTotalPrizeMoney(1093.80);
+                                                    setTotalGiveaways(SEED_TOTAL_GIVEAWAYS);
+                                                    setTotalPrizeMoney(SEED_TOTAL_MONEY);
                                                     localStorage.removeItem("wtf_giveaway_standings");
                                                     localStorage.removeItem("wtf_giveaway_total_count");
                                                     localStorage.removeItem("wtf_giveaway_total_money");
