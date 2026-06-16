@@ -194,7 +194,37 @@ export default function GiveawayPage() {
 
             if (savedStandings) {
                 try {
-                    setStandings(JSON.parse(savedStandings));
+                    let parsed = JSON.parse(savedStandings);
+                    
+                    // One-time hotfix for alex_oconnor__ duplicates/missing wins
+                    if (!localStorage.getItem("wtf_migrated_alex_fix")) {
+                        let alexFound = false;
+                        parsed = parsed.map((p: any) => {
+                            if (p.igHandle.toLowerCase() === "alex_oconnor__" || p.igHandle.toLowerCase() === "alex_oconnor_") {
+                                alexFound = true;
+                                return { ...p, igHandle: "alex_oconnor__", pwa: Math.max(p.pwa, 17), w: Math.max(p.w, 2), l: Math.max(p.pwa, 17) - Math.max(p.w, 2), totalWinnings: Math.max(p.totalWinnings, 50.00) };
+                            }
+                            return p;
+                        });
+                        // Deduplicate if there were multiple
+                        const uniqueMap = new Map();
+                        parsed.forEach((p: any) => {
+                            if (p.igHandle.toLowerCase() === "alex_oconnor__") {
+                                if (!uniqueMap.has("alex_oconnor__")) uniqueMap.set("alex_oconnor__", p);
+                            } else {
+                                uniqueMap.set(p.igHandle.toLowerCase(), p);
+                            }
+                        });
+                        parsed = Array.from(uniqueMap.values());
+
+                        if (!alexFound) {
+                            parsed.push({ igHandle: "alex_oconnor__", pwa: 17, w: 2, l: 15, totalWinnings: 50.00 });
+                        }
+                        localStorage.setItem("wtf_giveaway_standings", JSON.stringify(parsed));
+                        localStorage.setItem("wtf_migrated_alex_fix", "true");
+                    }
+                    
+                    setStandings(parsed);
                 } catch (e) {
                     setStandings(INITIAL_STANDINGS);
                 }
@@ -813,20 +843,48 @@ If no one matched, return: []`;
     const handleImportData = (rawInput: string) => {
         try {
             const trimmed = rawInput.trim();
-            if (!window.confirm("Are you sure you want to import this standings data? This will overwrite your current standings!")) {
-                return false;
-            }
+            const mode = window.prompt("Type 'MERGE' to add this data to current standings (adds up stats), or 'OVERWRITE' to completely replace current standings.", "MERGE");
+            if (!mode) return false;
+            const isMerge = mode.trim().toUpperCase() === "MERGE";
+            
             saveToHistory(standings, totalGiveaways, totalPrizeMoney);
             if (trimmed.startsWith("{")) {
                 const data = JSON.parse(trimmed);
                 if (typeof data.totalGiveaways === 'number' && typeof data.totalPrizeMoney === 'number' && Array.isArray(data.standings)) {
-                    setTotalGiveaways(data.totalGiveaways);
-                    setTotalPrizeMoney(data.totalPrizeMoney);
-                    setStandings(data.standings);
-                    localStorage.setItem("wtf_giveaway_total_count", data.totalGiveaways.toString());
-                    localStorage.setItem("wtf_giveaway_total_money", data.totalPrizeMoney.toString());
-                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(data.standings));
-                    alert("Successfully imported JSON stats!");
+                    let newTotalG = data.totalGiveaways;
+                    let newTotalM = data.totalPrizeMoney;
+                    let newStandings = data.standings;
+                    
+                    if (isMerge) {
+                        newTotalG += totalGiveaways;
+                        newTotalM += totalPrizeMoney;
+                        const mergedMap = new Map();
+                        standings.forEach(p => mergedMap.set(p.igHandle.toLowerCase().trim(), p));
+                        data.standings.forEach((p: any) => {
+                            const key = p.igHandle.toLowerCase().trim();
+                            if (mergedMap.has(key)) {
+                                const exist = mergedMap.get(key);
+                                mergedMap.set(key, {
+                                    ...exist,
+                                    pwa: exist.pwa + p.pwa,
+                                    w: exist.w + p.w,
+                                    l: (exist.l || 0) + (p.l || 0),
+                                    totalWinnings: exist.totalWinnings + p.totalWinnings
+                                });
+                            } else {
+                                mergedMap.set(key, p);
+                            }
+                        });
+                        newStandings = Array.from(mergedMap.values());
+                    }
+                    
+                    setTotalGiveaways(newTotalG);
+                    setTotalPrizeMoney(newTotalM);
+                    setStandings(newStandings);
+                    localStorage.setItem("wtf_giveaway_total_count", newTotalG.toString());
+                    localStorage.setItem("wtf_giveaway_total_money", newTotalM.toString());
+                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(newStandings));
+                    alert(`Successfully ${isMerge ? "merged" : "imported"} JSON stats!`);
                     return true;
                 }
                 throw new Error("Invalid JSON schema. Must contain totalGiveaways, totalPrizeMoney, and standings array.");
@@ -867,19 +925,44 @@ If no one matched, return: []`;
                 });
 
                 if (parsedStandings.length > 0) {
-                    const gCountStr = prompt("Enter Total Giveaways count:", totalGiveaways.toString());
-                    const totalG = parseInt(gCountStr || "0", 10) || 0;
-                    const mCountStr = prompt("Enter Total Prize Money amount ($):", calculatedMoney.toFixed(2));
-                    const totalM = parseFloat(mCountStr || "0") || 0;
-
-                    setTotalGiveaways(totalG);
-                    setTotalPrizeMoney(totalM);
-                    setStandings(parsedStandings);
+                    const gCountStr = prompt(`Enter Total Giveaways count to ${isMerge ? "ADD" : "SET"}:`, isMerge ? "0" : totalGiveaways.toString());
+                    const addG = parseInt(gCountStr || "0", 10) || 0;
+                    const newTotalG = isMerge ? totalGiveaways + addG : addG;
                     
-                    localStorage.setItem("wtf_giveaway_total_count", totalG.toString());
-                    localStorage.setItem("wtf_giveaway_total_money", totalM.toString());
-                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(parsedStandings));
-                    alert(`Successfully imported ${parsedStandings.length} players from spreadsheet data!`);
+                    const mCountStr = prompt(`Enter Total Prize Money amount ($) to ${isMerge ? "ADD" : "SET"}:`, calculatedMoney.toFixed(2));
+                    const addM = parseFloat(mCountStr || "0") || 0;
+                    const newTotalM = isMerge ? totalPrizeMoney + addM : addM;
+
+                    let newStandings = parsedStandings;
+                    if (isMerge) {
+                        const mergedMap = new Map();
+                        standings.forEach(p => mergedMap.set(p.igHandle.toLowerCase().trim(), p));
+                        parsedStandings.forEach((p: any) => {
+                            const key = p.igHandle.toLowerCase().trim();
+                            if (mergedMap.has(key)) {
+                                const exist = mergedMap.get(key);
+                                mergedMap.set(key, {
+                                    ...exist,
+                                    pwa: exist.pwa + p.pwa,
+                                    w: exist.w + p.w,
+                                    l: (exist.l || 0) + (p.pwa - p.w),
+                                    totalWinnings: exist.totalWinnings + p.totalWinnings
+                                });
+                            } else {
+                                mergedMap.set(key, { ...p, l: p.pwa - p.w });
+                            }
+                        });
+                        newStandings = Array.from(mergedMap.values());
+                    }
+
+                    setTotalGiveaways(newTotalG);
+                    setTotalPrizeMoney(newTotalM);
+                    setStandings(newStandings);
+                    
+                    localStorage.setItem("wtf_giveaway_total_count", newTotalG.toString());
+                    localStorage.setItem("wtf_giveaway_total_money", newTotalM.toString());
+                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(newStandings));
+                    alert(`Successfully ${isMerge ? "merged" : "imported"} ${parsedStandings.length} players from spreadsheet data!`);
                     return true;
                 }
                 throw new Error("Could not parse data. Ensure it is copy-pasted directly from a spreadsheet tab-separated table (containing handle, pwa, and wins columns).");
