@@ -394,6 +394,7 @@ export default function GiveawayPage() {
             return await callScannerApiRoute(text, images);
         }
 
+        let directErrorMsg = "";
         try {
             const misspellingRule = acceptMisspellings 
                 ? "Accept reasonable misspellings, abbreviations, or variations of the winning answer. For example if the answer is 'Spurs', accept 'spurs', 'SPURS', 'San Antonio Spurs', 'Spurss', etc." 
@@ -486,9 +487,16 @@ If no one matched, return: []`;
                 }
             }
             return usernames;
-        } catch (err) {
+        } catch (err: any) {
+            directErrorMsg = err.message || String(err);
             console.warn("Direct Gemini call failed, falling back to Next.js API route:", err);
+        }
+
+        // Try server route fallback
+        try {
             return await callScannerApiRoute(text, images);
+        } catch (fallbackErr: any) {
+            throw new Error(`Direct call failed (${directErrorMsg}) AND fallback failed (${fallbackErr.message || String(fallbackErr)})`);
         }
     };
 
@@ -535,6 +543,7 @@ If no one matched, return: []`;
             const allUsernames: string[] = isReverse ? [...usernames] : [];
             const hasApiKey = !!(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
             const BATCH_SIZE = hasApiKey ? 6 : 2; // Direct client-side calls support 6 frames; server route fallback needs 2 to avoid Vercel timeouts/payload limits
+            const scanErrors: string[] = [];
 
             if (frames.length > 0) {
                 const scanFrames = isReverse ? [...frames].reverse() : frames;
@@ -555,12 +564,13 @@ If no one matched, return: []`;
                         setShowResults(true);
                     } catch (batchErr: any) {
                         console.error(`Batch ${batchNum} exception:`, batchErr);
+                        scanErrors.push(`Batch ${batchNum}: ${batchErr.message || String(batchErr)}`);
                         someBatchesFailed = true;
                     }
                 }
 
                 if (someBatchesFailed) {
-                    alert("Notice: Some video frame batches failed to scan due to network timeouts, but all successfully scanned names have been added to the list.");
+                    alert(`Notice: Some video frame batches failed to scan.\n\nErrors:\n${scanErrors.slice(0, 3).join("\n")}`);
                 }
             } else {
                 setScanProgress("Scanning text...");
