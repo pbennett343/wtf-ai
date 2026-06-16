@@ -388,7 +388,7 @@ export default function GiveawayPage() {
         }
     };
 
-    const handleScan = async () => {
+    const handleScan = async (isReverse = false) => {
         if (!winningAnswer && !acceptAllComments) {
             alert("Please enter a winning answer to search for.");
             return;
@@ -399,29 +399,32 @@ export default function GiveawayPage() {
         }
 
         setIsScanning(true);
-        setShowResults(false);
-        setUsernames([]);
+        if (!isReverse) {
+            setShowResults(false);
+            setUsernames([]);
+        }
         setScanProgress("");
 
         try {
-            const allUsernames: string[] = [];
+            const allUsernames: string[] = isReverse ? [...usernames] : [];
             const BATCH_SIZE = 3; // Max 3 frames per request to stay under Vercel's 4.5MB body limit
 
             if (frames.length > 0) {
-                const totalBatches = Math.ceil(frames.length / BATCH_SIZE);
+                const scanFrames = isReverse ? [...frames].reverse() : frames;
+                const totalBatches = Math.ceil(scanFrames.length / BATCH_SIZE);
                 let someBatchesFailed = false;
 
-                for (let i = 0; i < frames.length; i += BATCH_SIZE) {
+                for (let i = 0; i < scanFrames.length; i += BATCH_SIZE) {
                     const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-                    setScanProgress(`Scanning batch ${batchNum} of ${totalBatches}...`);
-                    const batch = frames.slice(i, i + BATCH_SIZE);
+                    setScanProgress(`Scanning batch ${batchNum} of ${totalBatches} (${isReverse ? 'Reverse' : 'Forward'})...`);
+                    const batch = scanFrames.slice(i, i + BATCH_SIZE);
 
                     try {
                         const res = await fetch("/api/ai/giveaway-scanner", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                text: i === 0 ? rawText : "", // Only send text with the first batch
+                                text: (i === 0 && !isReverse) ? rawText : "", // Only send text with the first batch if not reverse
                                 images: batch,
                                 winningAnswer,
                                 acceptMisspellings,
@@ -821,12 +824,22 @@ export default function GiveawayPage() {
                             )}
 
                             <button
-                                onClick={handleScan}
+                                onClick={() => handleScan(false)}
                                 disabled={isScanning || (!rawText && frames.length === 0) || (isVideo && frames.length === 0)}
                                 className="w-full bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100 flex justify-center items-center gap-2"
                             >
                                 {isScanning ? <><Loader2 className="w-5 h-5 animate-spin" /> {scanProgress || "Scanning..."}</> : <><Sparkles className="w-5 h-5" /> Scan For Winners</>}
                             </button>
+
+                            {isVideo && frames.length > 0 && (
+                                <button
+                                    onClick={() => handleScan(true)}
+                                    disabled={isScanning}
+                                    className="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100 flex justify-center items-center gap-2 mt-2"
+                                >
+                                    {isScanning ? <><Loader2 className="w-4 h-4 animate-spin" /> {scanProgress || "Scanning..."}</> : <><Sparkles className="w-4 h-4" /> Re-scan from End (Merge)</>}
+                                </button>
+                            )}
                         </div>
                     </div>
 
