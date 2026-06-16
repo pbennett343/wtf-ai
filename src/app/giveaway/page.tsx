@@ -161,6 +161,7 @@ export default function GiveawayPage() {
     const [winningAnswer, setWinningAnswer] = useState("");
     const [acceptMisspellings, setAcceptMisspellings] = useState(true);
     const [acceptAllComments, setAcceptAllComments] = useState(false);
+    const [customApiKey, setCustomApiKey] = useState("");
     
     // Stats Standing State
     const [trackStats, setTrackStats] = useState(true);
@@ -209,7 +210,15 @@ export default function GiveawayPage() {
             }
         }
         setIsStatsLoaded(true);
+
+        const savedKey = localStorage.getItem("wtf_custom_gemini_api_key");
+        if (savedKey) setCustomApiKey(savedKey);
     }, []);
+
+    const handleCustomApiKeyChange = (val: string) => {
+        setCustomApiKey(val);
+        localStorage.setItem("wtf_custom_gemini_api_key", val);
+    };
     
     // Media
     const [file, setFile] = useState<File | null>(null);
@@ -389,7 +398,7 @@ export default function GiveawayPage() {
     };
 
     const performGeminiScan = async (text: string, images: string[]) => {
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+        const apiKey = customApiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
         if (!apiKey) {
             return await callScannerApiRoute(text, images);
         }
@@ -541,7 +550,7 @@ If no one matched, return: []`;
 
         try {
             const allUsernames: string[] = isReverse ? [...usernames] : [];
-            const hasApiKey = !!(process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
+            const hasApiKey = !!(customApiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "");
             const BATCH_SIZE = hasApiKey ? 6 : 2; // Direct client-side calls support 6 frames; server route fallback needs 2 to avoid Vercel timeouts/payload limits
             const scanErrors: string[] = [];
 
@@ -869,6 +878,20 @@ If no one matched, return: []`;
                                         />
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="pt-3 border-t border-white/5">
+                                <label className="block text-[10px] font-black uppercase tracking-widest text-white/50 mb-2 flex items-center justify-between">
+                                    <span>Custom Gemini API Key</span>
+                                    <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-[#b42434] hover:underline text-[9px] font-bold">Get Free Key</a>
+                                </label>
+                                <input
+                                    type="password"
+                                    value={customApiKey}
+                                    onChange={e => handleCustomApiKeyChange(e.target.value)}
+                                    placeholder={process.env.NEXT_PUBLIC_GEMINI_API_KEY ? "Using default key (rate limits apply)" : "Enter your AI Studio API key"}
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs font-bold focus:outline-none focus:border-[#b42434] transition-colors"
+                                />
                             </div>
                         </div>
 
