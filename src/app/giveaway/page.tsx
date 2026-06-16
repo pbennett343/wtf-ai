@@ -11,7 +11,7 @@ const SEED_TOTAL_MONEY = 1193.80;
 const INITIAL_STANDINGS = [
   // ── Winners ranked by W desc, then PWA desc ─────────────────────────────────
   { igHandle: "walker_theaussie94",    pwa: 22, w: 3, l: 19, totalWinnings: 85.00  },
-  { igHandle: "daddy_dan12345",        pwa: 24, w: 3, l: 21, totalWinnings: 60.00  },
+  { igHandle: "daddy_dan12345",        pwa: 24, w: 2, l: 22, totalWinnings: 60.00  },
   { igHandle: "georgiastvfl",          pwa: 7,  w: 3, l: 4,  totalWinnings: 75.00  },
   { igHandle: "minnichtrey",           pwa: 13, w: 2, l: 11, totalWinnings: 50.00  },
   { igHandle: "bwright4_3",            pwa: 22, w: 2, l: 20, totalWinnings: 60.00  },
@@ -175,7 +175,7 @@ export default function GiveawayPage() {
     const [isStatsLoaded, setIsStatsLoaded] = useState(false);
 
     React.useEffect(() => {
-        const DATA_VERSION = "v2"; // bump this whenever INITIAL_STANDINGS is updated
+        const DATA_VERSION = "v3"; // bump this whenever INITIAL_STANDINGS is updated
         const savedVersion = localStorage.getItem("wtf_giveaway_version");
 
         if (savedVersion !== DATA_VERSION) {
@@ -213,11 +213,89 @@ export default function GiveawayPage() {
 
         const savedKey = localStorage.getItem("wtf_custom_gemini_api_key");
         if (savedKey) setCustomApiKey(savedKey);
+
+        const savedHistory = localStorage.getItem("wtf_giveaway_history");
+        if (savedHistory) {
+            try { setHistory(JSON.parse(savedHistory)); } catch (e) {}
+        }
     }, []);
 
     const handleCustomApiKeyChange = (val: string) => {
         setCustomApiKey(val);
         localStorage.setItem("wtf_custom_gemini_api_key", val);
+    };
+
+    const [history, setHistory] = useState<{ standings: any[], totalGiveaways: number, totalPrizeMoney: number } | null>(null);
+
+    const saveToHistory = (currStandings: any[], currGiveaways: number, currMoney: number) => {
+        const historyObj = { standings: currStandings, totalGiveaways: currGiveaways, totalPrizeMoney: currMoney };
+        setHistory(historyObj);
+        localStorage.setItem("wtf_giveaway_history", JSON.stringify(historyObj));
+    };
+
+    const undoLastAction = () => {
+        if (!history) return;
+        if (!window.confirm("Are you sure you want to undo the last update/import/reset? This will restore stats to the previous state.")) {
+            return;
+        }
+        setStandings(history.standings);
+        setTotalGiveaways(history.totalGiveaways);
+        setTotalPrizeMoney(history.totalPrizeMoney);
+        localStorage.setItem("wtf_giveaway_standings", JSON.stringify(history.standings));
+        localStorage.setItem("wtf_giveaway_total_count", history.totalGiveaways.toString());
+        localStorage.setItem("wtf_giveaway_total_money", history.totalPrizeMoney.toString());
+        setHistory(null);
+        localStorage.removeItem("wtf_giveaway_history");
+        alert("Last action undone successfully!");
+    };
+
+    const handleEditPlayer = (igHandle: string) => {
+        const player = standings.find(p => p.igHandle.toLowerCase() === igHandle.toLowerCase());
+        if (!player) return;
+
+        const newPwaStr = window.prompt(`Edit stats for @${player.igHandle}\n\nEnter Prize Wheel Appearances (PWA):`, player.pwa.toString());
+        if (newPwaStr === null) return;
+        const newPwa = parseInt(newPwaStr, 10);
+        if (isNaN(newPwa)) { alert("Invalid number."); return; }
+
+        const newWStr = window.prompt(`Edit stats for @${player.igHandle}\n\nEnter Wins (W):`, player.w.toString());
+        if (newWStr === null) return;
+        const newW = parseInt(newWStr, 10);
+        if (isNaN(newW)) { alert("Invalid number."); return; }
+
+        const newMoneyStr = window.prompt(`Edit stats for @${player.igHandle}\n\nEnter Total Winnings ($):`, player.totalWinnings.toString());
+        if (newMoneyStr === null) return;
+        const newMoney = parseFloat(newMoneyStr);
+        if (isNaN(newMoney)) { alert("Invalid number."); return; }
+
+        const confirmUpdate = window.confirm(
+            `Confirm changes for @${player.igHandle}:\n` +
+            `- PWA: ${player.pwa} ➔ ${newPwa}\n` +
+            `- Wins: ${player.w} ➔ ${newW}\n` +
+            `- Losses: ${player.pwa - player.w} ➔ ${newPwa - newW}\n` +
+            `- Winnings: $${player.totalWinnings} ➔ $${newMoney}\n\n` +
+            `Save changes?`
+        );
+
+        if (confirmUpdate) {
+            saveToHistory(standings, totalGiveaways, totalPrizeMoney);
+            setStandings(prev => {
+                const updated = prev.map(p => {
+                    if (p.igHandle.toLowerCase() === igHandle.toLowerCase()) {
+                        return {
+                            ...p,
+                            pwa: newPwa,
+                            w: newW,
+                            l: newPwa - newW,
+                            totalWinnings: newMoney
+                        };
+                    }
+                    return p;
+                });
+                localStorage.setItem("wtf_giveaway_standings", JSON.stringify(updated));
+                return updated;
+            });
+        }
     };
     
     // Media
@@ -658,52 +736,62 @@ If no one matched, return: []`;
             // Update stats if tracked
             if (trackStats) {
                 const prize = parseFloat(prizeAmount) || 0;
-                setTotalGiveaways(prev => {
-                    const next = prev + 1;
-                    localStorage.setItem("wtf_giveaway_total_count", next.toString());
-                    return next;
-                });
-                setTotalPrizeMoney(prev => {
-                    const next = prev + prize;
-                    localStorage.setItem("wtf_giveaway_total_money", next.toFixed(2));
-                    return next;
-                });
-                setStandings(prev => {
-                    const candidateSet = new Set(usernames.map(u => u.toLowerCase().trim()));
-                    const existingKeys = new Set(prev.map(p => p.igHandle.toLowerCase().trim()));
-                    
-                    const updated = prev.map(p => {
-                        const key = p.igHandle.toLowerCase().trim();
-                        if (candidateSet.has(key)) {
-                            const isWinner = key === winner.toLowerCase().trim();
-                            return {
-                                ...p,
-                                pwa: p.pwa + 1,
-                                w: isWinner ? p.w + 1 : p.w,
-                                l: isWinner ? (p.l ?? 0) : (p.l ?? 0) + 1,
-                                totalWinnings: isWinner ? p.totalWinnings + prize : p.totalWinnings
-                            };
-                        }
-                        return p;
-                    });
+                const confirmSave = window.confirm(
+                    `Giveaway spin complete!\n\n` +
+                    `Winner: @${winner}\n` +
+                    `Prize: $${prize.toFixed(2)}\n\n` +
+                    `Do you want to update the standings stats with these results?`
+                );
 
-                    usernames.forEach(u => {
-                        const key = u.toLowerCase().trim();
-                        if (!existingKeys.has(key)) {
-                            const isWinner = key === winner.toLowerCase().trim();
-                            updated.push({
-                                igHandle: u.trim(),
-                                pwa: 1,
-                                w: isWinner ? 1 : 0,
-                                l: isWinner ? 0 : 1,
-                                totalWinnings: isWinner ? prize : 0
-                            });
-                        }
+                if (confirmSave) {
+                    saveToHistory(standings, totalGiveaways, totalPrizeMoney);
+                    setTotalGiveaways(prev => {
+                        const next = prev + 1;
+                        localStorage.setItem("wtf_giveaway_total_count", next.toString());
+                        return next;
                     });
+                    setTotalPrizeMoney(prev => {
+                        const next = prev + prize;
+                        localStorage.setItem("wtf_giveaway_total_money", next.toFixed(2));
+                        return next;
+                    });
+                    setStandings(prev => {
+                        const candidateSet = new Set(usernames.map(u => u.toLowerCase().trim()));
+                        const existingKeys = new Set(prev.map(p => p.igHandle.toLowerCase().trim()));
+                        
+                        const updated = prev.map(p => {
+                            const key = p.igHandle.toLowerCase().trim();
+                            if (candidateSet.has(key)) {
+                                const isWinner = key === winner.toLowerCase().trim();
+                                return {
+                                    ...p,
+                                    pwa: p.pwa + 1,
+                                    w: isWinner ? p.w + 1 : p.w,
+                                    l: isWinner ? (p.l ?? 0) : (p.l ?? 0) + 1,
+                                    totalWinnings: isWinner ? p.totalWinnings + prize : p.totalWinnings
+                                };
+                            }
+                            return p;
+                        });
 
-                    localStorage.setItem("wtf_giveaway_standings", JSON.stringify(updated));
-                    return updated;
-                });
+                        usernames.forEach(u => {
+                            const key = u.toLowerCase().trim();
+                            if (!existingKeys.has(key)) {
+                                const isWinner = key === winner.toLowerCase().trim();
+                                updated.push({
+                                    igHandle: u.trim(),
+                                    pwa: 1,
+                                    w: isWinner ? 1 : 0,
+                                    l: isWinner ? 0 : 1,
+                                    totalWinnings: isWinner ? prize : 0
+                                });
+                            }
+                        });
+
+                        localStorage.setItem("wtf_giveaway_standings", JSON.stringify(updated));
+                        return updated;
+                    });
+                }
             }
             
             // Auto-download with iOS Web Share API support
@@ -725,6 +813,10 @@ If no one matched, return: []`;
     const handleImportData = (rawInput: string) => {
         try {
             const trimmed = rawInput.trim();
+            if (!window.confirm("Are you sure you want to import this standings data? This will overwrite your current standings!")) {
+                return false;
+            }
+            saveToHistory(standings, totalGiveaways, totalPrizeMoney);
             if (trimmed.startsWith("{")) {
                 const data = JSON.parse(trimmed);
                 if (typeof data.totalGiveaways === 'number' && typeof data.totalPrizeMoney === 'number' && Array.isArray(data.standings)) {
@@ -1059,10 +1151,10 @@ If no one matched, return: []`;
                             </h2>
                             
                             {/* Subheader values */}
-                            <div className="w-full max-w-2xl flex justify-between items-center mt-6 text-white text-xs md:text-sm font-bold uppercase tracking-wider">
-                                <span className="italic opacity-90">Total Giveaways: {totalGiveaways}</span>
-                                <span className="italic opacity-90 text-right">
-                                    ${totalPrizeMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <div className="w-full max-w-2xl flex flex-col sm:flex-row justify-between items-center mt-6 text-white text-xs md:text-sm font-bold uppercase tracking-wider gap-2 select-none">
+                                <span className="italic opacity-90">Total Giveaways Count: {totalGiveaways}</span>
+                                <span className="italic opacity-90 text-center sm:text-right">
+                                    Total Prize Money Given: ${totalPrizeMoney.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
@@ -1116,9 +1208,7 @@ If no one matched, return: []`;
                             <>
                                 <div className="flex-1 overflow-x-auto p-4 md:p-6 max-h-[50vh] overflow-y-auto">
                                     {standings.length === 0 ? (
-                                        <div className="text-center py-12 text-white/40 font-bold uppercase tracking-wider text-xs">
-                                            No standings entries yet. Run a giveaway or import data.
-                                        </div>
+                                        <div className="text-center py-12 text-white/40 font-bold uppercase tracking-wider">No standings available. Import data to get started.</div>
                                     ) : (
                                         <table className="w-full border-collapse text-left">
                                             <thead>
@@ -1127,9 +1217,10 @@ If no one matched, return: []`;
                                                     <th className="py-3 px-4">IG Handle</th>
                                                     <th className="py-3 px-4 text-center">PWA</th>
                                                     <th className="py-3 px-4 text-center">W</th>
-                                                    <th className="py-3 px-4 text-center">L</th>
-                                                    <th className="py-3 px-4 text-center">Win %</th>
-                                                    <th className="py-3 px-4 text-right pr-6 rounded-tr-xl">Total Winnings</th>
+                                                    <th className="py-3 px-4 text-center hidden md:table-cell">L</th>
+                                                    <th className="py-3 px-4 text-center hidden md:table-cell">Win %</th>
+                                                    <th className="py-3 px-4 text-right pr-6">Winnings</th>
+                                                    <th className="py-3 px-4 text-center rounded-tr-xl w-14">Edit</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1154,20 +1245,29 @@ If no one matched, return: []`;
                                                                 className="border-b border-[#cbd5e1] hover:bg-[#e2e8f0] transition-colors odd:bg-white even:bg-[#f8fafc] text-slate-800 text-xs font-bold"
                                                             >
                                                                 <td className="py-2.5 px-4 text-center text-slate-500 font-black">{currentRank}</td>
-                                                                <td className="py-2.5 px-4 text-[#1e295d] font-bold">@{player.igHandle}</td>
+                                                                <td className="py-2.5 px-4 text-[#1e295d] font-bold break-all">@{player.igHandle}</td>
                                                                 <td className="py-2.5 px-4 text-center font-extrabold">{player.pwa}</td>
                                                                 <td className="py-2.5 px-4 text-center font-extrabold text-green-700">{player.w}</td>
-                                                                <td className="py-2.5 px-4 text-center font-extrabold text-slate-500">{lCount}</td>
-                                                                <td className="py-2.5 px-4 text-center font-extrabold text-indigo-700">
+                                                                <td className="py-2.5 px-4 text-center font-extrabold text-slate-500 hidden md:table-cell">{lCount}</td>
+                                                                <td className="py-2.5 px-4 text-center font-extrabold text-indigo-700 hidden md:table-cell">
                                                                     {winPercent.toFixed(2)}%
                                                                 </td>
                                                                 <td className="py-2.5 px-4 text-right pr-6 font-black text-emerald-700">
                                                                     ${player.totalWinnings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                 </td>
+                                                                <td className="py-2.5 px-4 text-center">
+                                                                    <button
+                                                                        onClick={() => handleEditPlayer(player.igHandle)}
+                                                                        className="p-1 text-slate-400 hover:text-[#b42434] active:scale-75 transition-transform"
+                                                                        title="Edit Stats"
+                                                                    >
+                                                                        ✏️
+                                                                    </button>
+                                                                </td>
                                                             </tr>
                                                         );
                                                     });
-                                                })()}
+                                                 })()}
                                             </tbody>
                                         </table>
                                     )}
@@ -1198,10 +1298,11 @@ If no one matched, return: []`;
 
                                     {/* Admin row */}
                                     <div className="flex flex-wrap gap-2 justify-between items-center pt-3 border-t border-white/5">
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             <button
                                                 onClick={() => {
                                                     if (confirm("Are you sure you want to reset standings to the default initial values?")) {
+                                                        saveToHistory(standings, totalGiveaways, totalPrizeMoney);
                                                         setStandings(INITIAL_STANDINGS);
                                                         setTotalGiveaways(SEED_TOTAL_GIVEAWAYS);
                                                         setTotalPrizeMoney(SEED_TOTAL_MONEY);
@@ -1217,6 +1318,7 @@ If no one matched, return: []`;
                                             <button
                                                 onClick={() => {
                                                     if (confirm("Are you sure you want to clear all standings to 0?")) {
+                                                        saveToHistory(standings, totalGiveaways, totalPrizeMoney);
                                                         setStandings([]);
                                                         setTotalGiveaways(0);
                                                         setTotalPrizeMoney(0);
@@ -1229,6 +1331,14 @@ If no one matched, return: []`;
                                             >
                                                 Clear All
                                             </button>
+                                            {history && (
+                                                <button
+                                                    onClick={undoLastAction}
+                                                    className="px-3 py-2 border border-yellow-500/30 hover:bg-yellow-500/10 active:scale-95 text-yellow-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                                >
+                                                    Undo Last Action
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="flex gap-2">
                                             <button
