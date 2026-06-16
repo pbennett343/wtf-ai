@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Loader2, Settings2, Sparkles, Video, Download, CheckCircle2, ChevronLeft, Upload, Trophy, X } from "lucide-react";
+import { Loader2, Settings2, Sparkles, Video, Download, CheckCircle2, ChevronLeft, Upload, Trophy, X, Link, Image } from "lucide-react";
 import VideoFrameExtractor from "@/components/giveaway/VideoFrameExtractor";
 import WheelGenerator, { WheelGeneratorRef } from "@/components/giveaway/WheelGenerator";
 
@@ -227,6 +227,148 @@ export default function GiveawayPage() {
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [winnerName, setWinnerName] = useState("");
     const wheelRef = useRef<WheelGeneratorRef>(null);
+
+    const [shareLinkCopied, setShareLinkCopied] = useState(false);
+
+    // Build a shareable /standings URL encoding all players with 2+ PWA
+    const generateShareUrl = () => {
+        const filtered = standings.filter(p => p.pwa >= 2);
+        const payload = {
+            standings: filtered,
+            totalGiveaways,
+            totalPrizeMoney,
+            generatedAt: new Date().toISOString(),
+        };
+        const encoded = btoa(JSON.stringify(payload));
+        const base = typeof window !== 'undefined' ? window.location.origin : '';
+        return `${base}/standings?d=${encoded}`;
+    };
+
+    // Download a styled PNG of the top 25 + ties for 25th
+    const downloadStandingsImage = async () => {
+        const sorted = [...standings].sort((a, b) => b.w !== a.w ? b.w - a.w : b.pwa - a.pwa);
+        // find cut-off: top 25 + everyone tied with 25th
+        let cutoff = Math.min(24, sorted.length - 1);
+        const p25 = sorted[cutoff];
+        while (cutoff + 1 < sorted.length && sorted[cutoff + 1].w === p25.w && sorted[cutoff + 1].pwa === p25.pwa) cutoff++;
+        const display = sorted.slice(0, cutoff + 1);
+
+        const COLS = ['#', 'IG Handle', 'PWA', 'W', 'L', 'Win%', '$ Won'];
+        const ROW_H = 32;
+        const HEAD_H = 48;
+        const HEADER_BLOCK = 110;
+        const FOOTER_H = 36;
+        const W = 820;
+        const H = HEADER_BLOCK + HEAD_H + display.length * ROW_H + FOOTER_H + 16;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W * 2; canvas.height = H * 2;
+        const ctx = canvas.getContext('2d')!;
+        ctx.scale(2, 2);
+
+        // Background
+        ctx.fillStyle = '#111114';
+        ctx.fillRect(0, 0, W, H);
+
+        // Header bar
+        ctx.fillStyle = '#1e295d';
+        ctx.fillRect(0, 0, W, HEADER_BLOCK);
+
+        // Logo
+        try {
+            const logoImg = await new Promise<HTMLImageElement>((res, rej) => {
+                const img = new window.Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => res(img);
+                img.onerror = rej;
+                img.src = '/wtf-logo-transparent.png';
+            });
+            const lh = 36; const lw = logoImg.width * (lh / logoImg.height);
+            ctx.drawImage(logoImg, W - lw - 14, 14, lw, lh);
+        } catch {}
+
+        // Title
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 20px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('2026 WTF GIVEAWAY GAMES', W / 2, 36);
+        ctx.font = 'bold 10px system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText('LIVE STANDINGS', W / 2, 54);
+
+        // Sub-stats
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Total Giveaways: ${totalGiveaways}`, 20, 82);
+        ctx.textAlign = 'right';
+        ctx.fillText(`$${totalPrizeMoney.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, W - 20, 82);
+
+        const colX = [16, 58, 530, 590, 640, 690, 760];
+        const colAlign: CanvasTextAlign[] = ['center', 'left', 'center', 'center', 'center', 'center', 'right'];
+
+        // Table header
+        const tableTop = HEADER_BLOCK;
+        ctx.fillStyle = '#1e295d';
+        ctx.fillRect(0, tableTop, W, HEAD_H);
+        ctx.font = 'bold 10px system-ui, sans-serif';
+        ctx.fillStyle = 'white';
+        COLS.forEach((col, ci) => {
+            ctx.textAlign = colAlign[ci];
+            ctx.fillText(col.toUpperCase(), colX[ci], tableTop + HEAD_H / 2 + 4);
+        });
+
+        // Rows
+        let rank = 1;
+        display.forEach((player, idx) => {
+            if (idx > 0) {
+                const prev = display[idx - 1];
+                if (player.w !== prev.w || player.pwa !== prev.pwa) rank = idx + 1;
+            }
+            const y = tableTop + HEAD_H + idx * ROW_H;
+            ctx.fillStyle = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            ctx.fillRect(0, y, W, ROW_H);
+
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+            const lCount = player.l ?? (player.pwa - player.w);
+            const winPct = player.pwa > 0 ? ((player.w / player.pwa) * 100).toFixed(2) : '0.00';
+            const cells = [
+                medal ?? String(rank),
+                `@${player.igHandle}`,
+                String(player.pwa),
+                String(player.w),
+                String(lCount),
+                `${winPct}%`,
+                player.totalWinnings > 0 ? `$${player.totalWinnings.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—',
+            ];
+            const colors = ['#64748b', '#1e295d', '#1e293b', '#15803d', '#64748b', '#4338ca', player.totalWinnings > 0 ? '#047857' : '#94a3b8'];
+            ctx.font = `${rank <= 3 && ci === 1 ? 'bold' : 'normal'} 11px system-ui, sans-serif`;
+            cells.forEach((cell, ci) => {
+                ctx.textAlign = colAlign[ci];
+                ctx.fillStyle = colors[ci];
+                ctx.font = `bold 11px system-ui, sans-serif`;
+                ctx.fillText(cell, colX[ci], y + ROW_H / 2 + 4);
+            });
+        });
+
+        // Footer
+        const footerY = tableTop + HEAD_H + display.length * ROW_H;
+        ctx.fillStyle = '#111114';
+        ctx.fillRect(0, footerY, W, FOOTER_H + 16);
+        ctx.font = 'bold 9px system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.textAlign = 'center';
+        ctx.fillText('WTF SPORTS · GIVEAWAY GAMES 2026', W / 2, footerY + FOOTER_H / 2 + 4);
+
+        canvas.toBlob(blob => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `wtf_standings_top25_${new Date().toISOString().slice(0,10)}.png`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 3000);
+        }, 'image/png');
+    };
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
@@ -888,56 +1030,77 @@ export default function GiveawayPage() {
                                     )}
                                 </div>
 
-                                <div className="bg-black/20 p-4 border-t border-white/5 flex flex-wrap gap-3 justify-between items-center shrink-0">
-                                    <div className="flex gap-2">
+                                <div className="bg-black/20 p-4 border-t border-white/5 space-y-3 shrink-0">
+                                    {/* Share row */}
+                                    <div className="flex flex-wrap gap-2">
                                         <button
-                                            onClick={() => {
-                                                if (confirm("Are you sure you want to reset standings to the default initial values?")) {
-                                                    setStandings(INITIAL_STANDINGS);
-                                                    setTotalGiveaways(SEED_TOTAL_GIVEAWAYS);
-                                                    setTotalPrizeMoney(SEED_TOTAL_MONEY);
-                                                    localStorage.removeItem("wtf_giveaway_standings");
-                                                    localStorage.removeItem("wtf_giveaway_total_count");
-                                                    localStorage.removeItem("wtf_giveaway_total_money");
-                                                }
+                                            onClick={async () => {
+                                                const url = generateShareUrl();
+                                                try { await navigator.clipboard.writeText(url); } catch { /* fallback */ }
+                                                setShareLinkCopied(true);
+                                                setTimeout(() => setShareLinkCopied(false), 2500);
                                             }}
-                                            className="px-3 py-2 border border-red-500/30 hover:bg-red-500/10 active:scale-95 text-red-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-[#1e295d] hover:bg-[#1e295d]/80 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
                                         >
-                                            Reset to Default
+                                            <Link className="w-3.5 h-3.5" />
+                                            {shareLinkCopied ? '✓ Copied!' : 'Copy Share Link'}
                                         </button>
                                         <button
-                                            onClick={() => {
-                                                if (confirm("Are you sure you want to clear all standings to 0?")) {
-                                                    setStandings([]);
-                                                    setTotalGiveaways(0);
-                                                    setTotalPrizeMoney(0);
-                                                    localStorage.setItem("wtf_giveaway_standings", "[]");
-                                                    localStorage.setItem("wtf_giveaway_total_count", "0");
-                                                    localStorage.setItem("wtf_giveaway_total_money", "0");
-                                                }
-                                            }}
-                                            className="px-3 py-2 border border-white/10 hover:bg-white/5 active:scale-95 text-white/60 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                            onClick={downloadStandingsImage}
+                                            className="flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
                                         >
-                                            Clear All
+                                            <Image className="w-3.5 h-3.5" /> Download Image (Top 25)
                                         </button>
                                     </div>
-                                    
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => {
-                                                setImportText("");
-                                                setShowImportExport(true);
-                                            }}
-                                            className="px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
-                                        >
-                                            Import / Export
-                                        </button>
-                                        <button
-                                            onClick={() => setShowStandings(false)}
-                                            className="px-5 py-2 bg-[#b42434] hover:bg-[#b42434]/90 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all"
-                                        >
-                                            Close
-                                        </button>
+
+                                    {/* Admin row */}
+                                    <div className="flex flex-wrap gap-2 justify-between items-center pt-3 border-t border-white/5">
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm("Are you sure you want to reset standings to the default initial values?")) {
+                                                        setStandings(INITIAL_STANDINGS);
+                                                        setTotalGiveaways(SEED_TOTAL_GIVEAWAYS);
+                                                        setTotalPrizeMoney(SEED_TOTAL_MONEY);
+                                                        localStorage.removeItem("wtf_giveaway_standings");
+                                                        localStorage.removeItem("wtf_giveaway_total_count");
+                                                        localStorage.removeItem("wtf_giveaway_total_money");
+                                                    }
+                                                }}
+                                                className="px-3 py-2 border border-red-500/30 hover:bg-red-500/10 active:scale-95 text-red-400 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                            >
+                                                Reset to Default
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm("Are you sure you want to clear all standings to 0?")) {
+                                                        setStandings([]);
+                                                        setTotalGiveaways(0);
+                                                        setTotalPrizeMoney(0);
+                                                        localStorage.setItem("wtf_giveaway_standings", "[]");
+                                                        localStorage.setItem("wtf_giveaway_total_count", "0");
+                                                        localStorage.setItem("wtf_giveaway_total_money", "0");
+                                                    }
+                                                }}
+                                                className="px-3 py-2 border border-white/10 hover:bg-white/5 active:scale-95 text-white/60 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                            >
+                                                Clear All
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => { setImportText(""); setShowImportExport(true); }}
+                                                className="px-4 py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+                                            >
+                                                Import / Export
+                                            </button>
+                                            <button
+                                                onClick={() => setShowStandings(false)}
+                                                className="px-5 py-2 bg-[#b42434] hover:bg-[#b42434]/90 active:scale-95 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all"
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </>
