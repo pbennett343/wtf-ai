@@ -556,6 +556,10 @@ If no one matched, return: []`;
                     const batch = scanFrames.slice(i, i + BATCH_SIZE);
 
                     try {
+                        // Rate limit prevention: sleep 1.5 seconds between batches (except the first one)
+                        if (i > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 1500));
+                        }
                         const batchUsernames = await performGeminiScan((i === 0 && !isReverse) ? rawText : "", batch);
                         allUsernames.push(...batchUsernames);
                         // Update usernames incrementally in real-time so the list populates live!

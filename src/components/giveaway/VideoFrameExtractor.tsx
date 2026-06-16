@@ -77,10 +77,22 @@ export default function VideoFrameExtractor({
                     await new Promise(r => setTimeout(r, 50));
                 }
 
-                // Draw to canvas
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // Draw to canvas with a max dimension of 720px to save token limits and bandwidth
+                const MAX_DIM = 720;
+                let w = video.videoWidth;
+                let h = video.videoHeight;
+                if (w > MAX_DIM || h > MAX_DIM) {
+                    if (w > h) {
+                        h = Math.round((h * MAX_DIM) / w);
+                        w = MAX_DIM;
+                    } else {
+                        w = Math.round((w * MAX_DIM) / h);
+                        h = MAX_DIM;
+                    }
+                }
+                canvas.width = w;
+                canvas.height = h;
+                ctx.drawImage(video, 0, 0, w, h);
 
                 // Get data URL
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
@@ -113,9 +125,21 @@ export default function VideoFrameExtractor({
                     }, 500);
                 });
 
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const MAX_DIM = 720;
+                let w = video.videoWidth;
+                let h = video.videoHeight;
+                if (w > MAX_DIM || h > MAX_DIM) {
+                    if (w > h) {
+                        h = Math.round((h * MAX_DIM) / w);
+                        w = MAX_DIM;
+                    } else {
+                        w = Math.round((w * MAX_DIM) / h);
+                        h = MAX_DIM;
+                    }
+                }
+                canvas.width = w;
+                canvas.height = h;
+                ctx.drawImage(video, 0, 0, w, h);
 
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                 extractedFrames.push(dataUrl);
