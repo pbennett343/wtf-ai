@@ -718,8 +718,42 @@ export default function Home() {
         }
     };
 
+    const removeWhiteBackground = (dataUrl: string): Promise<string> => {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return resolve(dataUrl);
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const d = imgData.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const r = d[i];
+                    const g = d[i + 1];
+                    const b = d[i + 2];
+                    // Convert white / near-white background pixels (R, G, B > 215) to 100% transparent
+                    if (r > 215 && g > 215 && b > 215) {
+                        d[i + 3] = 0; // Alpha = 0
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+                resolve(canvas.toDataURL("image/png"));
+            };
+            img.onerror = () => resolve(dataUrl);
+            img.src = dataUrl;
+        });
+    };
+
     const handleAIGenerate = async () => {
-        if (!aiImagePrompt && !aiRefImage) return;
+        const promptToUse = aiImagePrompt || statText;
+        if (!promptToUse && !aiRefImage) {
+            alert("Please enter a stat or text prompt first.");
+            return;
+        }
         setGenCount(prev => prev + 1);
         setIsAILoading(true);
         setIsGeneratingImage(true);
@@ -729,21 +763,30 @@ export default function Home() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    prompt: aiImagePrompt,
+                    prompt: promptToUse,
                     referenceImage: aiRefImage || undefined,
+                    brand,
+                    mode: brand === 'book-illustrations' ? 'book-illustrations' : 'clay',
                 }),
             });
             const data = await res.json();
 
-            if (data.imageDataUrl) {
-                // Native Gemini image generation — true image-to-image result
-                setAiImageResult({ url: data.imageDataUrl, prompt: `[gemini-native] Clay transformation` });
-            } else if (data.imageUrl || data.generatedPrompt) {
-                // Pollinations fallback
-                const url = data.imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(data.generatedPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
-                setAiImageResult({ url, prompt: `[${data.source || "pollinations"}] ${data.generatedPrompt || ""}` });
+            let rawUrl = data.imageDataUrl || data.imageUrl;
+            if (!rawUrl && data.generatedPrompt) {
+                rawUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(data.generatedPrompt)}?width=1024&height=1024&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+            }
+
+            if (rawUrl) {
+                let finalUrl = rawUrl;
+                if (brand === 'book-illustrations') {
+                    finalUrl = await removeWhiteBackground(rawUrl);
+                }
+                setAiImageResult({
+                    url: finalUrl,
+                    prompt: brand === 'book-illustrations' ? '[Book Illustration] Transparent PNG Sketch' : `[${data.source || "gemini"}] Clay Model`
+                });
             } else if (data.error) {
-                alert("API ERROR: " + data.error);
+                alert("API ERROR: " + (typeof data.error === 'object' ? JSON.stringify(data.error) : data.error));
             }
         } catch (error: any) {
             console.error("Generate fetch failed", error);
@@ -920,21 +963,29 @@ export default function Home() {
                                         { file: 'bets-x-logo.jpg', label: 'WTF Bets' },
                                         { file: 'vfl-x-logo.jpg', label: 'VFL' },
                                         { file: 'pod-x-logo.jpg', label: 'Willing To Fail' },
+                                        { file: 'book-illustrations', label: 'Book Illustrations' },
                                     ].map((b) => (
                                         <button
                                             key={b.file}
                                             onClick={() => { setBrand(b.file); setCurrentStep(1); }}
-                                            className="flex items-center justify-center p-4 rounded-xl border-2 transition-all active:scale-95 bg-white"
+                                            className={`flex items-center justify-center p-4 rounded-xl border-2 transition-all active:scale-95 bg-white ${b.file === 'book-illustrations' ? 'col-span-2' : ''}`}
                                             style={{ borderColor: brand === b.file ? BRAND.crimson : 'transparent' }}
                                             onMouseEnter={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
                                             onMouseLeave={(e) => e.currentTarget.style.borderColor = brand === b.file ? BRAND.crimson : 'transparent'}
                                         >
-                                            <img
-                                                src={`/${b.file}`}
-                                                alt={b.label}
-                                                className="w-full h-12 object-contain"
-                                                onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
-                                            />
+                                            {b.file === 'book-illustrations' ? (
+                                                <div className="flex flex-col items-center justify-center h-12">
+                                                    <span className="text-sm font-black uppercase text-[#3b3b6d] tracking-tight">Book Illustrations</span>
+                                                    <span className="text-[10px] font-bold text-gray-500">Transparent PNG Sketch Generator</span>
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={`/${b.file}`}
+                                                    alt={b.label}
+                                                    className="w-full h-12 object-contain"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
+                                                />
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -1260,6 +1311,23 @@ export default function Home() {
                                                             APPLY TO GRAPHIC
                                                         </button>
                                                     </div>
+                                                    {brand === 'book-illustrations' && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const a = document.createElement("a");
+                                                                a.href = aiImageResult.url;
+                                                                a.download = `book_illustration_${Date.now()}.png`;
+                                                                document.body.appendChild(a);
+                                                                a.click();
+                                                                document.body.removeChild(a);
+                                                            }}
+                                                            className="w-full mt-2 py-2.5 rounded font-black text-xs transition-all shadow-xl text-white flex items-center justify-center gap-2 active:scale-95"
+                                                            style={{ background: BRAND.crimson }}
+                                                        >
+                                                            <Download size={14} />
+                                                            DOWNLOAD TRANSPARENT PNG
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

@@ -38,12 +38,18 @@ export async function POST(req: Request) {
             }
         }
 
-        const clayInstruction = referenceImage
-            ? `Transform this image into a 3D clay figurine style. Keep the EXACT same pose, composition, player number, jersey colors, and body proportions from the original image. Only change the material/texture: make everything look like smooth matte clay or soft plastic. The face should remain recognizable but simplified. Place the characters on the appropriate sports field, zoomed in, with a heavily blurred background of fans in the stands. Nothing else going on in the background. Do NOT change the pose or add new elements. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Additional context: ${prompt}` : ""}`
-            : `Create a simple 3D clay figurine sports illustration based on this context: "${enrichedContext}". IMPORTANT RESTRICTIONS: Do NOT generate or include any text, words, or numbers floating in the image. Do NOT include scoreboards, UI elements, or infographics. ONLY generate the simple clay figurine character(s) in their accurate team uniform. The background MUST be the appropriate sports field, zoomed in, with a heavily blurred background of fans in the stands. Nothing else going on in the background. Smooth matte clay material, soft studio lighting. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`;
+        const isBookIllustrations = body.mode === 'book-illustrations' || body.brand === 'book-illustrations';
+
+        const imageInstruction = isBookIllustrations
+            ? (referenceImage
+                ? `Transform this image into a very simplified, minimal black ink sketch illustration for a book. Keep the main subject pose and action. IMPORTANT RESTRICTIONS: Render ONLY clean black ink line art strokes and outlines. NO colors, NO shading, NO gray tones, NO background objects. Isolated on a plain solid white background. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Context: ${prompt}` : ""}`
+                : `Create a very simplified, minimal black ink sketch illustration for a book based on this context: "${enrichedContext}". IMPORTANT RESTRICTIONS: Render ONLY clean black ink line art outlines and strokes of the main athlete/subject. NO colors, NO shading, NO gray tones, NO text, NO numbers, NO background scenery or objects. Isolated on a plain solid white background. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`)
+            : (referenceImage
+                ? `Transform this image into a 3D clay figurine style. Keep the EXACT same pose, composition, player number, jersey colors, and body proportions from the original image. Only change the material/texture: make everything look like smooth matte clay or soft plastic. The face should remain recognizable but simplified. Place the characters on the appropriate sports field, zoomed in, with a heavily blurred background of fans in the stands. Nothing else going on in the background. Do NOT change the pose or add new elements. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.${prompt ? ` Additional context: ${prompt}` : ""}`
+                : `Create a simple 3D clay figurine sports illustration based on this context: "${enrichedContext}". IMPORTANT RESTRICTIONS: Do NOT generate or include any text, words, or numbers floating in the image. Do NOT include scoreboards, UI elements, or infographics. ONLY generate the simple clay figurine character(s) in their accurate team uniform. The background MUST be the appropriate sports field, zoomed in, with a heavily blurred background of fans in the stands. Nothing else going on in the background. Smooth matte clay material, soft studio lighting. MUST BE A PERFECT 1:1 SQUARE ASPECT RATIO.`);
 
         // Build content parts array
-        const contentParts: any[] = [{ text: clayInstruction }];
+        const contentParts: any[] = [{ text: imageInstruction }];
 
         if (referenceImage) {
             const mimeMatch = referenceImage.match(/^data:(image\/\w+);base64,/);
