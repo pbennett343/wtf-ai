@@ -652,12 +652,12 @@ export default function Home() {
                                 alt="Circle overlay"
                                 style={{ 
                                     position: 'absolute',
-                                    width: `${circleImageZoom}%`,
-                                    height: `${circleImageZoom}%`,
+                                    width: `${circleImageSize * circleImageZoom / 100}px`,
+                                    height: `${circleImageSize * circleImageZoom / 100}px`,
                                     objectFit: 'cover',
-                                    top: `calc(50% + ${circleImgOffsetY}px)`,
-                                    left: `calc(50% + ${circleImgOffsetX}px)`,
-                                    transform: 'translate(-50%, -50%)',
+                                    left: `${(circleImageSize * (1 - circleImageZoom / 100)) / 2 + circleImgOffsetX}px`,
+                                    top: `${(circleImageSize * (1 - circleImageZoom / 100)) / 2 + circleImgOffsetY}px`,
+                                    display: 'block',
                                 }}
                                 crossOrigin="anonymous"
                             />
