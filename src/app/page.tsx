@@ -265,6 +265,7 @@ export default function Home() {
         setCircleBorderWidth(20);
         setCircleImageZoom(100);
         setCircleImgOffsetY(0);
+        setCircleImgOffsetX(0);
         setShowCircleImage(false);
     };
 
@@ -384,6 +385,7 @@ export default function Home() {
     const [circleBorderWidth, setCircleBorderWidth] = useState(20);
     const [circleImageZoom, setCircleImageZoom] = useState(100);
     const [circleImgOffsetY, setCircleImgOffsetY] = useState(0);
+    const [circleImgOffsetX, setCircleImgOffsetX] = useState(0);
     const [showCircleImage, setShowCircleImage] = useState(false);
 
     const exportRef = useRef<HTMLDivElement>(null);
@@ -442,14 +444,13 @@ export default function Home() {
 
             // 1. Full graphic (exactly as preview)
             const fullUrl = await captureRef(exportRef);
-            if (fullUrl) await downloadOrShare(fullUrl, `wtf_stat_${ts}.jpg`);
+            if (fullUrl) await downloadOrShare(fullUrl, `wtf_FULL_${ts}.jpg`);
 
             // 2. Image-only (no header/text box)
             if (imageOnlyRef.current) {
-                // Small delay so browser doesn't merge downloads
                 await new Promise(r => setTimeout(r, 400));
                 const imgUrl = await captureRef(imageOnlyRef);
-                if (imgUrl) await downloadOrShare(imgUrl, `wtf_image_${ts}.jpg`);
+                if (imgUrl) await downloadOrShare(imgUrl, `wtf_IMAGE_ONLY_${ts}.jpg`);
             }
         } catch (err) {
             console.error("Failed to export:", err);
@@ -650,16 +651,12 @@ export default function Home() {
                                 src={circleImageUrl}
                                 alt="Circle overlay"
                                 style={{ 
-                                    width: `${circleImageZoom}%`, 
-                                    height: `${circleImageZoom}%`, 
-                                    objectFit: 'cover', 
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
                                     display: 'block',
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: `translate(-50%, calc(-50% + ${circleImgOffsetY}px))`,
-                                    minWidth: '100%',
-                                    minHeight: '100%',
+                                    transform: `scale(${circleImageZoom / 100}) translate(${circleImgOffsetX / (circleImageZoom / 100)}px, ${circleImgOffsetY / (circleImageZoom / 100)}px)`,
+                                    transformOrigin: 'center center',
                                 }}
                                 crossOrigin="anonymous"
                             />
@@ -695,7 +692,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY, circleImgOffsetX]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1458,8 +1455,9 @@ export default function Home() {
                                                 { label: "Horizontal", value: circleImagePosX, setter: setCircleImagePosX, min: -2000, max: 2000, unit: "px" },
                                                 { label: "Vertical", value: circleImagePosY, setter: setCircleImagePosY, min: -3000, max: 2000, unit: "px" },
                                                 { label: "Border", value: circleBorderWidth, setter: setCircleBorderWidth, min: 0, max: 60, unit: "px" },
-                                                { label: "Zoom", value: circleImageZoom, setter: setCircleImageZoom, min: 100, max: 300, unit: "%" },
-                                                { label: "Pan Inside", value: circleImgOffsetY, setter: setCircleImgOffsetY, min: -500, max: 500, unit: "px" },
+                                                { label: "Zoom", value: circleImageZoom, setter: setCircleImageZoom, min: 100, max: 1000, unit: "%" },
+                                                { label: "Pan Vertical", value: circleImgOffsetY, setter: setCircleImgOffsetY, min: -1000, max: 1000, unit: "px" },
+                                                { label: "Pan Horizontal", value: circleImgOffsetX, setter: setCircleImgOffsetX, min: -1000, max: 1000, unit: "px" },
                                             ].map((c) => (
                                                 <div key={c.label} className="space-y-1">
                                                     <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
