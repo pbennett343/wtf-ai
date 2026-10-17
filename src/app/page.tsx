@@ -651,12 +651,13 @@ export default function Home() {
                                 src={circleImageUrl}
                                 alt="Circle overlay"
                                 style={{ 
-                                    width: '100%',
-                                    height: '100%',
+                                    position: 'absolute',
+                                    width: `${circleImageZoom}%`,
+                                    height: `${circleImageZoom}%`,
                                     objectFit: 'cover',
-                                    display: 'block',
-                                    transform: `scale(${circleImageZoom / 100}) translate(${circleImgOffsetX / (circleImageZoom / 100)}px, ${circleImgOffsetY / (circleImageZoom / 100)}px)`,
-                                    transformOrigin: 'center center',
+                                    top: `calc(50% + ${circleImgOffsetY}px)`,
+                                    left: `calc(50% + ${circleImgOffsetX}px)`,
+                                    transform: 'translate(-50%, -50%)',
                                 }}
                                 crossOrigin="anonymous"
                             />
