@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
+
 export async function POST(req: Request) {
     const key = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
     if (!key) return NextResponse.json({ error: "GEMINI_API_KEY missing" }, { status: 500 });
