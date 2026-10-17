@@ -62,7 +62,7 @@ ${STORY_STRUCTURE}
 Given a collection of stats and/or images of stats, write a complete short-form video script (60-90 seconds) that:
 1. Finds the most compelling narrative angle from the provided stats
 2. Follows the EXACT 7-section structure above
-3. Includes specific visual suggestions for each section (what to show on screen)
+3. Writes a detailed AI video generation prompt for each section's visual — rich enough to copy-paste directly into Sora, Runway, Pika, or Kling
 4. Weaves the stats naturally into the narrative - don't just list them
 5. Creates a script that sounds conversational and authentic, NOT robotic or corporate
 6. Uses the stats to tell a STORY, not just present data
@@ -80,7 +80,7 @@ Return a valid JSON object with this exact structure:
       "timestamp": "0:00–0:03",
       "script": "Exact words spoken by narrator",
       "textOverlay": "Text shown on screen",
-      "visualSuggestion": "Description of what to show visually"
+      "visualSuggestion": "A detailed, copy-paste-ready AI video generation prompt for this section. Write it like a professional prompt engineer. Include: the exact subject and action, camera angle and movement (e.g. slow-motion close-up, aerial pull-back, whip pan), lighting and atmosphere (e.g. golden-hour stadium glow, dramatic rim lighting, foggy arena), specific visual details (crowd reactions, jersey colors, environmental elements), cinematic style references (e.g. hyperrealistic, broadcast television aesthetic, ESPN Films documentary style). Do NOT include aspect ratio, duration, or frame count. Make it vivid, specific, and immediately usable."
     },
     {
       "id": 2,
