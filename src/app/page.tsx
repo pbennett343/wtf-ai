@@ -258,6 +258,13 @@ export default function Home() {
         setFoundStats([]);
         setFoundImages([]);
         setPrevStatText(null);
+        setCircleImageUrl(null);
+        setCircleImageSize(700);
+        setCircleImagePosX(-1200);
+        setCircleImagePosY(-800);
+        setCircleBorderWidth(20);
+        setCircleImageZoom(100);
+        setShowCircleImage(false);
     };
 
     // AI Image state
@@ -368,60 +375,80 @@ export default function Home() {
     const [photoPanX, setPhotoPanX] = useState(0);
     const [photoPanY, setPhotoPanY] = useState(0);
 
+    // Circle overlay image
+    const [circleImageUrl, setCircleImageUrl] = useState<string | null>(null);
+    const [circleImageSize, setCircleImageSize] = useState(700);
+    const [circleImagePosX, setCircleImagePosX] = useState(-1200);
+    const [circleImagePosY, setCircleImagePosY] = useState(-800);
+    const [circleBorderWidth, setCircleBorderWidth] = useState(20);
+    const [circleImageZoom, setCircleImageZoom] = useState(100);
+    const [showCircleImage, setShowCircleImage] = useState(false);
+
     const exportRef = useRef<HTMLDivElement>(null);
+    const imageOnlyRef = useRef<HTMLDivElement>(null);
+
+    // Helper: capture a ref to a data URL
+    const captureRef = async (ref: React.RefObject<HTMLDivElement | null>, bg: string = "#ffffff") => {
+        if (!ref.current) return null;
+        const canvas = await html2canvas(ref.current, {
+            scale: 1,
+            useCORS: true,
+            backgroundColor: bg,
+        });
+        return canvas.toDataURL("image/jpeg", 0.9);
+    };
+
+    // Helper: download or share a data URL
+    const downloadOrShare = async (dataUrl: string, fileName: string) => {
+        const nav = navigator as Navigator & {
+            canShare?: (data?: { files?: File[] }) => boolean;
+        };
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (isMobile && typeof nav.share === 'function') {
+            try {
+                const arr = dataUrl.split(',');
+                const mimeMatch = arr[0].match(/:(.*?);/);
+                const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) u8arr[n] = bstr.charCodeAt(n);
+                const blob = new Blob([u8arr], { type: mime });
+                const file = new File([blob], fileName, { type: 'image/jpeg' });
+                if (nav.canShare && nav.canShare({ files: [file] })) {
+                    await nav.share({ files: [file], title: 'WTF Stat' });
+                    return;
+                }
+            } catch (shareErr) {
+                if ((shareErr as Error).name === 'AbortError') return;
+            }
+        }
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
 
     const handleExport = async () => {
         if (!exportRef.current) return;
         setIsExporting(true);
         try {
-            const canvas = await html2canvas(exportRef.current, {
-                scale: 1,
-                useCORS: true,
-                backgroundColor: "#ffffff",
-            });
-            const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-            const fileName = `wtf_stat_${Date.now()}.jpg`;
+            const ts = Date.now();
 
-            // Web Share API — gives iOS native "Save Image" to Camera Roll
-            const nav = navigator as Navigator & {
-                canShare?: (data?: { files?: File[] }) => boolean;
-            };
-            
-            // Only trigger native share sheet on mobile devices. Desktop (Mac) should force download.
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            // 1. Full graphic (exactly as preview)
+            const fullUrl = await captureRef(exportRef);
+            if (fullUrl) await downloadOrShare(fullUrl, `wtf_stat_${ts}.jpg`);
 
-            if (isMobile && typeof nav.share === 'function') {
-                try {
-                    const arr = dataUrl.split(',');
-                    const mimeMatch = arr[0].match(/:(.*?);/);
-                    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-                    const bstr = atob(arr[1]);
-                    let n = bstr.length;
-                    const u8arr = new Uint8Array(n);
-                    while (n--) u8arr[n] = bstr.charCodeAt(n);
-                    const blob = new Blob([u8arr], { type: mime });
-                    const file = new File([blob], fileName, { type: 'image/jpeg' });
-                    if (nav.canShare && nav.canShare({ files: [file] })) {
-                        await nav.share({ files: [file], title: 'WTF Stat' });
-                        setIsExporting(false);
-                        return;
-                    }
-                } catch (shareErr) {
-                    if ((shareErr as Error).name === 'AbortError') {
-                        setIsExporting(false);
-                        return;
-                    }
-                    // fall through to link download
-                }
+            // 2. Image-only (no header/text box)
+            if (imageOnlyRef.current) {
+                // Small delay so browser doesn't merge downloads
+                await new Promise(r => setTimeout(r, 400));
+                const imgUrl = await captureRef(imageOnlyRef);
+                if (imgUrl) await downloadOrShare(imgUrl, `wtf_image_${ts}.jpg`);
             }
-
-            // Desktop fallback (direct download)
-            const a = document.createElement("a");
-            a.href = dataUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
         } catch (err) {
             console.error("Failed to export:", err);
             alert("Failed to export the image. Check console for details.");
@@ -430,7 +457,7 @@ export default function Home() {
         }
     };
 
-    const GraphicTemplate = useCallback(({ containerRef, isHidden = false }: { containerRef?: React.RefObject<HTMLDivElement>, isHidden?: boolean }) => (
+    const GraphicTemplate = useCallback(({ containerRef, imageRef, isHidden = false }: { containerRef?: React.RefObject<HTMLDivElement>, imageRef?: React.RefObject<HTMLDivElement>, isHidden?: boolean }) => (
         <div
             ref={containerRef}
             className={`w-[4000px] h-[5333px] bg-white flex flex-col ${isHidden ? 'fixed -left-[5000px] -top-[5000px]' : ''}`}
@@ -472,7 +499,7 @@ export default function Home() {
             </div>
 
             {/* MEDIA / PHOTO LAYER */}
-            <div className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
+            <div ref={imageRef} className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
                 {photoUrl ? (
                     <img
                         src={photoUrl.startsWith('blob:') || photoUrl.startsWith('data:') ? photoUrl : proxyUrl(photoUrl)}
@@ -595,6 +622,36 @@ export default function Home() {
                     </div>
                 )}
 
+                {/* Circle Overlay Image */}
+                {showCircleImage && circleImageUrl && (
+                    <div
+                        className="absolute z-20"
+                        style={{
+                            left: `calc(50% + ${circleImagePosX}px)`,
+                            top: `calc(50% + ${circleImagePosY}px)`,
+                            width: `${circleImageSize}px`,
+                            height: `${circleImageSize}px`,
+                        }}
+                    >
+                        <div style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            border: `${circleBorderWidth}px solid #ffffff`,
+                            boxShadow: '0 20px 80px rgba(0,0,0,0.45), 0 8px 30px rgba(0,0,0,0.2)',
+                            overflow: 'hidden',
+                            background: '#000',
+                        }}>
+                            <img
+                                src={circleImageUrl}
+                                alt="Circle overlay"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: `scale(${circleImageZoom / 100})` }}
+                                crossOrigin="anonymous"
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Chart Builder Overlay */}
                 {showChartOverlay && chartData && (
                     <div 
@@ -625,7 +682,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1339,6 +1396,74 @@ export default function Home() {
                                     </div>
                                 ))}
 
+                                {/* CIRCLE OVERLAY IMAGE CONTROLS */}
+                                <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Circle Image</h3>
+                                        <button
+                                            onClick={() => setShowCircleImage(!showCircleImage)}
+                                            className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                showCircleImage ? 'text-white' : 'text-white/40'
+                                            }`}
+                                            style={{
+                                                background: showCircleImage ? BRAND.crimson : BRAND.navyDark,
+                                                border: `1px solid ${showCircleImage ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                            }}
+                                        >
+                                            {showCircleImage ? 'ON' : 'OFF'}
+                                        </button>
+                                    </div>
+
+                                    {circleImageUrl ? (
+                                        <div className="flex items-center gap-3 p-2 rounded-lg border" style={{ borderColor: BRAND.crimson, background: BRAND.crimson + '10' }}>
+                                            <img src={circleImageUrl} alt="Circle" className="w-10 h-10 rounded-full object-cover flex-shrink-0" style={{ border: '2px solid white' }} />
+                                            <p className="text-xs font-bold text-white flex-1 truncate">Circle image loaded</p>
+                                            <button onClick={() => { setCircleImageUrl(null); setShowCircleImage(false); }} className="text-[10px] hover:text-white transition-colors" style={{ color: BRAND.navyLight }}>Clear</button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex items-center gap-3 p-3 rounded-lg border border-dashed cursor-pointer transition-all hover:border-[#b42434]" style={{ borderColor: BRAND.navyLight + '60' }}>
+                                            <Upload size={16} style={{ color: BRAND.crimson }} className="flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-bold text-white">Upload circle overlay</p>
+                                                <p className="text-[10px]" style={{ color: BRAND.navyLight }}>Layered on top with white border & shadow</p>
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => { setCircleImageUrl(reader.result as string); setShowCircleImage(true); };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }} />
+                                        </label>
+                                    )}
+
+                                    {showCircleImage && circleImageUrl && (
+                                        <div className="space-y-3">
+                                            {[
+                                                { label: "Size", value: circleImageSize, setter: setCircleImageSize, min: 200, max: 2000, unit: "px" },
+                                                { label: "Horizontal", value: circleImagePosX, setter: setCircleImagePosX, min: -2000, max: 2000, unit: "px" },
+                                                { label: "Vertical", value: circleImagePosY, setter: setCircleImagePosY, min: -2000, max: 2000, unit: "px" },
+                                                { label: "Border", value: circleBorderWidth, setter: setCircleBorderWidth, min: 0, max: 60, unit: "px" },
+                                                { label: "Zoom", value: circleImageZoom, setter: setCircleImageZoom, min: 100, max: 300, unit: "%" },
+                                            ].map((c) => (
+                                                <div key={c.label} className="space-y-1">
+                                                    <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                        <span>{c.label}</span>
+                                                        <span className="text-white">{c.value}{c.unit}</span>
+                                                    </label>
+                                                    <input
+                                                        type="range" min={c.min} max={c.max}
+                                                        value={c.value}
+                                                        onChange={(e) => c.setter(Number(e.target.value))}
+                                                        className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
                                     {/* MATCHUP OVERLAY CONTROLS (WTF BETS) */}
                                     {brand === 'bets-x-logo.jpg' && (
@@ -1789,7 +1914,7 @@ export default function Home() {
             >
 
                 {/* Render-ready hidden target (Perfect for html2canvas) */}
-                <GraphicTemplate containerRef={exportRef} isHidden={true} />
+                <GraphicTemplate containerRef={exportRef} imageRef={imageOnlyRef} isHidden={true} />
 
                 {/* Canvas visual view — overflow-hidden wrapper prevents 4000px layout bleed */}
                 <div
