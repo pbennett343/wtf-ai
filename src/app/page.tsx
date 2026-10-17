@@ -102,6 +102,7 @@ export default function Home() {
     const [scriptNotes, setScriptNotes] = useState('');
     const [scriptImages, setScriptImages] = useState<string[]>([]);
     const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+    const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
     const [scriptResult, setScriptResult] = useState<any>(null);
     const [scriptError, setScriptError] = useState('');
     const [showFullScript, setShowFullScript] = useState(false);
@@ -2164,6 +2165,46 @@ export default function Home() {
                                                 EXPORT TXT
                                             </button>
                                         </div>
+
+                                        {/* Audio Narration Export */}
+                                        <button
+                                            onClick={async () => {
+                                                if (!scriptResult?.fullScript) return;
+                                                setIsGeneratingAudio(true);
+                                                try {
+                                                    const res = await fetch('/api/ai/narrate', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            fullScript: scriptResult.fullScript,
+                                                            title: scriptResult.title,
+                                                        }),
+                                                    });
+                                                    if (!res.ok) {
+                                                        const err = await res.json();
+                                                        throw new Error(err.error || 'Narration failed');
+                                                    }
+                                                    const blob = await res.blob();
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = `wtf_narration_${scriptResult.title?.replace(/\s+/g,'_').toLowerCase().slice(0,30) || Date.now()}.wav`;
+                                                    a.click();
+                                                    URL.revokeObjectURL(url);
+                                                } catch (e: any) {
+                                                    alert('Audio export failed: ' + (e.message || e));
+                                                } finally {
+                                                    setIsGeneratingAudio(false);
+                                                }
+                                            }}
+                                            disabled={isGeneratingAudio}
+                                            className="w-full py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                            style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #2d2d54 100%)', border: `1px solid ${BRAND.crimson}60`, color: 'white' }}
+                                        >
+                                            {isGeneratingAudio
+                                                ? <><Loader2 className="animate-spin" size={14} /> GENERATING AUDIO...</>
+                                                : <>🎙️ EXPORT AUDIO (WAV)</>}
+                                        </button>
 
                                         {/* Full Script Toggle */}
                                         <div className="space-y-2">
