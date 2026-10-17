@@ -17,6 +17,7 @@ import {
     Zap,
     Home as HomeIcon,
     Search,
+    FileText,
 } from "lucide-react";
 
 const proxyUrl = (url: string) => `/api/proxy-image?url=${encodeURIComponent(url)}`;
@@ -90,11 +91,20 @@ const MLB_TEAMS = [
     { abbr: "wsh", name: "Nationals" }
 ];
 
-type Step = 0 | 1 | 2 | 3 | 5 | 6;
+type Step = 0 | 1 | 2 | 3 | 5 | 6 | 7;
 
 export default function Home() {
     const [currentStep, setCurrentStep] = useState<Step>(0);
     const [isExporting, setIsExporting] = useState(false);
+
+    // WTF Script state
+    const [scriptStatsList, setScriptStatsList] = useState('');
+    const [scriptNotes, setScriptNotes] = useState('');
+    const [scriptImages, setScriptImages] = useState<string[]>([]);
+    const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+    const [scriptResult, setScriptResult] = useState<any>(null);
+    const [scriptError, setScriptError] = useState('');
+    const [showFullScript, setShowFullScript] = useState(false);
 
     // Matchup Overlay State
     const [showMatchupOverlay, setShowMatchupOverlay] = useState(false);
@@ -922,6 +932,7 @@ export default function Home() {
         { id: 3, icon: <ImageIcon size={20} />, label: "Add Photo" },
         { id: 5, icon: <Maximize size={20} />, label: "Visuals" },
         { id: 6, icon: <Download size={20} />, label: "Finalize" },
+        { id: 7, icon: <FileText size={20} />, label: "Script" },
     ];
 
     return (
@@ -1029,10 +1040,22 @@ export default function Home() {
                                         </button>
                                     ))}
                                 </div>
-                                <div className="text-center pt-8">
-                                    <a href="/giveaway" className="text-xs font-bold text-white/30 hover:text-white/70 uppercase tracking-widest transition-colors">
-                                        WTF Giveaway
+                                <div className="grid grid-cols-2 gap-3 mt-3">
+                                    <a
+                                        href="/giveaway"
+                                        className="flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-transparent transition-all active:scale-95 bg-white hover:border-[#b42434]"
+                                    >
+                                        <span className="text-xl">🎁</span>
+                                        <span className="text-sm font-black uppercase text-[#3b3b6d] tracking-tight">WTF Giveaway</span>
                                     </a>
+                                    <button
+                                        onClick={() => { setBrand('wtf-script'); setCurrentStep(7); }}
+                                        className="flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-transparent transition-all active:scale-95 bg-white hover:border-[#b42434]"
+                                        style={{ borderColor: brand === 'wtf-script' ? BRAND.crimson : 'transparent' }}
+                                    >
+                                        <span className="text-xl">✍️</span>
+                                        <span className="text-sm font-black uppercase text-[#3b3b6d] tracking-tight">WTF Script</span>
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -1913,6 +1936,202 @@ export default function Home() {
                                 </button>
                             </div>
                         )}
+
+                        {currentStep === 7 && (
+                            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <h2 className="text-lg font-bold flex items-center gap-2">
+                                    <FileText style={{ color: BRAND.crimson }} /> WTF Script Writer
+                                </h2>
+                                <p className="text-xs" style={{ color: BRAND.navyLight }}>Upload up to 10 stat images and/or paste your stats. AI will write a short-form video script using the 2026 TikTok story structure.</p>
+
+                                {/* Image Upload */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Stat Images ({scriptImages.length}/10)</label>
+                                        {scriptImages.length > 0 && (
+                                            <button onClick={() => setScriptImages([])} className="text-[10px] hover:text-white transition-colors" style={{ color: BRAND.navyLight }}>Clear all</button>
+                                        )}
+                                    </div>
+                                    {scriptImages.length > 0 && (
+                                        <div className="grid grid-cols-5 gap-1">
+                                            {scriptImages.map((img, i) => (
+                                                <div key={i} className="relative group">
+                                                    <img src={img} alt={`Stat ${i+1}`} className="w-full h-12 object-cover rounded" />
+                                                    <button
+                                                        onClick={() => setScriptImages(prev => prev.filter((_, idx) => idx !== i))}
+                                                        className="absolute top-0 right-0 bg-black/70 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-bl opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >×</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {scriptImages.length < 10 && (
+                                        <label className="flex items-center gap-3 p-3 rounded-lg border border-dashed cursor-pointer transition-all hover:border-[#b42434]" style={{ borderColor: BRAND.navyLight + '60' }}>
+                                            <Upload size={16} style={{ color: BRAND.crimson }} className="flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-bold text-white">Upload stat screenshots</p>
+                                                <p className="text-[10px]" style={{ color: BRAND.navyLight }}>JPG, PNG — up to 10 images</p>
+                                            </div>
+                                            <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                const remaining = 10 - scriptImages.length;
+                                                files.slice(0, remaining).forEach(file => {
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => setScriptImages(prev => [...prev, reader.result as string]);
+                                                    reader.readAsDataURL(file);
+                                                });
+                                                e.target.value = '';
+                                            }} />
+                                        </label>
+                                    )}
+                                </div>
+
+                                {/* Stats Text */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Stats / Data (text)</label>
+                                    <textarea
+                                        value={scriptStatsList}
+                                        onChange={(e) => setScriptStatsList(e.target.value)}
+                                        className="w-full h-28 border rounded-lg p-3 text-zinc-300 focus:outline-none resize-none text-xs"
+                                        style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                        onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                        onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                        placeholder="Paste stats, facts, or talking points here..."
+                                    />
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Extra Notes (optional)</label>
+                                    <textarea
+                                        value={scriptNotes}
+                                        onChange={(e) => setScriptNotes(e.target.value)}
+                                        className="w-full h-16 border rounded-lg p-3 text-zinc-300 focus:outline-none resize-none text-xs"
+                                        style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                        onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                        onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                        placeholder="Angle, tone, audience, specific focus..."
+                                    />
+                                </div>
+
+                                {/* Generate Button */}
+                                <button
+                                    onClick={async () => {
+                                        if (!scriptStatsList && scriptImages.length === 0) return;
+                                        setIsGeneratingScript(true);
+                                        setScriptError('');
+                                        setScriptResult(null);
+                                        setShowFullScript(false);
+                                        try {
+                                            const res = await fetch('/api/ai/script-writer', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    statsList: scriptStatsList,
+                                                    images: scriptImages,
+                                                    additionalNotes: scriptNotes,
+                                                }),
+                                            });
+                                            const data = await res.json();
+                                            if (data.script) setScriptResult(data.script);
+                                            else setScriptError(data.error || 'Script generation failed');
+                                        } catch (e: any) {
+                                            setScriptError(e.message || 'Network error');
+                                        } finally {
+                                            setIsGeneratingScript(false);
+                                        }
+                                    }}
+                                    disabled={isGeneratingScript || (!scriptStatsList && scriptImages.length === 0)}
+                                    className="w-full py-3 text-white font-black text-sm rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                                    style={{ background: BRAND.crimson, boxShadow: `0 0 30px ${BRAND.crimson}40` }}
+                                >
+                                    {isGeneratingScript ? <><Loader2 className="animate-spin" size={16} /> WRITING SCRIPT...</> : <><FileText size={16} /> GENERATE SCRIPT</>}
+                                </button>
+
+                                {scriptError && <p className="text-xs text-red-400 bg-red-900/20 rounded-lg p-3">{scriptError}</p>}
+
+                                {/* Script Result */}
+                                {scriptResult && (
+                                    <div className="space-y-4">
+                                        {/* Header */}
+                                        <div className="rounded-xl p-4 space-y-1" style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.crimson}40` }}>
+                                            <h3 className="font-black text-white text-base">{scriptResult.title}</h3>
+                                            <p className="text-xs" style={{ color: BRAND.navyLight }}>{scriptResult.topic}</p>
+                                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded" style={{ background: BRAND.crimson + '30', color: BRAND.crimson }}>
+                                                ~{scriptResult.estimatedDuration}
+                                            </span>
+                                        </div>
+
+                                        {/* Sections */}
+                                        <div className="space-y-3">
+                                            {scriptResult.sections?.map((sec: any) => (
+                                                <div key={sec.id} className="rounded-xl p-4 space-y-2" style={{ background: BRAND.navy, border: '1px solid rgba(255,255,255,0.07)' }}>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: BRAND.crimson }}>{sec.id}. {sec.name}</span>
+                                                        <span className="text-[10px] text-white/30 font-mono">{sec.timestamp}</span>
+                                                    </div>
+                                                    <p className="text-sm text-white leading-relaxed">"{sec.script}"</p>
+                                                    {sec.textOverlay && (
+                                                        <div className="flex items-start gap-2 mt-1">
+                                                            <span className="text-[10px] font-bold text-white/30 uppercase shrink-0 mt-0.5">Text:</span>
+                                                            <span className="text-[11px] font-bold" style={{ color: BRAND.crimson }}>{sec.textOverlay}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-start gap-2 mt-1">
+                                                        <span className="text-[10px] font-bold text-white/30 uppercase shrink-0 mt-0.5">Visual:</span>
+                                                        <span className="text-[11px] text-white/60 italic">{sec.visualSuggestion}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Full Script Toggle + Actions */}
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={() => setShowFullScript(v => !v)}
+                                                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
+                                                style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}40`, color: BRAND.navyLight }}
+                                            >
+                                                {showFullScript ? 'Hide Full Script' : 'Show Full Script'}
+                                            </button>
+
+                                            {showFullScript && scriptResult.fullScript && (
+                                                <div className="rounded-xl p-4 space-y-3" style={{ background: '#0d0d18', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                                    <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{scriptResult.fullScript}</p>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => navigator.clipboard.writeText(scriptResult.fullScript)}
+                                                            className="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-white"
+                                                            style={{ background: BRAND.crimson }}
+                                                        >
+                                                            COPY SCRIPT
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                const content = `${scriptResult.title}\n${scriptResult.topic}\nDuration: ${scriptResult.estimatedDuration}\n\n` +
+                                                                    scriptResult.sections.map((s: any) => `[${s.id}. ${s.name} — ${s.timestamp}]\n\n"${s.script}"${s.textOverlay ? `\n\nTEXT OVERLAY: ${s.textOverlay}` : ''}${s.visualSuggestion ? `\n\nVISUAL: ${s.visualSuggestion}` : ''}`).join('\n\n---\n\n') +
+                                                                    `\n\n=== FULL SCRIPT ===\n\n${scriptResult.fullScript}`;
+                                                                const blob = new Blob([content], { type: 'text/plain' });
+                                                                const a = document.createElement('a');
+                                                                a.href = URL.createObjectURL(blob);
+                                                                a.download = `wtf_script_${Date.now()}.txt`;
+                                                                a.click();
+                                                            }}
+                                                            className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
+                                                            style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}40`, color: BRAND.navyLight }}
+                                                        >
+                                                            SAVE AS TXT
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+
 
                     </div>
                 </div>
