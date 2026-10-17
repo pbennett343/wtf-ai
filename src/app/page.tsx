@@ -650,14 +650,12 @@ export default function Home() {
                             <img
                                 src={circleImageUrl}
                                 alt="Circle overlay"
+                                className="absolute max-w-none"
                                 style={{ 
-                                    position: 'absolute',
-                                    width: `${circleImageSize * circleImageZoom / 100}px`,
-                                    height: `${circleImageSize * circleImageZoom / 100}px`,
-                                    objectFit: 'cover',
-                                    left: `${(circleImageSize * (1 - circleImageZoom / 100)) / 2 + circleImgOffsetX}px`,
-                                    top: `${(circleImageSize * (1 - circleImageZoom / 100)) / 2 + circleImgOffsetY}px`,
-                                    display: 'block',
+                                    width: `${circleImageZoom}%`,
+                                    left: `calc(50% + ${circleImgOffsetX}px)`,
+                                    top: `calc(50% + ${circleImgOffsetY}px)`,
+                                    transform: 'translate(-50%, -50%)',
                                 }}
                                 crossOrigin="anonymous"
                             />
