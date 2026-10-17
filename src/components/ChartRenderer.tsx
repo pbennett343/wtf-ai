@@ -333,6 +333,19 @@ export default function ChartRenderer({ chartType, data }: { chartType: string; 
         case "head-to-head": return <HeadToHead data={data} />;
         case "series-badge": return <SeriesBadge data={data} />;
         case "context-table": return <ContextTable data={data} />;
+        case "passthrough-image": return (
+            <div style={{ padding: "80px 80px 100px 80px", filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.38)) drop-shadow(0 8px 24px rgba(0,0,0,0.18))" }}>
+                <div style={{ borderRadius: 60, overflow: "hidden" }}>
+                    <img
+                        src={data.src}
+                        alt="Uploaded chart"
+                        style={{ display: "block", width: "100%", height: "auto" }}
+                        crossOrigin="anonymous"
+                    />
+                </div>
+            </div>
+        );
         default: return <ContextTable data={data} />;
     }
 }
+

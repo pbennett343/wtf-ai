@@ -95,7 +95,7 @@ type Step = 0 | 1 | 2 | 3 | 5 | 6 | 7;
 
 export default function Home() {
     const [currentStep, setCurrentStep] = useState<Step>(0);
-    const [isExporting, setIsExporting] = useState(false);
+    const [isExporting, setIsExporting] = useState<string | false>(false);
 
     // WTF Script state
     const [scriptStatsList, setScriptStatsList] = useState('');
@@ -446,25 +446,32 @@ export default function Home() {
         document.body.removeChild(a);
     };
 
-    const handleExport = async () => {
+    const handleExportFull = async () => {
         if (!exportRef.current) return;
-        setIsExporting(true);
+        setIsExporting('full');
         try {
             const ts = Date.now();
-
-            // 1. Full graphic (exactly as preview)
             const fullUrl = await captureRef(exportRef);
             if (fullUrl) await downloadOrShare(fullUrl, `wtf_FULL_${ts}.jpg`);
-
-            // 2. Image-only (no header/text box)
-            if (imageOnlyRef.current) {
-                await new Promise(r => setTimeout(r, 400));
-                const imgUrl = await captureRef(imageOnlyRef);
-                if (imgUrl) await downloadOrShare(imgUrl, `wtf_IMAGE_ONLY_${ts}.jpg`);
-            }
         } catch (err) {
             console.error("Failed to export:", err);
-            alert("Failed to export the image. Check console for details.");
+            alert("Failed to export the image.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleExportImageOnly = async () => {
+        if (!imageOnlyRef.current) return;
+        setIsExporting('imageOnly');
+        try {
+            const ts = Date.now();
+            await new Promise(r => setTimeout(r, 400));
+            const imgUrl = await captureRef(imageOnlyRef);
+            if (imgUrl) await downloadOrShare(imgUrl, `wtf_IMAGE_ONLY_${ts}.jpg`);
+        } catch (err) {
+            console.error("Failed to export image-only:", err);
+            alert("Failed to export the image.");
         } finally {
             setIsExporting(false);
         }
@@ -1778,10 +1785,21 @@ export default function Home() {
                                                             <p className="text-xs font-bold text-white truncate">Chart image loaded</p>
                                                             <div className="flex gap-2 mt-1">
                                                                 <button
-                                                                    onClick={() => handleChartBuild(statText, true, 'extract')}
-                                                                    disabled={isSearchingChart}
+                                                                    onClick={() => {
+                                                                        setChartType('passthrough-image');
+                                                                        setChartData({ src: chartImageUpload });
+                                                                        setShowChartOverlay(true);
+                                                                    }}
                                                                     className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors text-white"
                                                                     style={{ background: BRAND.crimson }}
+                                                                >
+                                                                    USE AS-IS
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleChartBuild(statText, true, 'extract')}
+                                                                    disabled={isSearchingChart}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors"
+                                                                    style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}60`, color: BRAND.navyLight }}
                                                                 >
                                                                     {isSearchingChart ? 'EXTRACTING...' : 'EXTRACT & RECREATE'}
                                                                 </button>
@@ -1919,21 +1937,35 @@ export default function Home() {
                         )}
 
                         {currentStep === 6 && (
-                            <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Download style={{ color: BRAND.crimson }} /> Step 5: Export</h2>
-                                <p className="text-sm" style={{ color: BRAND.navyLight }}>Review your graphic on the right. When ready, click export to generate the 4000x5333 JPG.</p>
+                                <p className="text-sm" style={{ color: BRAND.navyLight }}>Choose your export format below.</p>
 
                                 <button
-                                    onClick={handleExport}
-                                    disabled={isExporting}
+                                    onClick={handleExportFull}
+                                    disabled={!!isExporting}
                                     className="w-full py-4 text-white font-black text-lg rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     style={{
                                         background: BRAND.crimson,
                                         boxShadow: `0 0 40px ${BRAND.crimson}50`,
                                     }}
                                 >
-                                    {isExporting ? <span className="animate-pulse">Rendering...</span> : <><Download size={24} /> EXPORT JPG</>}
+                                    {isExporting === 'full' ? <span className="animate-pulse">Rendering...</span> : <><Download size={24} /> FULL EXPORT</>}
                                 </button>
+                                <p className="text-[10px] text-center -mt-3" style={{ color: BRAND.navyLight }}>Header + stat text + photo (4000×5333)</p>
+
+                                <button
+                                    onClick={handleExportImageOnly}
+                                    disabled={!!isExporting}
+                                    className="w-full py-4 font-black text-lg rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-white"
+                                    style={{
+                                        background: BRAND.navy,
+                                        border: `2px solid ${BRAND.crimson}80`,
+                                    }}
+                                >
+                                    {isExporting === 'imageOnly' ? <span className="animate-pulse">Rendering...</span> : <><Download size={24} /> NO TEXT BAR</>}
+                                </button>
+                                <p className="text-[10px] text-center -mt-3" style={{ color: BRAND.navyLight }}>Photo zone only — no header or stat text</p>
                             </div>
                         )}
 
@@ -2098,44 +2130,53 @@ export default function Home() {
                                             ))}
                                         </div>
 
-                                        {/* Full Script Toggle + Actions */}
+                                        {/* Export Actions — always visible */}
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    const fullText = scriptResult.sections
+                                                        .map((s: any) => `${s.id}. ${s.name} (${s.timestamp})\n\n${s.script}${s.textOverlay ? `\n\nTEXT OVERLAY: ${s.textOverlay}` : ''}${s.visualSuggestion ? `\n\nVISUAL: ${s.visualSuggestion}` : ''}`)
+                                                        .join('\n\n---\n\n') + `\n\n=== FULL READ-ALOUD SCRIPT ===\n\n${scriptResult.fullScript}`;
+                                                    navigator.clipboard.writeText(fullText);
+                                                }}
+                                                className="py-2.5 rounded-xl text-xs font-black transition-all text-white"
+                                                style={{ background: BRAND.crimson }}
+                                            >
+                                                COPY ALL
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const content =
+                                                        `${scriptResult.title}\n${scriptResult.topic}\nEstimated Duration: ${scriptResult.estimatedDuration}\n\n${'='.repeat(60)}\n\n` +
+                                                        scriptResult.sections.map((s: any) =>
+                                                            `=== ${s.id}. ${s.name.toUpperCase()} (${s.timestamp}) ===\n\nSCRIPT:\n"${s.script}"${s.textOverlay ? `\n\nTEXT OVERLAY:\n${s.textOverlay}` : ''}${s.visualSuggestion ? `\n\nVISUAL:\n${s.visualSuggestion}` : ''}`
+                                                        ).join('\n\n' + '-'.repeat(60) + '\n\n') +
+                                                        `\n\n${'='.repeat(60)}\nFULL READ-ALOUD SCRIPT\n${'='.repeat(60)}\n\n${scriptResult.fullScript}`;
+                                                    const blob = new Blob([content], { type: 'text/plain' });
+                                                    const a = document.createElement('a');
+                                                    a.href = URL.createObjectURL(blob);
+                                                    a.download = `wtf_script_${scriptResult.title?.replace(/\s+/g,'_').toLowerCase() || Date.now()}.txt`;
+                                                    a.click();
+                                                }}
+                                                className="py-2.5 rounded-xl text-xs font-black transition-all"
+                                                style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}40`, color: BRAND.navyLight }}
+                                            >
+                                                EXPORT TXT
+                                            </button>
+                                        </div>
+
+                                        {/* Full Script Toggle */}
                                         <div className="space-y-2">
                                             <button
                                                 onClick={() => setShowFullScript(v => !v)}
-                                                className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
-                                                style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}40`, color: BRAND.navyLight }}
+                                                className="w-full py-2 rounded-xl text-xs font-bold transition-all"
+                                                style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}30`, color: BRAND.navyLight }}
                                             >
-                                                {showFullScript ? 'Hide Full Script' : 'Show Full Script'}
+                                                {showFullScript ? 'Hide Full Script' : 'Show Full Read-Aloud Script'}
                                             </button>
-
                                             {showFullScript && scriptResult.fullScript && (
-                                                <div className="rounded-xl p-4 space-y-3" style={{ background: '#0d0d18', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                                <div className="rounded-xl p-4" style={{ background: '#0d0d18', border: '1px solid rgba(255,255,255,0.06)' }}>
                                                     <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap">{scriptResult.fullScript}</p>
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => navigator.clipboard.writeText(scriptResult.fullScript)}
-                                                            className="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-white"
-                                                            style={{ background: BRAND.crimson }}
-                                                        >
-                                                            COPY SCRIPT
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                const content = `${scriptResult.title}\n${scriptResult.topic}\nDuration: ${scriptResult.estimatedDuration}\n\n` +
-                                                                    scriptResult.sections.map((s: any) => `[${s.id}. ${s.name} — ${s.timestamp}]\n\n"${s.script}"${s.textOverlay ? `\n\nTEXT OVERLAY: ${s.textOverlay}` : ''}${s.visualSuggestion ? `\n\nVISUAL: ${s.visualSuggestion}` : ''}`).join('\n\n---\n\n') +
-                                                                    `\n\n=== FULL SCRIPT ===\n\n${scriptResult.fullScript}`;
-                                                                const blob = new Blob([content], { type: 'text/plain' });
-                                                                const a = document.createElement('a');
-                                                                a.href = URL.createObjectURL(blob);
-                                                                a.download = `wtf_script_${Date.now()}.txt`;
-                                                                a.click();
-                                                            }}
-                                                            className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
-                                                            style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}40`, color: BRAND.navyLight }}
-                                                        >
-                                                            SAVE AS TXT
-                                                        </button>
-                                                    </div>
                                                 </div>
                                             )}
                                         </div>
