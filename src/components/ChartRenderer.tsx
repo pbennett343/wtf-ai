@@ -18,13 +18,12 @@ const Logo = ({ abbr, league, size = 120 }: { abbr: string; league?: string; siz
     />
 );
 
-/* ─── Shared card wrapper — white bg, rounded, blurred shadow ─── */
+/* ─── Shared card wrapper — white bg, rounded, shadow via filter (html2canvas-safe) ─── */
 const ChartCard = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-    <div style={{ padding: "120px 120px 160px 120px" }}>
+    <div style={{ padding: "80px 80px 100px 80px", filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.38)) drop-shadow(0 8px 24px rgba(0,0,0,0.18))" }}>
         <div style={{
             background: "#ffffff",
             borderRadius: 60,
-            boxShadow: "0 40px 120px rgba(0,0,0,0.35), 0 8px 40px rgba(0,0,0,0.15)",
             padding: "70px 80px",
             fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
             color: "#1a1a1a",

@@ -264,6 +264,7 @@ export default function Home() {
         setCircleImagePosY(-800);
         setCircleBorderWidth(20);
         setCircleImageZoom(100);
+        setCircleImgOffsetY(0);
         setShowCircleImage(false);
     };
 
@@ -382,6 +383,7 @@ export default function Home() {
     const [circleImagePosY, setCircleImagePosY] = useState(-800);
     const [circleBorderWidth, setCircleBorderWidth] = useState(20);
     const [circleImageZoom, setCircleImageZoom] = useState(100);
+    const [circleImgOffsetY, setCircleImgOffsetY] = useState(0);
     const [showCircleImage, setShowCircleImage] = useState(false);
 
     const exportRef = useRef<HTMLDivElement>(null);
@@ -629,6 +631,7 @@ export default function Home() {
                         style={{
                             left: `calc(50% + ${circleImagePosX}px)`,
                             top: `calc(50% + ${circleImagePosY}px)`,
+                            transform: 'translate(-50%, -50%)',
                             width: `${circleImageSize}px`,
                             height: `${circleImageSize}px`,
                         }}
@@ -638,14 +641,26 @@ export default function Home() {
                             height: '100%',
                             borderRadius: '50%',
                             border: `${circleBorderWidth}px solid #ffffff`,
-                            boxShadow: '0 20px 80px rgba(0,0,0,0.45), 0 8px 30px rgba(0,0,0,0.2)',
+                            filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.5)) drop-shadow(0 8px 20px rgba(0,0,0,0.25))',
                             overflow: 'hidden',
                             background: '#000',
+                            position: 'relative',
                         }}>
                             <img
                                 src={circleImageUrl}
                                 alt="Circle overlay"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: `scale(${circleImageZoom / 100})` }}
+                                style={{ 
+                                    width: `${circleImageZoom}%`, 
+                                    height: `${circleImageZoom}%`, 
+                                    objectFit: 'cover', 
+                                    display: 'block',
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: `translate(-50%, calc(-50% + ${circleImgOffsetY}px))`,
+                                    minWidth: '100%',
+                                    minHeight: '100%',
+                                }}
                                 crossOrigin="anonymous"
                             />
                         </div>
@@ -661,8 +676,6 @@ export default function Home() {
                             left: `calc(50% + ${chartPanX}px)`,
                             transform: `translateX(-50%) scale(${chartScale / 100})`,
                             transformOrigin: 'bottom center',
-                            maxWidth: '2800px',
-                            minWidth: '1400px',
                         }}
                     >
                         <ChartRenderer chartType={chartType} data={chartData} />
@@ -682,7 +695,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1443,9 +1456,10 @@ export default function Home() {
                                             {[
                                                 { label: "Size", value: circleImageSize, setter: setCircleImageSize, min: 200, max: 2000, unit: "px" },
                                                 { label: "Horizontal", value: circleImagePosX, setter: setCircleImagePosX, min: -2000, max: 2000, unit: "px" },
-                                                { label: "Vertical", value: circleImagePosY, setter: setCircleImagePosY, min: -2000, max: 2000, unit: "px" },
+                                                { label: "Vertical", value: circleImagePosY, setter: setCircleImagePosY, min: -3000, max: 2000, unit: "px" },
                                                 { label: "Border", value: circleBorderWidth, setter: setCircleBorderWidth, min: 0, max: 60, unit: "px" },
                                                 { label: "Zoom", value: circleImageZoom, setter: setCircleImageZoom, min: 100, max: 300, unit: "%" },
+                                                { label: "Pan Inside", value: circleImgOffsetY, setter: setCircleImgOffsetY, min: -500, max: 500, unit: "px" },
                                             ].map((c) => (
                                                 <div key={c.label} className="space-y-1">
                                                     <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
