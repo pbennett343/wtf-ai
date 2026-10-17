@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import html2canvas from "html2canvas";
+import ChartRenderer from "@/components/ChartRenderer";
 import {
     Type,
     Settings2,
@@ -148,37 +149,57 @@ export default function Home() {
         }
     };
 
-    // Stat Context Overlay State
-    const [showStatContextOverlay, setShowStatContextOverlay] = useState(false);
-    const [statContextData, setStatContextData] = useState<any>(null);
-    const [isSearchingStatContext, setIsSearchingStatContext] = useState(false);
-    const [statContextScale, setStatContextScale] = useState(100);
-    const [statContextPanY, setStatContextPanY] = useState(200);
-    const [isStatContextLocked, setIsStatContextLocked] = useState(false);
-    const [isEditingStatContext, setIsEditingStatContext] = useState(false);
-    const [statContextJsonStr, setStatContextJsonStr] = useState("");
+    // Chart Builder Overlay State
+    const [showChartOverlay, setShowChartOverlay] = useState(false);
+    const [chartData, setChartData] = useState<any>(null);
+    const [chartType, setChartType] = useState<string>("");
+    const [isSearchingChart, setIsSearchingChart] = useState(false);
+    const [chartScale, setChartScale] = useState(100);
+    const [chartPanY, setChartPanY] = useState(200);
+    const [chartPanX, setChartPanX] = useState(0);
+    const [isChartLocked, setIsChartLocked] = useState(false);
+    const [isEditingChart, setIsEditingChart] = useState(false);
+    const [chartJsonStr, setChartJsonStr] = useState("");
+    const [chartImageUpload, setChartImageUpload] = useState<string | null>(null);
+    const [chartUserPrompt, setChartUserPrompt] = useState("");
 
-    const handleStatContextSearch = async (text: string, force = false) => {
-        if (!text || brand !== 'wtf-x-logo.jpg') return;
-        if (isStatContextLocked && !force) return;
-        setIsSearchingStatContext(true);
+    // Legacy aliases for stat selection callbacks
+    const showStatContextOverlay = showChartOverlay;
+    const setShowStatContextOverlay = setShowChartOverlay;
+
+    const handleChartBuild = async (text: string, force = false, mode: 'generate' | 'extract' = 'generate') => {
+        if (!text && !chartImageUpload) return;
+        if (isChartLocked && !force) return;
+        setIsSearchingChart(true);
         try {
-            const res = await fetch("/api/ai/stat-context", {
+            const res = await fetch("/api/ai/chart-builder", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ statText: text }),
+                body: JSON.stringify({
+                    statText: text,
+                    chartImage: mode === 'extract' ? chartImageUpload : undefined,
+                    userPrompt: chartUserPrompt || undefined,
+                    mode,
+                }),
             });
             const data = await res.json();
-            if (data.success && data.context) {
-                setStatContextData(data.context);
-                setShowStatContextOverlay(true);
+            if (data.success && data.chart) {
+                setChartType(data.chart.chartType);
+                setChartData(data.chart.data);
+                setShowChartOverlay(true);
+            } else if (data.error) {
+                alert("Chart Error: " + data.error);
             }
         } catch (e: any) {
-            console.error("Stat context search error:", e);
+            console.error("Chart builder error:", e);
+            alert("Chart builder failed: " + (e.message || e));
         } finally {
-            setIsSearchingStatContext(false);
+            setIsSearchingChart(false);
         }
     };
+
+    // Legacy alias for stat selection callback
+    const handleStatContextSearch = (text: string, force = false) => handleChartBuild(text, force, 'generate');
 
     // App State
     const [statText, setStatText] = useState(INITIAL_STAT);
@@ -223,12 +244,16 @@ export default function Home() {
         setAiImageResult(null);
         setAiRefImage(null);
         setAiRefImageName(null);
-        setStatContextData(null);
-        setShowStatContextOverlay(false);
-        setStatContextScale(100);
-        setStatContextPanY(200);
-        setIsStatContextLocked(false);
-        setIsEditingStatContext(false);
+        setChartData(null);
+        setChartType("");
+        setShowChartOverlay(false);
+        setChartScale(100);
+        setChartPanY(200);
+        setChartPanX(0);
+        setIsChartLocked(false);
+        setIsEditingChart(false);
+        setChartImageUpload(null);
+        setChartUserPrompt("");
         setShowMatchupOverlay(false);
         setFoundStats([]);
         setFoundImages([]);
@@ -570,71 +595,20 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* Stat Context Overlay Card */}
-                {showStatContextOverlay && statContextData && (
+                {/* Chart Builder Overlay */}
+                {showChartOverlay && chartData && (
                     <div 
-                        className="absolute left-1/2 -translate-x-1/2 w-[2600px] rounded-[80px] p-[100px] border-[12px] border-white/10 shadow-2xl text-white flex flex-col z-30 font-sans origin-bottom"
+                        className="absolute z-30 font-sans"
                         style={{ 
-                            backgroundColor: 'rgba(28, 28, 36, 0.95)',
-                            bottom: `${statContextPanY}px`,
-                            transform: `translateX(-50%) scale(${statContextScale / 100})`
+                            bottom: `${chartPanY}px`,
+                            left: `calc(50% + ${chartPanX}px)`,
+                            transform: `translateX(-50%) scale(${chartScale / 100})`,
+                            transformOrigin: 'bottom center',
+                            maxWidth: '2800px',
+                            minWidth: '1400px',
                         }}
                     >
-                        {/* Header Title & Subtitle */}
-                        <div className="text-center mb-[80px]">
-                            <h2 className="text-[100px] font-black uppercase tracking-tight text-white leading-none">{statContextData.title}</h2>
-                            {statContextData.subtitle && (
-                                <p className="text-[50px] font-bold text-white/50 tracking-widest uppercase mt-4">{statContextData.subtitle}</p>
-                            )}
-                        </div>
-
-                        {/* Table Header */}
-                        <div className="flex items-center w-full px-[60px] pb-[40px] border-b-[4px] border-white/10 mb-[40px]">
-                            <div className="w-[150px] text-[40px] font-black text-white/40 uppercase tracking-widest">{statContextData.columns?.[0] || 'Rank'}</div>
-                            <div className="flex-1 text-[40px] font-black text-white/40 uppercase tracking-widest">{statContextData.columns?.[1] || 'Player'}</div>
-                            <div className="w-[500px] text-[40px] font-black text-white/40 uppercase tracking-widest text-center">{statContextData.columns?.[2] || 'Team'}</div>
-                            <div className="w-[450px] text-[40px] font-black text-white/40 uppercase tracking-widest text-center">{statContextData.columns?.[3] || 'Date'}</div>
-                            <div className="w-[400px] text-[40px] font-black text-white/40 uppercase tracking-widest text-right">{statContextData.columns?.[4] || 'Stat'}</div>
-                        </div>
-
-                        {/* Table Rows */}
-                        <div className="flex flex-col gap-[30px] w-full px-[40px]">
-                            {statContextData.rows?.map((row: any, idx: number) => {
-                                const isHighlight = row.isHighlight || (statContextData.highlight && row.player?.includes(statContextData.highlight));
-                                return (
-                                    <div 
-                                        key={idx} 
-                                        className="flex items-center w-full px-[40px] py-[30px] rounded-[40px] transition-all"
-                                        style={{ backgroundColor: isHighlight ? 'rgba(180, 36, 52, 0.15)' : 'transparent', border: isHighlight ? '4px solid rgba(180, 36, 52, 0.5)' : '4px solid transparent' }}
-                                    >
-                                        <div className="w-[150px] text-[65px] font-bold text-white/60">{row.rank || idx + 1}</div>
-                                        <div className="flex-1 text-[85px] font-black text-white uppercase tracking-tight leading-none pr-8 break-words">{row.player}</div>
-                                        <div className="w-[500px] flex justify-center items-center">
-                                            {row.teamAbbr ? (
-                                                <img
-                                                    src={`https://a.espncdn.com/i/teamlogos/${statContextData.title?.toLowerCase().includes('nba') ? 'nba' : statContextData.title?.toLowerCase().includes('nfl') ? 'nfl' : 'mlb'}/500/scoreboard/${row.teamAbbr.toLowerCase()}.png`}
-                                                    alt="Team Logo"
-                                                    className="w-[180px] h-[180px] object-contain"
-                                                    crossOrigin="anonymous"
-                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                />
-                                            ) : (
-                                                <span className="text-[55px] font-bold text-white/50">{row.team}</span>
-                                            )}
-                                        </div>
-                                        <div className="w-[450px] text-[55px] font-bold text-white/60 text-center">{row.date}</div>
-                                        <div className="w-[400px] text-[80px] font-black text-[#58a6ff] text-right">{row.value}</div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Footnote */}
-                        {statContextData.footnote && (
-                            <div className="text-[40px] font-medium italic text-white/30 text-right mt-[60px] pr-[60px]">
-                                {statContextData.footnote}
-                            </div>
-                        )}
+                        <ChartRenderer chartType={chartType} data={chartData} />
                     </div>
                 )}
 
@@ -651,7 +625,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showStatContextOverlay, statContextData, statContextScale, statContextPanY]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1589,65 +1563,120 @@ export default function Home() {
                                         </>
                                     )}
 
-                                    {/* STAT CONTEXT OVERLAY CONTROLS (WTF STATS) */}
+                                    {/* CHART BUILDER CONTROLS (WTF STATS) */}
                                     {brand === 'wtf-x-logo.jpg' && (
                                         <>
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                                                    Stat Context Chart
-                                                    {isSearchingStatContext && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
+                                                    Data Chart
+                                                    {isSearchingChart && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
                                                 </h3>
                                                 <div className="flex items-center gap-2">
                                                     <button
-                                                        onClick={() => handleStatContextSearch(statText, true)}
-                                                        disabled={isSearchingStatContext || !statText}
+                                                        onClick={() => handleChartBuild(statText, true, 'generate')}
+                                                        disabled={isSearchingChart || !statText}
                                                         className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
                                                         style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
                                                     >
-                                                        {isSearchingStatContext ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
+                                                        {isSearchingChart ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
                                                         Auto
                                                     </button>
                                                     <button
-                                                        onClick={() => setShowStatContextOverlay(!showStatContextOverlay)}
+                                                        onClick={() => setShowChartOverlay(!showChartOverlay)}
                                                         className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
-                                                            showStatContextOverlay ? 'text-white' : 'text-white/40'
+                                                            showChartOverlay ? 'text-white' : 'text-white/40'
                                                         }`}
                                                         style={{
-                                                            background: showStatContextOverlay ? BRAND.crimson : BRAND.navyDark,
-                                                            border: `1px solid ${showStatContextOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                                            background: showChartOverlay ? BRAND.crimson : BRAND.navyDark,
+                                                            border: `1px solid ${showChartOverlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
                                                         }}
                                                     >
-                                                        {showStatContextOverlay ? 'ON' : 'OFF'}
+                                                        {showChartOverlay ? 'ON' : 'OFF'}
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            {showStatContextOverlay && !statContextData && (
-                                                <div className="text-xs text-white/50 italic text-center py-4">Click AUTO to generate chart data from stat.</div>
+                                            {/* Chart Prompt */}
+                                            <div className="space-y-2">
+                                                <textarea
+                                                    value={chartUserPrompt}
+                                                    onChange={(e) => setChartUserPrompt(e.target.value)}
+                                                    className="w-full border rounded-lg p-2 text-xs text-zinc-300 focus:outline-none resize-none h-12"
+                                                    style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                                    onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                                    onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                                    placeholder="Optional: describe what chart you want..."
+                                                />
+                                            </div>
+
+                                            {/* Upload Chart Image */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Upload Chart Image</label>
+                                                {chartImageUpload ? (
+                                                    <div className="flex items-center gap-3 p-2 rounded-lg border" style={{ borderColor: BRAND.crimson, background: BRAND.crimson + '10' }}>
+                                                        <img src={chartImageUpload} alt="Chart" className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-white truncate">Chart image loaded</p>
+                                                            <div className="flex gap-2 mt-1">
+                                                                <button
+                                                                    onClick={() => handleChartBuild(statText, true, 'extract')}
+                                                                    disabled={isSearchingChart}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors text-white"
+                                                                    style={{ background: BRAND.crimson }}
+                                                                >
+                                                                    {isSearchingChart ? 'EXTRACTING...' : 'EXTRACT & RECREATE'}
+                                                                </button>
+                                                                <button onClick={() => setChartImageUpload(null)} className="text-[10px] hover:text-white transition-colors" style={{ color: BRAND.navyLight }}>Clear</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-dashed cursor-pointer transition-all hover:border-[#b42434]" style={{ borderColor: BRAND.navyLight + '60' }}>
+                                                        <Upload size={16} style={{ color: BRAND.crimson }} className="flex-shrink-0" />
+                                                        <div>
+                                                            <p className="text-xs font-bold text-white">Upload a chart screenshot</p>
+                                                            <p className="text-[10px]" style={{ color: BRAND.navyLight }}>AI will extract data & recreate in WTF style</p>
+                                                        </div>
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => setChartImageUpload(reader.result as string);
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }} />
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            {showChartOverlay && !chartData && (
+                                                <div className="text-xs text-white/50 italic text-center py-4">Click AUTO to generate chart from stat, or upload a chart image to recreate.</div>
                                             )}
-                                            {showStatContextOverlay && statContextData && (
-                                                <div className="mt-4 space-y-4">
-                                                    {!isEditingStatContext ? (
+                                            {showChartOverlay && chartData && (
+                                                <div className="mt-2 space-y-4">
+                                                    {!isEditingChart ? (
                                                         <div className="text-xs text-white/70 bg-[#161622] border border-white/10 rounded-lg p-3">
-                                                            <span className="font-bold text-white block mb-1">{statContextData.title}</span>
-                                                            Loaded {statContextData.rows?.length || 0} context rows. Click Auto to regenerate if needed.
+                                                            <span className="font-bold text-white block mb-1">
+                                                                {chartType.replace(/-/g, ' ').toUpperCase()} — {chartData.title || chartData.playerName || 'Chart'}
+                                                            </span>
+                                                            Chart loaded. Click Auto to regenerate.
                                                             
                                                             <div className="flex gap-2 mt-3">
                                                                 <button
                                                                     onClick={() => {
-                                                                        setStatContextJsonStr(JSON.stringify(statContextData, null, 2));
-                                                                        setIsEditingStatContext(true);
+                                                                        setChartJsonStr(JSON.stringify({ chartType, data: chartData }, null, 2));
+                                                                        setIsEditingChart(true);
                                                                     }}
                                                                     className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded transition-colors text-white text-[10px] font-bold"
                                                                 >
                                                                     EDIT DATA
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => setIsStatContextLocked(!isStatContextLocked)}
+                                                                    onClick={() => setIsChartLocked(!isChartLocked)}
                                                                     className="px-2 py-1 hover:opacity-80 rounded transition-colors text-white text-[10px] font-bold"
-                                                                    style={{ background: isStatContextLocked ? BRAND.crimson : 'rgba(255,255,255,0.1)' }}
+                                                                    style={{ background: isChartLocked ? BRAND.crimson : 'rgba(255,255,255,0.1)' }}
                                                                 >
-                                                                    {isStatContextLocked ? 'LOCKED' : 'LOCK DATA'}
+                                                                    {isChartLocked ? 'LOCKED' : 'LOCK DATA'}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -1655,16 +1684,17 @@ export default function Home() {
                                                         <div className="space-y-2">
                                                             <textarea
                                                                 className="w-full h-48 bg-[#161622] border border-white/10 rounded-lg p-2 text-[10px] font-mono text-zinc-300 focus:outline-none"
-                                                                value={statContextJsonStr}
-                                                                onChange={(e) => setStatContextJsonStr(e.target.value)}
+                                                                value={chartJsonStr}
+                                                                onChange={(e) => setChartJsonStr(e.target.value)}
                                                             />
                                                             <div className="flex gap-2">
                                                                 <button
                                                                     onClick={() => {
                                                                         try {
-                                                                            const parsed = JSON.parse(statContextJsonStr);
-                                                                            setStatContextData(parsed);
-                                                                            setIsEditingStatContext(false);
+                                                                            const parsed = JSON.parse(chartJsonStr);
+                                                                            if (parsed.chartType) setChartType(parsed.chartType);
+                                                                            if (parsed.data) setChartData(parsed.data);
+                                                                            setIsEditingChart(false);
                                                                         } catch (e) {
                                                                             alert("Invalid JSON format");
                                                                         }
@@ -1674,7 +1704,7 @@ export default function Home() {
                                                                     Save
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => setIsEditingStatContext(false)}
+                                                                    onClick={() => setIsEditingChart(false)}
                                                                     className="flex-1 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"
                                                                 >
                                                                     Cancel
@@ -1687,24 +1717,36 @@ export default function Home() {
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
                                                                 <span>Scale</span>
-                                                                <span className="text-white">{statContextScale}%</span>
+                                                                <span className="text-white">{chartScale}%</span>
                                                             </label>
                                                             <input
-                                                                type="range" min="50" max="150" step="1"
-                                                                value={statContextScale}
-                                                                onChange={(e) => setStatContextScale(Number(e.target.value))}
+                                                                type="range" min="30" max="200" step="1"
+                                                                value={chartScale}
+                                                                onChange={(e) => setChartScale(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Horizontal Pan</span>
+                                                                <span className="text-white">{chartPanX}px</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="-2000" max="2000" step="10"
+                                                                value={chartPanX}
+                                                                onChange={(e) => setChartPanX(Number(e.target.value))}
                                                                 className="w-full" style={{ accentColor: BRAND.crimson }}
                                                             />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
                                                                 <span>Bottom Offset</span>
-                                                                <span className="text-white">{statContextPanY}px</span>
+                                                                <span className="text-white">{chartPanY}px</span>
                                                             </label>
                                                             <input
-                                                                type="range" min="-500" max="1500" step="10"
-                                                                value={statContextPanY}
-                                                                onChange={(e) => setStatContextPanY(Number(e.target.value))}
+                                                                type="range" min="-500" max="3000" step="10"
+                                                                value={chartPanY}
+                                                                onChange={(e) => setChartPanY(Number(e.target.value))}
                                                                 className="w-full" style={{ accentColor: BRAND.crimson }}
                                                             />
                                                         </div>
