@@ -174,6 +174,20 @@ export default function Home() {
     const [chartImageUpload, setChartImageUpload] = useState<string | null>(null);
     const [chartUserPrompt, setChartUserPrompt] = useState("");
 
+    // Chart 2 Overlay State
+    const [showChart2Overlay, setShowChart2Overlay] = useState(false);
+    const [chart2Data, setChart2Data] = useState<any>(null);
+    const [chart2Type, setChart2Type] = useState<string>("");
+    const [isSearchingChart2, setIsSearchingChart2] = useState(false);
+    const [chart2Scale, setChart2Scale] = useState(100);
+    const [chart2PanY, setChart2PanY] = useState(200);
+    const [chart2PanX, setChart2PanX] = useState(0);
+    const [isChart2Locked, setIsChart2Locked] = useState(false);
+    const [isEditingChart2, setIsEditingChart2] = useState(false);
+    const [chart2JsonStr, setChart2JsonStr] = useState("");
+    const [chart2ImageUpload, setChart2ImageUpload] = useState<string | null>(null);
+    const [chart2UserPrompt, setChart2UserPrompt] = useState("");
+
     // Legacy aliases for stat selection callbacks
     const showStatContextOverlay = showChartOverlay;
     const setShowStatContextOverlay = setShowChartOverlay;
@@ -211,6 +225,37 @@ export default function Home() {
 
     // Legacy alias for stat selection callback
     const handleStatContextSearch = (text: string, force = false) => handleChartBuild(text, force, 'generate');
+
+    const handleChart2Build = async (text: string, force = false, mode: 'generate' | 'extract' = 'generate') => {
+        if (!text && !chart2ImageUpload) return;
+        if (isChart2Locked && !force) return;
+        setIsSearchingChart2(true);
+        try {
+            const res = await fetch("/api/ai/chart-builder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    statText: text,
+                    chartImage: mode === 'extract' ? chart2ImageUpload : undefined,
+                    userPrompt: chart2UserPrompt || undefined,
+                    mode,
+                }),
+            });
+            const data = await res.json();
+            if (data.success && data.chart) {
+                setChart2Type(data.chart.chartType);
+                setChart2Data(data.chart.data);
+                setShowChart2Overlay(true);
+            } else if (data.error) {
+                alert("Chart 2 Error: " + data.error);
+            }
+        } catch (e: any) {
+            console.error("Chart 2 builder error:", e);
+            alert("Chart 2 builder failed: " + (e.message || e));
+        } finally {
+            setIsSearchingChart2(false);
+        }
+    };
 
     // App State
     const [statText, setStatText] = useState(INITIAL_STAT);
@@ -265,7 +310,20 @@ export default function Home() {
         setIsEditingChart(false);
         setChartImageUpload(null);
         setChartUserPrompt("");
+        setChart2Data(null);
+        setChart2Type("");
+        setShowChart2Overlay(false);
+        setChart2Scale(100);
+        setChart2PanY(200);
+        setChart2PanX(0);
+        setIsChart2Locked(false);
+        setIsEditingChart2(false);
+        setChart2ImageUpload(null);
+        setChart2UserPrompt("");
         setShowMatchupOverlay(false);
+        setPhotoUrls([null, null, null, null]);
+        setPhotoCount(1);
+        setPhotoLayout('vertical');
         setFoundStats([]);
         setFoundImages([]);
         setPrevStatText(null);
@@ -387,6 +445,11 @@ export default function Home() {
     const [photoZoom, setPhotoZoom] = useState(100);
     const [photoPanX, setPhotoPanX] = useState(0);
     const [photoPanY, setPhotoPanY] = useState(0);
+
+    // Multi-photo state
+    const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null, null, null]);
+    const [photoCount, setPhotoCount] = useState(1); // 1-4
+    const [photoLayout, setPhotoLayout] = useState<'vertical' | 'horizontal'>('vertical');
 
     // Circle overlay image
     const [circleImageUrl, setCircleImageUrl] = useState<string | null>(null);
@@ -521,22 +584,77 @@ export default function Home() {
 
             {/* MEDIA / PHOTO LAYER */}
             <div ref={imageRef} className="flex-1 w-[4000px] relative overflow-hidden mt-[150px]">
-                {photoUrl ? (
-                    <img
-                        src={photoUrl.startsWith('blob:') || photoUrl.startsWith('data:') ? photoUrl : proxyUrl(photoUrl)}
-                        alt="Background"
-                        className="absolute max-w-none"
-                        style={{
-                            width: `${photoZoom}%`,
-                            left: `calc(50% + ${photoPanX}px)`,
-                            top: `calc(50% + ${photoPanY}px)`,
-                            transform: 'translate(-50%, -50%)',
-                        }}
-                        crossOrigin="anonymous"
-                    />
+                {photoCount === 1 ? (
+                    // Single photo — original behavior
+                    photoUrl ? (
+                        <img
+                            src={photoUrl.startsWith('blob:') || photoUrl.startsWith('data:') ? photoUrl : proxyUrl(photoUrl)}
+                            alt="Background"
+                            className="absolute max-w-none"
+                            style={{
+                                width: `${photoZoom}%`,
+                                left: `calc(50% + ${photoPanX}px)`,
+                                top: `calc(50% + ${photoPanY}px)`,
+                                transform: 'translate(-50%, -50%)',
+                            }}
+                            crossOrigin="anonymous"
+                        />
+                    ) : (
+                        <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center border-t-[4px] border-zinc-200">
+                            <p className="text-zinc-400 text-[80px]">No media selected</p>
+                        </div>
+                    )
                 ) : (
-                    <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center border-t-[4px] border-zinc-200">
-                        <p className="text-zinc-400 text-[80px]">No media selected</p>
+                    // Multi-photo layout (2-4 photos)
+                    <div className="absolute inset-0 flex" style={{ flexDirection: photoCount === 4 ? 'column' : (photoLayout === 'horizontal' ? 'column' : 'row') }}>
+                        {photoCount === 4 ? (
+                            // 2x2 grid
+                            <>
+                                <div className="flex flex-1" style={{ borderBottom: '6px solid white' }}>
+                                    <div className="flex-1 relative overflow-hidden" style={{ borderRight: '3px solid white' }}>
+                                        {photoUrls[0] ? <img src={photoUrls[0].startsWith('blob:') || photoUrls[0].startsWith('data:') ? photoUrls[0] : proxyUrl(photoUrls[0])} alt="Photo 1" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">1</p></div>}
+                                    </div>
+                                    <div className="flex-1 relative overflow-hidden" style={{ borderLeft: '3px solid white' }}>
+                                        {photoUrls[1] ? <img src={photoUrls[1].startsWith('blob:') || photoUrls[1].startsWith('data:') ? photoUrls[1] : proxyUrl(photoUrls[1])} alt="Photo 2" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">2</p></div>}
+                                    </div>
+                                </div>
+                                <div className="flex flex-1" style={{ borderTop: '6px solid white' }}>
+                                    <div className="flex-1 relative overflow-hidden" style={{ borderRight: '3px solid white' }}>
+                                        {photoUrls[2] ? <img src={photoUrls[2].startsWith('blob:') || photoUrls[2].startsWith('data:') ? photoUrls[2] : proxyUrl(photoUrls[2])} alt="Photo 3" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">3</p></div>}
+                                    </div>
+                                    <div className="flex-1 relative overflow-hidden" style={{ borderLeft: '3px solid white' }}>
+                                        {photoUrls[3] ? <img src={photoUrls[3].startsWith('blob:') || photoUrls[3].startsWith('data:') ? photoUrls[3] : proxyUrl(photoUrls[3])} alt="Photo 4" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">4</p></div>}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            // 2 or 3 photos — split vertically or horizontally
+                            Array.from({ length: photoCount }).map((_, idx) => (
+                                <div
+                                    key={idx}
+                                    className="flex-1 relative overflow-hidden"
+                                    style={{
+                                        ...(photoLayout === 'horizontal'
+                                            ? { borderTop: idx > 0 ? '6px solid white' : undefined }
+                                            : { borderLeft: idx > 0 ? '6px solid white' : undefined }
+                                        ),
+                                    }}
+                                >
+                                    {photoUrls[idx] ? (
+                                        <img
+                                            src={photoUrls[idx]!.startsWith('blob:') || photoUrls[idx]!.startsWith('data:') ? photoUrls[idx]! : proxyUrl(photoUrls[idx]!)}
+                                            alt={`Photo ${idx + 1}`}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                            crossOrigin="anonymous"
+                                        />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center">
+                                            <p className="text-zinc-400 text-[60px]">{idx + 1}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
                     </div>
                 )}
 
@@ -681,18 +799,35 @@ export default function Home() {
                     </div>
                 )}
 
-                {/* Chart Builder Overlay */}
+                {/* Chart Builder Overlay 1 */}
                 {showChartOverlay && chartData && (
                     <div 
                         className="absolute z-30 font-sans"
                         style={{ 
                             bottom: `${chartPanY}px`,
                             left: `calc(50% + ${chartPanX}px)`,
-                            transform: `translateX(-50%) scale(${chartScale / 100})`,
-                            transformOrigin: 'bottom center',
+                            transform: 'translateX(-50%)',
                         }}
                     >
-                        <ChartRenderer chartType={chartType} data={chartData} />
+                        <div style={{ transform: `scale(${chartScale / 100})`, transformOrigin: 'bottom center' }}>
+                            <ChartRenderer chartType={chartType} data={chartData} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Chart Builder Overlay 2 */}
+                {showChart2Overlay && chart2Data && (
+                    <div 
+                        className="absolute z-30 font-sans"
+                        style={{ 
+                            bottom: `${chart2PanY}px`,
+                            left: `calc(50% + ${chart2PanX}px)`,
+                            transform: 'translateX(-50%)',
+                        }}
+                    >
+                        <div style={{ transform: `scale(${chart2Scale / 100})`, transformOrigin: 'bottom center' }}>
+                            <ChartRenderer chartType={chart2Type} data={chart2Data} />
+                        </div>
                     </div>
                 )}
 
@@ -709,7 +844,7 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY, circleImgOffsetX]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, photoUrls, photoCount, photoLayout, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showChart2Overlay, chart2Data, chart2Type, chart2Scale, chart2PanY, chart2PanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY, circleImgOffsetX]);
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1221,6 +1356,72 @@ export default function Home() {
                             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><ImageIcon style={{ color: BRAND.crimson }} /> Step 3: Add Photo</h2>
 
+                                {/* PHOTO COUNT SELECTOR */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase font-bold tracking-widest" style={{ color: BRAND.navyLight }}>Photo Layout</label>
+                                    <div className="flex gap-2">
+                                        {[1, 2, 3, 4].map(n => (
+                                            <button
+                                                key={n}
+                                                onClick={() => { setPhotoCount(n); if (n === 1) { setPhotoUrl(photoUrls[0]); } }}
+                                                className={`flex-1 py-2 rounded-lg text-xs font-black uppercase transition-all ${photoCount === n ? 'text-white' : 'text-white/40'}`}
+                                                style={{ background: photoCount === n ? BRAND.crimson : BRAND.navyDark, border: `1px solid ${photoCount === n ? BRAND.crimson : 'rgba(255,255,255,0.1)'}` }}
+                                            >
+                                                {n} {n === 1 ? 'Photo' : 'Photos'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {photoCount >= 2 && photoCount <= 3 && (
+                                        <div className="flex gap-2">
+                                            {(['vertical', 'horizontal'] as const).map(dir => (
+                                                <button
+                                                    key={dir}
+                                                    onClick={() => setPhotoLayout(dir)}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase transition-all ${photoLayout === dir ? 'text-white' : 'text-white/40'}`}
+                                                    style={{ background: photoLayout === dir ? BRAND.crimson : BRAND.navyDark, border: `1px solid ${photoLayout === dir ? BRAND.crimson : 'rgba(255,255,255,0.1)'}` }}
+                                                >
+                                                    Split {dir}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* MULTI-PHOTO UPLOAD SLOTS */}
+                                {photoCount > 1 && (
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] uppercase font-bold tracking-widest" style={{ color: BRAND.navyLight }}>Upload Photos</label>
+                                        <div className={`grid gap-2 ${photoCount === 4 ? 'grid-cols-2' : photoCount === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                                            {Array.from({ length: photoCount }).map((_, idx) => (
+                                                <label key={idx} className="relative aspect-square rounded-lg border-2 border-dashed cursor-pointer transition-all hover:border-[#b42434] overflow-hidden flex items-center justify-center" style={{ borderColor: photoUrls[idx] ? BRAND.crimson : BRAND.navyLight + '60', background: BRAND.navyDark }}>
+                                                    {photoUrls[idx] ? (
+                                                        <>
+                                                            <img src={photoUrls[idx]!} alt={`Photo ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover" />
+                                                            <button
+                                                                onClick={(e) => { e.preventDefault(); const next = [...photoUrls]; next[idx] = null; setPhotoUrls(next); }}
+                                                                className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10 hover:bg-red-600"
+                                                            >✕</button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <Upload size={16} style={{ color: BRAND.crimson }} />
+                                                            <span className="text-[10px] font-bold text-white/50">Photo {idx + 1}</span>
+                                                        </div>
+                                                    )}
+                                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => { const next = [...photoUrls]; next[idx] = reader.result as string; setPhotoUrls(next); };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }} />
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* INPUT SOURCE SELECTION */}
                                 <div className="space-y-2">
                                     {/* Stat Text radio */}
@@ -1730,12 +1931,216 @@ export default function Home() {
                                         </>
                                     )}
 
-                                    {/* CHART BUILDER CONTROLS (WTF STATS) */}
-                                    {brand === 'wtf-x-logo.jpg' && (
+                                    {/* DATA CHART 2 CONTROLS */}
+                                    {(brand === 'wtf-x-logo.jpg' || brand === 'bets-x-logo.jpg' || brand === 'vfl-x-logo.jpg') && (
                                         <>
                                             <div className="flex items-center justify-between">
                                                 <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                                                    Data Chart
+                                                    Data Chart 2
+                                                    {isSearchingChart2 && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
+                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleChart2Build(statText, true, 'generate')}
+                                                        disabled={isSearchingChart2 || !statText}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
+                                                        style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
+                                                    >
+                                                        {isSearchingChart2 ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
+                                                        Auto
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowChart2Overlay(!showChart2Overlay)}
+                                                        className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                            showChart2Overlay ? 'text-white' : 'text-white/40'
+                                                        }`}
+                                                        style={{
+                                                            background: showChart2Overlay ? BRAND.crimson : BRAND.navyDark,
+                                                            border: `1px solid ${showChart2Overlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                                        }}
+                                                    >
+                                                        {showChart2Overlay ? 'ON' : 'OFF'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Chart 2 Prompt */}
+                                            <div className="space-y-2">
+                                                <textarea
+                                                    value={chart2UserPrompt}
+                                                    onChange={(e) => setChart2UserPrompt(e.target.value)}
+                                                    className="w-full border rounded-lg p-2 text-xs text-zinc-300 focus:outline-none resize-none h-12"
+                                                    style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                                    onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                                    onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                                    placeholder="Optional: describe what chart 2 you want..."
+                                                />
+                                            </div>
+
+                                            {/* Upload Chart 2 Image */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Upload Chart 2 Image</label>
+                                                {chart2ImageUpload ? (
+                                                    <div className="flex items-center gap-3 p-2 rounded-lg border" style={{ borderColor: BRAND.crimson, background: BRAND.crimson + '10' }}>
+                                                        <img src={chart2ImageUpload} alt="Chart 2" className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-white truncate">Chart 2 image loaded</p>
+                                                            <div className="flex gap-2 mt-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setChart2Type('passthrough-image');
+                                                                        setChart2Data({ src: chart2ImageUpload });
+                                                                        setShowChart2Overlay(true);
+                                                                    }}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors text-white"
+                                                                    style={{ background: BRAND.crimson }}
+                                                                >
+                                                                    USE AS-IS
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleChart2Build(statText, true, 'extract')}
+                                                                    disabled={isSearchingChart2}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors"
+                                                                    style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}60`, color: BRAND.navyLight }}
+                                                                >
+                                                                    {isSearchingChart2 ? 'EXTRACTING...' : 'EXTRACT & RECREATE'}
+                                                                </button>
+                                                                <button onClick={() => setChart2ImageUpload(null)} className="text-[10px] hover:text-white transition-colors" style={{ color: BRAND.navyLight }}>Clear</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-dashed cursor-pointer transition-all hover:border-[#b42434]" style={{ borderColor: BRAND.navyLight + '60' }}>
+                                                        <Upload size={16} style={{ color: BRAND.crimson }} className="flex-shrink-0" />
+                                                        <div>
+                                                            <p className="text-xs font-bold text-white">Upload a chart screenshot</p>
+                                                            <p className="text-[10px]" style={{ color: BRAND.navyLight }}>AI will extract data & recreate in WTF style</p>
+                                                        </div>
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => setChart2ImageUpload(reader.result as string);
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }} />
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            {showChart2Overlay && !chart2Data && (
+                                                <div className="text-xs text-white/50 italic text-center py-4">Click AUTO to generate chart from stat, or upload a chart image to recreate.</div>
+                                            )}
+                                            {showChart2Overlay && chart2Data && (
+                                                <div className="mt-2 space-y-4">
+                                                    {!isEditingChart2 ? (
+                                                        <div className="text-xs text-white/70 bg-[#161622] border border-white/10 rounded-lg p-3">
+                                                            <span className="font-bold text-white block mb-1">
+                                                                {chart2Type.replace(/-/g, ' ').toUpperCase()} — {chart2Data.title || chart2Data.playerName || 'Chart'}
+                                                            </span>
+                                                            Chart loaded. Click Auto to regenerate.
+                                                            
+                                                            <div className="flex gap-2 mt-3">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setChart2JsonStr(JSON.stringify({ chartType: chart2Type, data: chart2Data }, null, 2));
+                                                                        setIsEditingChart2(true);
+                                                                    }}
+                                                                    className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded transition-colors text-white text-[10px] font-bold"
+                                                                >
+                                                                    EDIT DATA
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setIsChart2Locked(!isChart2Locked)}
+                                                                    className="px-2 py-1 hover:opacity-80 rounded transition-colors text-white text-[10px] font-bold"
+                                                                    style={{ background: isChart2Locked ? BRAND.crimson : 'rgba(255,255,255,0.1)' }}
+                                                                >
+                                                                    {isChart2Locked ? 'LOCKED' : 'LOCK DATA'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            <textarea
+                                                                className="w-full h-48 bg-[#161622] border border-white/10 rounded-lg p-2 text-[10px] font-mono text-zinc-300 focus:outline-none"
+                                                                value={chart2JsonStr}
+                                                                onChange={(e) => setChart2JsonStr(e.target.value)}
+                                                            />
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        try {
+                                                                            const parsed = JSON.parse(chart2JsonStr);
+                                                                            if (parsed.chartType) setChart2Type(parsed.chartType);
+                                                                            if (parsed.data) setChart2Data(parsed.data);
+                                                                            setIsEditingChart2(false);
+                                                                        } catch (e) {
+                                                                            alert("Invalid JSON format");
+                                                                        }
+                                                                    }}
+                                                                    className="flex-1 py-1 bg-emerald-600/50 hover:bg-emerald-600 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setIsEditingChart2(false)}
+                                                                    className="flex-1 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="space-y-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Scale</span>
+                                                                <span className="text-white">{chart2Scale}%</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="10" max="400" step="1"
+                                                                value={chart2Scale}
+                                                                onChange={(e) => setChart2Scale(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Horizontal Pan</span>
+                                                                <span className="text-white">{chart2PanX}px</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="-4000" max="4000" step="10"
+                                                                value={chart2PanX}
+                                                                onChange={(e) => setChart2PanX(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Bottom Offset</span>
+                                                                <span className="text-white">{chart2PanY}px</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="-2000" max="5000" step="10"
+                                                                value={chart2PanY}
+                                                                onChange={(e) => setChart2PanY(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* CHART BUILDER CONTROLS */}
+                                    {(brand === 'wtf-x-logo.jpg' || brand === 'bets-x-logo.jpg' || brand === 'vfl-x-logo.jpg') && (
+                                        <>
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                                    Data Chart 1
                                                     {isSearchingChart && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
                                                 </h3>
                                                 <div className="flex items-center gap-2">
@@ -1898,7 +2303,7 @@ export default function Home() {
                                                                 <span className="text-white">{chartScale}%</span>
                                                             </label>
                                                             <input
-                                                                type="range" min="30" max="200" step="1"
+                                                                type="range" min="10" max="400" step="1"
                                                                 value={chartScale}
                                                                 onChange={(e) => setChartScale(Number(e.target.value))}
                                                                 className="w-full" style={{ accentColor: BRAND.crimson }}
@@ -1910,7 +2315,7 @@ export default function Home() {
                                                                 <span className="text-white">{chartPanX}px</span>
                                                             </label>
                                                             <input
-                                                                type="range" min="-2000" max="2000" step="10"
+                                                                type="range" min="-4000" max="4000" step="10"
                                                                 value={chartPanX}
                                                                 onChange={(e) => setChartPanX(Number(e.target.value))}
                                                                 className="w-full" style={{ accentColor: BRAND.crimson }}
@@ -1922,9 +2327,213 @@ export default function Home() {
                                                                 <span className="text-white">{chartPanY}px</span>
                                                             </label>
                                                             <input
-                                                                type="range" min="-500" max="3000" step="10"
+                                                                type="range" min="-2000" max="5000" step="10"
                                                                 value={chartPanY}
                                                                 onChange={(e) => setChartPanY(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* DATA CHART 2 CONTROLS */}
+                                    {(brand === 'wtf-x-logo.jpg' || brand === 'bets-x-logo.jpg' || brand === 'vfl-x-logo.jpg') && (
+                                        <>
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                                    Data Chart 2
+                                                    {isSearchingChart2 && <Loader2 className="animate-spin" size={14} style={{ color: BRAND.crimson }} />}
+                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => handleChart2Build(statText, true, 'generate')}
+                                                        disabled={isSearchingChart2 || !statText}
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all duration-200 text-white disabled:opacity-30 flex items-center gap-1"
+                                                        style={{ background: BRAND.navyDark, border: '1px solid rgba(255,255,255,0.1)' }}
+                                                    >
+                                                        {isSearchingChart2 ? <Loader2 className="animate-spin" size={10} /> : <Zap size={10} />}
+                                                        Auto
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setShowChart2Overlay(!showChart2Overlay)}
+                                                        className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all duration-200 ${
+                                                            showChart2Overlay ? 'text-white' : 'text-white/40'
+                                                        }`}
+                                                        style={{
+                                                            background: showChart2Overlay ? BRAND.crimson : BRAND.navyDark,
+                                                            border: `1px solid ${showChart2Overlay ? BRAND.crimson : 'rgba(255,255,255,0.1)'}`
+                                                        }}
+                                                    >
+                                                        {showChart2Overlay ? 'ON' : 'OFF'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Chart 2 Prompt */}
+                                            <div className="space-y-2">
+                                                <textarea
+                                                    value={chart2UserPrompt}
+                                                    onChange={(e) => setChart2UserPrompt(e.target.value)}
+                                                    className="w-full border rounded-lg p-2 text-xs text-zinc-300 focus:outline-none resize-none h-12"
+                                                    style={{ background: BRAND.navyDark, borderColor: BRAND.navyLight + '40' }}
+                                                    onFocus={(e) => e.currentTarget.style.borderColor = BRAND.crimson}
+                                                    onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
+                                                    placeholder="Optional: describe what chart 2 you want..."
+                                                />
+                                            </div>
+
+                                            {/* Upload Chart 2 Image */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase font-bold text-white/40 tracking-wider">Upload Chart 2 Image</label>
+                                                {chart2ImageUpload ? (
+                                                    <div className="flex items-center gap-3 p-2 rounded-lg border" style={{ borderColor: BRAND.crimson, background: BRAND.crimson + '10' }}>
+                                                        <img src={chart2ImageUpload} alt="Chart 2" className="w-12 h-12 rounded object-cover flex-shrink-0" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs font-bold text-white truncate">Chart 2 image loaded</p>
+                                                            <div className="flex gap-2 mt-1">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setChart2Type('passthrough-image');
+                                                                        setChart2Data({ src: chart2ImageUpload });
+                                                                        setShowChart2Overlay(true);
+                                                                    }}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors text-white"
+                                                                    style={{ background: BRAND.crimson }}
+                                                                >
+                                                                    USE AS-IS
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleChart2Build(statText, true, 'extract')}
+                                                                    disabled={isSearchingChart2}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded transition-colors"
+                                                                    style={{ background: BRAND.navyDark, border: `1px solid ${BRAND.navyLight}60`, color: BRAND.navyLight }}
+                                                                >
+                                                                    {isSearchingChart2 ? 'EXTRACTING...' : 'EXTRACT & RECREATE'}
+                                                                </button>
+                                                                <button onClick={() => setChart2ImageUpload(null)} className="text-[10px] hover:text-white transition-colors" style={{ color: BRAND.navyLight }}>Clear</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-dashed cursor-pointer transition-all hover:border-[#b42434]" style={{ borderColor: BRAND.navyLight + '60' }}>
+                                                        <Upload size={16} style={{ color: BRAND.crimson }} className="flex-shrink-0" />
+                                                        <div>
+                                                            <p className="text-xs font-bold text-white">Upload a chart screenshot</p>
+                                                            <p className="text-[10px]" style={{ color: BRAND.navyLight }}>AI will extract data & recreate in WTF style</p>
+                                                        </div>
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => setChart2ImageUpload(reader.result as string);
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }} />
+                                                    </label>
+                                                )}
+                                            </div>
+
+                                            {showChart2Overlay && !chart2Data && (
+                                                <div className="text-xs text-white/50 italic text-center py-4">Click AUTO to generate chart from stat, or upload a chart image to recreate.</div>
+                                            )}
+                                            {showChart2Overlay && chart2Data && (
+                                                <div className="mt-2 space-y-4">
+                                                    {!isEditingChart2 ? (
+                                                        <div className="text-xs text-white/70 bg-[#161622] border border-white/10 rounded-lg p-3">
+                                                            <span className="font-bold text-white block mb-1">
+                                                                {chart2Type.replace(/-/g, ' ').toUpperCase()} — {chart2Data.title || chart2Data.playerName || 'Chart'}
+                                                            </span>
+                                                            Chart loaded. Click Auto to regenerate.
+                                                            
+                                                            <div className="flex gap-2 mt-3">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setChart2JsonStr(JSON.stringify({ chartType: chart2Type, data: chart2Data }, null, 2));
+                                                                        setIsEditingChart2(true);
+                                                                    }}
+                                                                    className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded transition-colors text-white text-[10px] font-bold"
+                                                                >
+                                                                    EDIT DATA
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setIsChart2Locked(!isChart2Locked)}
+                                                                    className="px-2 py-1 hover:opacity-80 rounded transition-colors text-white text-[10px] font-bold"
+                                                                    style={{ background: isChart2Locked ? BRAND.crimson : 'rgba(255,255,255,0.1)' }}
+                                                                >
+                                                                    {isChart2Locked ? 'LOCKED' : 'LOCK DATA'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-2">
+                                                            <textarea
+                                                                className="w-full h-48 bg-[#161622] border border-white/10 rounded-lg p-2 text-[10px] font-mono text-zinc-300 focus:outline-none"
+                                                                value={chart2JsonStr}
+                                                                onChange={(e) => setChart2JsonStr(e.target.value)}
+                                                            />
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        try {
+                                                                            const parsed = JSON.parse(chart2JsonStr);
+                                                                            if (parsed.chartType) setChart2Type(parsed.chartType);
+                                                                            if (parsed.data) setChart2Data(parsed.data);
+                                                                            setIsEditingChart2(false);
+                                                                        } catch (e) {
+                                                                            alert("Invalid JSON format");
+                                                                        }
+                                                                    }}
+                                                                    className="flex-1 py-1 bg-emerald-600/50 hover:bg-emerald-600 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Save
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setIsEditingChart2(false)}
+                                                                    className="flex-1 py-1 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="space-y-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Scale</span>
+                                                                <span className="text-white">{chart2Scale}%</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="10" max="400" step="1"
+                                                                value={chart2Scale}
+                                                                onChange={(e) => setChart2Scale(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Horizontal Pan</span>
+                                                                <span className="text-white">{chart2PanX}px</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="-4000" max="4000" step="10"
+                                                                value={chart2PanX}
+                                                                onChange={(e) => setChart2PanX(Number(e.target.value))}
+                                                                className="w-full" style={{ accentColor: BRAND.crimson }}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] uppercase font-bold text-white/40 flex justify-between">
+                                                                <span>Bottom Offset</span>
+                                                                <span className="text-white">{chart2PanY}px</span>
+                                                            </label>
+                                                            <input
+                                                                type="range" min="-2000" max="5000" step="10"
+                                                                value={chart2PanY}
+                                                                onChange={(e) => setChart2PanY(Number(e.target.value))}
                                                                 className="w-full" style={{ accentColor: BRAND.crimson }}
                                                             />
                                                         </div>
