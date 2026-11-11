@@ -603,6 +603,10 @@ If no one matched, return: []`;
                     } catch (e2) {}
                 }
             }
+            // Clean: strip @, trim whitespace (matches server route cleanup)
+            usernames = usernames
+                .map(u => String(u).replace(/^@+/, '').trim())
+                .filter(u => u.length > 0);
             return usernames;
         } catch (err: any) {
             directErrorMsg = err.message || String(err);
@@ -680,7 +684,7 @@ If no one matched, return: []`;
                         const batchUsernames = await performGeminiScan((i === 0 && !isReverse) ? rawText : "", batch);
                         allUsernames.push(...batchUsernames);
                         // Update usernames incrementally in real-time so the list populates live!
-                        const uniqueSoFar = [...new Set(allUsernames.map(u => String(u).toLowerCase()))];
+                        const uniqueSoFar = [...new Set(allUsernames.map(u => String(u).replace(/^@+/, '').trim().toLowerCase()))];
                         setUsernames(uniqueSoFar);
                         setShowResults(true);
                     } catch (batchErr: any) {
@@ -704,7 +708,7 @@ If no one matched, return: []`;
             }
 
             // Final Deduplicate and clean
-            const unique = [...new Set(allUsernames.map(u => String(u).toLowerCase()))];
+            const unique = [...new Set(allUsernames.map(u => String(u).replace(/^@+/, '').trim().toLowerCase()))];
             setUsernames(unique);
             setShowResults(true);
 
