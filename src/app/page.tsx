@@ -1199,6 +1199,13 @@ export default function Home() {
                                         <span className="text-xl">✍️</span>
                                         <span className="text-sm font-black uppercase text-[#3b3b6d] tracking-tight">WTF Script</span>
                                     </button>
+                                    <a
+                                        href="/clip-maker"
+                                        className="flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-transparent transition-all active:scale-95 bg-white hover:border-[#b42434]"
+                                    >
+                                        <span className="text-xl">✂️</span>
+                                        <span className="text-sm font-black uppercase text-[#3b3b6d] tracking-tight">Clip Maker</span>
+                                    </a>
                                 </div>
                             </div>
                         )}
