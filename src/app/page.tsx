@@ -324,6 +324,9 @@ export default function Home() {
         setPhotoUrls([null, null, null, null]);
         setPhotoCount(1);
         setPhotoLayout('vertical');
+        setPhotoZooms([100, 100, 100, 100]);
+        setPhotoPanXs([0, 0, 0, 0]);
+        setPhotoPanYs([0, 0, 0, 0]);
         setFoundStats([]);
         setFoundImages([]);
         setPrevStatText(null);
@@ -450,6 +453,9 @@ export default function Home() {
     const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null, null, null]);
     const [photoCount, setPhotoCount] = useState(1); // 1-4
     const [photoLayout, setPhotoLayout] = useState<'vertical' | 'horizontal'>('vertical');
+    const [photoZooms, setPhotoZooms] = useState<number[]>([100, 100, 100, 100]);
+    const [photoPanXs, setPhotoPanXs] = useState<number[]>([0, 0, 0, 0]);
+    const [photoPanYs, setPhotoPanYs] = useState<number[]>([0, 0, 0, 0]);
 
     // Circle overlay image
     const [circleImageUrl, setCircleImageUrl] = useState<string | null>(null);
@@ -611,20 +617,22 @@ export default function Home() {
                             // 2x2 grid
                             <>
                                 <div className="flex flex-1" style={{ borderBottom: '6px solid white' }}>
-                                    <div className="flex-1 relative overflow-hidden" style={{ borderRight: '3px solid white' }}>
-                                        {photoUrls[0] ? <img src={photoUrls[0].startsWith('blob:') || photoUrls[0].startsWith('data:') ? photoUrls[0] : proxyUrl(photoUrls[0])} alt="Photo 1" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">1</p></div>}
-                                    </div>
-                                    <div className="flex-1 relative overflow-hidden" style={{ borderLeft: '3px solid white' }}>
-                                        {photoUrls[1] ? <img src={photoUrls[1].startsWith('blob:') || photoUrls[1].startsWith('data:') ? photoUrls[1] : proxyUrl(photoUrls[1])} alt="Photo 2" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">2</p></div>}
-                                    </div>
+                                    {[0, 1].map((i, arrIdx) => (
+                                        <div key={i} className="flex-1 relative overflow-hidden" style={{ [arrIdx === 0 ? 'borderRight' : 'borderLeft']: '3px solid white' }}>
+                                            {photoUrls[i] ? (
+                                                <img src={photoUrls[i]!.startsWith('blob:') || photoUrls[i]!.startsWith('data:') ? photoUrls[i]! : proxyUrl(photoUrls[i]!)} alt={`Photo ${i + 1}`} className="absolute max-w-none" crossOrigin="anonymous" style={{ width: `${photoZooms[i]}%`, left: `calc(50% + ${photoPanXs[i]}px)`, top: `calc(50% + ${photoPanYs[i]}px)`, transform: 'translate(-50%, -50%)' }} />
+                                            ) : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">{i + 1}</p></div>}
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="flex flex-1" style={{ borderTop: '6px solid white' }}>
-                                    <div className="flex-1 relative overflow-hidden" style={{ borderRight: '3px solid white' }}>
-                                        {photoUrls[2] ? <img src={photoUrls[2].startsWith('blob:') || photoUrls[2].startsWith('data:') ? photoUrls[2] : proxyUrl(photoUrls[2])} alt="Photo 3" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">3</p></div>}
-                                    </div>
-                                    <div className="flex-1 relative overflow-hidden" style={{ borderLeft: '3px solid white' }}>
-                                        {photoUrls[3] ? <img src={photoUrls[3].startsWith('blob:') || photoUrls[3].startsWith('data:') ? photoUrls[3] : proxyUrl(photoUrls[3])} alt="Photo 4" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" /> : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">4</p></div>}
-                                    </div>
+                                    {[2, 3].map((i, arrIdx) => (
+                                        <div key={i} className="flex-1 relative overflow-hidden" style={{ [arrIdx === 0 ? 'borderRight' : 'borderLeft']: '3px solid white' }}>
+                                            {photoUrls[i] ? (
+                                                <img src={photoUrls[i]!.startsWith('blob:') || photoUrls[i]!.startsWith('data:') ? photoUrls[i]! : proxyUrl(photoUrls[i]!)} alt={`Photo ${i + 1}`} className="absolute max-w-none" crossOrigin="anonymous" style={{ width: `${photoZooms[i]}%`, left: `calc(50% + ${photoPanXs[i]}px)`, top: `calc(50% + ${photoPanYs[i]}px)`, transform: 'translate(-50%, -50%)' }} />
+                                            ) : <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center"><p className="text-zinc-400 text-[60px]">{i + 1}</p></div>}
+                                        </div>
+                                    ))}
                                 </div>
                             </>
                         ) : (
@@ -644,8 +652,9 @@ export default function Home() {
                                         <img
                                             src={photoUrls[idx]!.startsWith('blob:') || photoUrls[idx]!.startsWith('data:') ? photoUrls[idx]! : proxyUrl(photoUrls[idx]!)}
                                             alt={`Photo ${idx + 1}`}
-                                            className="absolute inset-0 w-full h-full object-cover"
+                                            className="absolute max-w-none"
                                             crossOrigin="anonymous"
+                                            style={{ width: `${photoZooms[idx]}%`, left: `calc(50% + ${photoPanXs[idx]}px)`, top: `calc(50% + ${photoPanYs[idx]}px)`, transform: 'translate(-50%, -50%)' }}
                                         />
                                     ) : (
                                         <div className="absolute inset-0 bg-zinc-100 flex items-center justify-center">
@@ -844,7 +853,8 @@ export default function Home() {
                 )}
             </div>
         </div>
-    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, photoUrls, photoCount, photoLayout, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showChart2Overlay, chart2Data, chart2Type, chart2Scale, chart2PanY, chart2PanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY, circleImgOffsetX]);
+    ), [previewScale, leftIndent, logoTopPadding, logoBottomPadding, brand, logoHeight, fontSize, lineHeight, textTopPadding, textBottomPadding, statText, photoUrl, photoZoom, photoPanX, photoPanY, photoUrls, photoCount, photoLayout, photoZooms, photoPanXs, photoPanYs, isGeneratingImage, showMatchupOverlay, matchupLeague, matchupTime, awayTeamAbbr, awayTeamName, awayTeamRecord, awayMl, awayRl, homeTeamAbbr, homeTeamName, homeTeamRecord, homeMl, homeRl, showChartOverlay, chartData, chartType, chartScale, chartPanY, chartPanX, showChart2Overlay, chart2Data, chart2Type, chart2Scale, chart2PanY, chart2PanX, showCircleImage, circleImageUrl, circleImageSize, circleImagePosX, circleImagePosY, circleBorderWidth, circleImageZoom, circleImgOffsetY, circleImgOffsetX]);
+
 
     const [isAILoading, setIsAILoading] = useState(false);
 
@@ -1622,27 +1632,60 @@ export default function Home() {
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <h2 className="text-lg font-bold flex items-center gap-2"><Maximize style={{ color: BRAND.crimson }} /> Step 4: Visuals</h2>
 
-                                {[
-                                    { label: "Photo Zoom", value: photoZoom, setter: setPhotoZoom, min: 100, max: 500, unit: "%" },
-                                    { label: "Horizontal Pan", value: photoPanX, setter: setPhotoPanX, min: -4000, max: 4000, unit: "px" },
-                                    { label: "Vertical Pan (Offset)", value: photoPanY, setter: setPhotoPanY, min: -4000, max: 4000, unit: "px" },
-                                ].map((control) => (
-                                    <div key={control.label} className="space-y-3">
-                                        <label className="text-sm flex justify-between" style={{ color: BRAND.navyLight }}>
-                                            <span>{control.label}</span>
-                                            <span className="text-white">{control.value}{control.unit}</span>
-                                        </label>
-                                        <input
-                                            type="range"
-                                            min={control.min}
-                                            max={control.max}
-                                            value={control.value}
-                                            onChange={(e) => control.setter(Number(e.target.value))}
-                                            className="w-full"
-                                            style={{ accentColor: BRAND.crimson }}
-                                        />
+                                {photoCount === 1 ? (
+                                    // Single photo — existing sliders
+                                    [
+                                        { label: "Photo Zoom", value: photoZoom, setter: setPhotoZoom, min: 100, max: 500, unit: "%" },
+                                        { label: "Horizontal Pan", value: photoPanX, setter: setPhotoPanX, min: -4000, max: 4000, unit: "px" },
+                                        { label: "Vertical Pan (Offset)", value: photoPanY, setter: setPhotoPanY, min: -4000, max: 4000, unit: "px" },
+                                    ].map((control) => (
+                                        <div key={control.label} className="space-y-3">
+                                            <label className="text-sm flex justify-between" style={{ color: BRAND.navyLight }}>
+                                                <span>{control.label}</span>
+                                                <span className="text-white">{control.value}{control.unit}</span>
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min={control.min}
+                                                max={control.max}
+                                                value={control.value}
+                                                onChange={(e) => control.setter(Number(e.target.value))}
+                                                className="w-full"
+                                                style={{ accentColor: BRAND.crimson }}
+                                            />
+                                        </div>
+                                    ))
+                                ) : (
+                                    // Multi-photo — per-slot zoom/pan (only shown when photoCount > 1)
+                                    <div className="space-y-5">
+                                        {Array.from({ length: photoCount }).map((_, idx) => (
+                                            <div key={idx} className="space-y-2">
+                                                <p className="text-xs font-black uppercase tracking-widest" style={{ color: BRAND.crimson }}>Photo {idx + 1}</p>
+                                                {[
+                                                    { label: "Zoom", value: photoZooms[idx], min: 50, max: 500, unit: "%", setter: (v: number) => { const next = [...photoZooms]; next[idx] = v; setPhotoZooms(next); } },
+                                                    { label: "H Pan", value: photoPanXs[idx], min: -4000, max: 4000, unit: "px", setter: (v: number) => { const next = [...photoPanXs]; next[idx] = v; setPhotoPanXs(next); } },
+                                                    { label: "V Pan", value: photoPanYs[idx], min: -4000, max: 4000, unit: "px", setter: (v: number) => { const next = [...photoPanYs]; next[idx] = v; setPhotoPanYs(next); } },
+                                                ].map((c) => (
+                                                    <div key={c.label} className="space-y-1">
+                                                        <label className="text-[11px] uppercase font-bold flex justify-between" style={{ color: BRAND.navyLight }}>
+                                                            <span>{c.label}</span>
+                                                            <span className="text-white">{c.value}{c.unit}</span>
+                                                        </label>
+                                                        <input
+                                                            type="range" min={c.min} max={c.max}
+                                                            value={c.value}
+                                                            onChange={(e) => c.setter(Number(e.target.value))}
+                                                            className="w-full"
+                                                            style={{ accentColor: BRAND.crimson }}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
+
+
 
                                 {/* CIRCLE OVERLAY IMAGE CONTROLS */}
                                 <div className="border-t border-white/10 pt-6 mt-6 space-y-4">
