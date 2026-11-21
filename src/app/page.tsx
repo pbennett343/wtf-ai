@@ -1274,6 +1274,14 @@ export default function Home() {
                                         onBlur={(e) => e.currentTarget.style.borderColor = BRAND.navyLight + '40'}
                                         placeholder="Type or paste text from found stat below..."
                                     />
+                                    <button
+                                        onClick={() => navigator.clipboard.writeText(statText)}
+                                        title="Copy text"
+                                        className="absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all hover:scale-105 active:scale-95"
+                                        style={{ background: BRAND.navyLight + '22', color: BRAND.navyLight, border: `1px solid ${BRAND.navyLight}44` }}
+                                    >
+                                        Copy
+                                    </button>
                                     {isAILoading && (
                                         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
                                             <div className="flex flex-col items-center gap-2">
@@ -1283,6 +1291,7 @@ export default function Home() {
                                         </div>
                                     )}
                                 </div>
+
 
                                 {foundStats.length > 0 && (
                                     <div className="mt-4 space-y-4">
